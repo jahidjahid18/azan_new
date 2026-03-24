@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import es.antonborri.home_widget.HomeWidgetProvider
 
-class PrayerAppWidgetProvider : HomeWidgetProvider() {
+class PrayerRamadanWidgetProvider : HomeWidgetProvider() {
   override fun onUpdate(
     context: Context,
     appWidgetManager: AppWidgetManager,
@@ -17,8 +17,8 @@ class PrayerAppWidgetProvider : HomeWidgetProvider() {
       appWidgetManager = appWidgetManager,
       appWidgetIds = appWidgetIds,
       widgetData = widgetData,
-      layoutRes = R.layout.prayer_widget_layout,
-      showRamadan = false,
+      layoutRes = R.layout.prayer_widget_ramadan_layout,
+      showRamadan = true,
     )
   }
 }

@@ -17,13 +17,24 @@
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/widgetRamadanCountdown"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="10 day(s) to Ramadan"
+        android:textColor="#FFE2A8"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:visibility="visible" />
+
+    <TextView
         android:id="@+id/widgetNextPrayerName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Fajr"
+        android:text="Next: Fajr"
         android:textColor="#FFFFFF"
-        android:textSize="20sp"
+        android:textSize="16sp"
         android:textStyle="bold" />
 
     <TextView
@@ -32,33 +43,23 @@
         android:layout_height="wrap_content"
         android:text="05:46 AM"
         android:textColor="#FFFFFF"
-        android:textSize="26sp"
+        android:textSize="24sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/widgetCountdown"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:text="In 01:45:12"
         android:textColor="#D8F5EA"
-        android:textSize="14sp" />
-
-    <TextView
-        android:id="@+id/widgetRamadanCountdown"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="10 day(s) to Ramadan"
-        android:textColor="#FFE2A8"
-        android:textSize="13sp"
-        android:visibility="gone" />
+        android:textSize="13sp" />
 
     <TextView
         android:id="@+id/widgetUpdatedAt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="8dp"
         android:text="Updated 24 Mar, 2:30 PM"
         android:textColor="#D8F5EA"
         android:textSize="12sp" />

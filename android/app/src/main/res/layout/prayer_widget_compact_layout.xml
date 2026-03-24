@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/prayer_widget_bg"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <TextView
         android:id="@+id/widgetCity"
@@ -13,17 +13,17 @@
         android:layout_height="wrap_content"
         android:text="Prayer Times"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:textSize="12sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/widgetNextPrayerName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:text="Fajr"
         android:textColor="#FFFFFF"
-        android:textSize="20sp"
+        android:textSize="16sp"
         android:textStyle="bold" />
 
     <TextView
@@ -32,34 +32,31 @@
         android:layout_height="wrap_content"
         android:text="05:46 AM"
         android:textColor="#FFFFFF"
-        android:textSize="26sp"
+        android:textSize="20sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/widgetCountdown"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="4dp"
         android:text="In 01:45:12"
         android:textColor="#D8F5EA"
-        android:textSize="14sp" />
+        android:textSize="12sp" />
 
     <TextView
         android:id="@+id/widgetRamadanCountdown"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="10 day(s) to Ramadan"
-        android:textColor="#FFE2A8"
-        android:textSize="13sp"
+        android:text=""
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/widgetUpdatedAt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:text="Updated 24 Mar, 2:30 PM"
         android:textColor="#D8F5EA"
-        android:textSize="12sp" />
+        android:textSize="10sp" />
 </LinearLayout>

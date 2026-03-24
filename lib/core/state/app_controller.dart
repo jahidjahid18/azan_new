@@ -8,6 +8,7 @@ import 'package:azan_app/core/models/app_location.dart';
 import 'package:azan_app/core/models/app_settings.dart';
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/services/hive_service.dart';
+import 'package:azan_app/core/services/backup_service.dart';
 import 'package:azan_app/core/services/home_widget_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
@@ -17,6 +18,7 @@ import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
 import 'package:azan_app/features/daily/data/models/saved_daily_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/arabic_font_preset.dart';
 import 'package:azan_app/features/quran/data/models/quran_reader_preferences.dart';
 import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
@@ -31,12 +33,14 @@ class AppController extends ChangeNotifier {
     required NotificationService notificationService,
     required DailyContentService dailyContentService,
     required HomeWidgetService homeWidgetService,
+    required BackupService backupService,
   }) : _hiveService = hiveService,
        _locationService = locationService,
        _prayerService = prayerService,
        _notificationService = notificationService,
        _dailyContentService = dailyContentService,
-       _homeWidgetService = homeWidgetService;
+       _homeWidgetService = homeWidgetService,
+       _backupService = backupService;
 
   final HiveService _hiveService;
   final LocationService _locationService;
@@ -44,6 +48,7 @@ class AppController extends ChangeNotifier {
   final NotificationService _notificationService;
   final DailyContentService _dailyContentService;
   final HomeWidgetService _homeWidgetService;
+  final BackupService _backupService;
 
   AppSettings _settings = AppSettings.defaults();
   AppLocation? _location;
@@ -624,14 +629,75 @@ class AppController extends ChangeNotifier {
     double? fontSize,
     double? lineHeight,
     bool? nightMode,
+    ArabicFontPreset? fontPreset,
   }) async {
     _quranReaderPreferences = _quranReaderPreferences.copyWith(
       fontSize: fontSize,
       lineHeight: lineHeight,
       nightMode: nightMode,
+      fontPreset: fontPreset,
     );
     await _hiveService.saveQuranReaderPreferences(_quranReaderPreferences);
     notifyListeners();
+  }
+
+  Future<String?> exportLocalBackup() async {
+    if (_isBusy) {
+      return 'Please wait for the current action to finish.';
+    }
+
+    try {
+      _isBusy = true;
+      notifyListeners();
+      final data = _hiveService.exportAllData();
+      final path = await _backupService.exportJsonBackup(data);
+      return 'Backup exported: $path';
+    } catch (_) {
+      return 'Could not export backup. Please try again.';
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  Future<String?> importLocalBackup() async {
+    if (_isBusy) {
+      return 'Please wait for the current action to finish.';
+    }
+
+    try {
+      _isBusy = true;
+      notifyListeners();
+      final payload = await _backupService.pickAndReadBackupFile();
+      if (payload == null) {
+        return 'Backup import cancelled.';
+      }
+
+      await _hiveService.importAllData(payload);
+
+      _settings = _hiveService.loadSettings();
+      _location = _hiveService.loadLocation();
+      _tasbihCount = _hiveService.loadTasbihCount();
+      _prayerTracker = _hiveService.loadPrayerTracker();
+      _quranBookmarks = _hiveService.loadQuranBookmarks();
+      _quranLastRead = _hiveService.loadQuranLastRead();
+      _azkarTracker = _hiveService.loadAzkarTracker();
+      _dailyFavorites = _hiveService.loadDailyFavorites();
+      _azkarFavorites = _hiveService.loadAzkarFavorites();
+      _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
+
+      _recalculatePrayers();
+      await _refreshNotificationSchedule();
+      await _syncHomeWidgetIfNeeded(force: true);
+      return 'Backup imported successfully.';
+    } on FormatException {
+      return 'Invalid backup file format.';
+    } catch (_) {
+      return 'Could not import backup. Please try again.';
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
   }
 
   Future<void> _refreshDailyContent() async {

@@ -297,6 +297,76 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        _SectionCard(
+          title: 'Backup and Restore',
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Export all local app data to JSON and restore later.',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: controller.isBusy
+                          ? null
+                          : () async {
+                              final scaffoldMessenger = ScaffoldMessenger.of(
+                                context,
+                              );
+                              final appController = context
+                                  .read<AppController>();
+                              final message = await appController
+                                  .exportLocalBackup();
+                              if (!mounted) return;
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    message ??
+                                        'Backup exported. Check app documents folder.',
+                                  ),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.upload_file_rounded),
+                      label: const Text('Export'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.tonalIcon(
+                      onPressed: controller.isBusy
+                          ? null
+                          : () async {
+                              final scaffoldMessenger = ScaffoldMessenger.of(
+                                context,
+                              );
+                              final appController = context
+                                  .read<AppController>();
+                              final message = await appController
+                                  .importLocalBackup();
+                              if (!mounted) return;
+                              scaffoldMessenger.showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    message ?? 'Backup imported successfully.',
+                                  ),
+                                ),
+                              );
+                            },
+                      icon: const Icon(Icons.download_rounded),
+                      label: const Text('Import'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

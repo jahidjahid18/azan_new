@@ -4,6 +4,7 @@ import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/features/audio/models/quran_reciter.dart';
 import 'package:azan_app/features/audio/services/quran_audio_service.dart';
 import 'package:azan_app/features/audio/widgets/quran_player_bar.dart';
+import 'package:azan_app/features/quran/data/models/arabic_font_preset.dart';
 import 'package:azan_app/features/quran/data/models/quran_surah.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -38,6 +39,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   late double _fontSize;
   late double _lineHeight;
   late bool _nightMode;
+  late ArabicFontPreset _fontPreset;
 
   @override
   void initState() {
@@ -49,6 +51,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     _fontSize = prefs.fontSize;
     _lineHeight = prefs.lineHeight;
     _nightMode = prefs.nightMode;
+    _fontPreset = prefs.fontPreset;
 
     _selectedAyahNumber = widget.initialAyahNumber.clamp(1, surah.ayahCount);
     _bookmarkKeys = context
@@ -200,6 +203,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                               ?.copyWith(
                                 height: _lineHeight,
                                 fontSize: _fontSize,
+                                fontFamily: _fontPreset.family,
                               ),
                         ),
                       ],
@@ -414,6 +418,29 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                       context
                           .read<AppController>()
                           .updateQuranReaderPreferences(lineHeight: value);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<ArabicFontPreset>(
+                    initialValue: _fontPreset,
+                    decoration: const InputDecoration(
+                      labelText: 'Arabic preset',
+                    ),
+                    items: ArabicFontPreset.values
+                        .map(
+                          (preset) => DropdownMenuItem<ArabicFontPreset>(
+                            value: preset,
+                            child: Text(preset.label),
+                          ),
+                        )
+                        .toList(growable: false),
+                    onChanged: (value) {
+                      if (value == null) return;
+                      setState(() => _fontPreset = value);
+                      setModalState(() {});
+                      context
+                          .read<AppController>()
+                          .updateQuranReaderPreferences(fontPreset: value);
                     },
                   ),
                   const SizedBox(height: 8),

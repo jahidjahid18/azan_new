@@ -161,4 +161,15 @@ class HiveService {
       preferences.toMap(),
     );
   }
+
+  Map<String, dynamic> exportAllData() {
+    return _box.toMap().map(
+      (key, value) => MapEntry<String, dynamic>(key.toString(), value),
+    );
+  }
+
+  Future<void> importAllData(Map<String, dynamic> data) async {
+    await _box.clear();
+    await _box.putAll(data);
+  }
 }
