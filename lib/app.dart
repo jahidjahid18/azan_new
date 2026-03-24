@@ -8,6 +8,7 @@ import 'package:azan_app/features/quran/presentation/quran_surah_list_screen.dar
 import 'package:azan_app/features/settings/presentation/settings_screen.dart';
 import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -23,16 +24,26 @@ class AzanApp extends StatelessWidget {
     return MaterialApp(
       title: AppConstants.appTitle,
       debugShowCheckedModeBanner: false,
-      theme: _buildTheme(brightness: Brightness.light),
-      darkTheme: _buildTheme(brightness: Brightness.dark),
+      theme: _buildTheme(
+        brightness: Brightness.light,
+        style: appController.themeStyle,
+      ),
+      darkTheme: _buildTheme(
+        brightness: Brightness.dark,
+        style: appController.themeStyle,
+      ),
       themeMode: appController.themeMode.flutterThemeMode,
-      home: const _MainScaffold(),
+      home: _MainScaffold(style: appController.themeStyle),
     );
   }
 
-  ThemeData _buildTheme({required Brightness brightness}) {
+  ThemeData _buildTheme({
+    required Brightness brightness,
+    required ThemeStyleOption style,
+  }) {
+    final seedColor = _styleSeedColor(style);
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFF1E6CEB),
+      seedColor: seedColor,
       brightness: brightness,
     );
 
@@ -79,10 +90,21 @@ class AzanApp extends StatelessWidget {
       ),
     );
   }
+
+  Color _styleSeedColor(ThemeStyleOption style) {
+    return switch (style) {
+      ThemeStyleOption.glassBlue => const Color(0xFF1E6CEB),
+      ThemeStyleOption.emerald => const Color(0xFF198A66),
+      ThemeStyleOption.sunset => const Color(0xFFE06B2E),
+      ThemeStyleOption.monochrome => const Color(0xFF556070),
+    };
+  }
 }
 
 class _MainScaffold extends StatefulWidget {
-  const _MainScaffold();
+  const _MainScaffold({required this.style});
+
+  final ThemeStyleOption style;
 
   @override
   State<_MainScaffold> createState() => _MainScaffoldState();
@@ -130,7 +152,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
       ),
       body: Stack(
         children: <Widget>[
-          const Positioned.fill(child: _BackgroundLayer()),
+          Positioned.fill(child: _BackgroundLayer(style: widget.style)),
           SafeArea(
             child: IndexedStack(index: _currentTab, children: _screens),
           ),
@@ -200,28 +222,22 @@ class _MainScaffoldState extends State<_MainScaffold> {
 }
 
 class _BackgroundLayer extends StatelessWidget {
-  const _BackgroundLayer();
+  const _BackgroundLayer({required this.style});
+
+  final ThemeStyleOption style;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final palette = _paletteFor(style, isDark);
 
     return DecoratedBox(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: isDark
-              ? const <Color>[
-                  Color(0xFF071229),
-                  Color(0xFF0E2C5D),
-                  Color(0xFF0B1B3D),
-                ]
-              : const <Color>[
-                  Color(0xFFE9F3FF),
-                  Color(0xFFCFE4FF),
-                  Color(0xFFB4D4FF),
-                ],
+          colors: palette.gradient,
         ),
       ),
       child: Stack(
@@ -229,22 +245,101 @@ class _BackgroundLayer extends StatelessWidget {
           Positioned(
             top: -80,
             right: -40,
-            child: _GlowBubble(
-              size: 220,
-              color: Colors.white.withValues(alpha: 0.2),
-            ),
+            child: _GlowBubble(size: 220, color: palette.primaryGlow),
           ),
           Positioned(
             bottom: -60,
             left: -30,
-            child: _GlowBubble(
-              size: 180,
-              color: Colors.cyanAccent.withValues(alpha: 0.17),
-            ),
+            child: _GlowBubble(size: 180, color: palette.secondaryGlow),
           ),
         ],
       ),
     );
+  }
+
+  _StylePalette _paletteFor(ThemeStyleOption style, bool isDark) {
+    return switch (style) {
+      ThemeStyleOption.glassBlue =>
+        isDark
+            ? const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFF071229),
+                  Color(0xFF0E2C5D),
+                  Color(0xFF0B1B3D),
+                ],
+                primaryGlow: Color(0x33FFFFFF),
+                secondaryGlow: Color(0x2BC4FFFF),
+              )
+            : const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFFE9F3FF),
+                  Color(0xFFCFE4FF),
+                  Color(0xFFB4D4FF),
+                ],
+                primaryGlow: Color(0x44FFFFFF),
+                secondaryGlow: Color(0x33A9E4FF),
+              ),
+      ThemeStyleOption.emerald =>
+        isDark
+            ? const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFF041A15),
+                  Color(0xFF0B3C30),
+                  Color(0xFF0A2D24),
+                ],
+                primaryGlow: Color(0x2FFFFFFF),
+                secondaryGlow: Color(0x2B4BFFC7),
+              )
+            : const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFFE8F9F3),
+                  Color(0xFFC8EFDF),
+                  Color(0xFFA7E5CB),
+                ],
+                primaryGlow: Color(0x44FFFFFF),
+                secondaryGlow: Color(0x3391F7CF),
+              ),
+      ThemeStyleOption.sunset =>
+        isDark
+            ? const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFF2A1010),
+                  Color(0xFF5A2514),
+                  Color(0xFF3E1A0F),
+                ],
+                primaryGlow: Color(0x2FFFFFFF),
+                secondaryGlow: Color(0x33FFC38F),
+              )
+            : const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFFFFF0E7),
+                  Color(0xFFFFD8C4),
+                  Color(0xFFFFC09E),
+                ],
+                primaryGlow: Color(0x44FFFFFF),
+                secondaryGlow: Color(0x33FFDCAE),
+              ),
+      ThemeStyleOption.monochrome =>
+        isDark
+            ? const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFF121519),
+                  Color(0xFF28313C),
+                  Color(0xFF1A212A),
+                ],
+                primaryGlow: Color(0x2FFFFFFF),
+                secondaryGlow: Color(0x337E95B0),
+              )
+            : const _StylePalette(
+                gradient: <Color>[
+                  Color(0xFFF2F5F8),
+                  Color(0xFFDBE3EA),
+                  Color(0xFFC6D2DC),
+                ],
+                primaryGlow: Color(0x44FFFFFF),
+                secondaryGlow: Color(0x33B7CAE0),
+              ),
+    };
   }
 }
 
@@ -262,4 +357,16 @@ class _GlowBubble extends StatelessWidget {
       decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
+}
+
+class _StylePalette {
+  const _StylePalette({
+    required this.gradient,
+    required this.primaryGlow,
+    required this.secondaryGlow,
+  });
+
+  final List<Color> gradient;
+  final Color primaryGlow;
+  final Color secondaryGlow;
 }

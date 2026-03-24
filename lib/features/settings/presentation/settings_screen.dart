@@ -3,6 +3,7 @@ import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/widgets/glass_card.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -203,24 +204,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 12),
         _SectionCard(
           title: 'Appearance',
-          child: DropdownButtonFormField<ThemeModeOption>(
-            initialValue: controller.themeMode,
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
-              labelText: 'Theme mode',
-            ),
-            items: ThemeModeOption.values
-                .map(
-                  (option) => DropdownMenuItem<ThemeModeOption>(
-                    value: option,
-                    child: Text(option.label),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) async {
-              if (value == null) return;
-              await context.read<AppController>().setThemeMode(value);
-            },
+          child: Column(
+            children: <Widget>[
+              DropdownButtonFormField<ThemeModeOption>(
+                initialValue: controller.themeMode,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Theme mode',
+                ),
+                items: ThemeModeOption.values
+                    .map(
+                      (option) => DropdownMenuItem<ThemeModeOption>(
+                        value: option,
+                        child: Text(option.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await context.read<AppController>().setThemeMode(value);
+                },
+              ),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<ThemeStyleOption>(
+                initialValue: controller.themeStyle,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  labelText: 'Theme style',
+                ),
+                items: ThemeStyleOption.values
+                    .map(
+                      (option) => DropdownMenuItem<ThemeStyleOption>(
+                        value: option,
+                        child: Text(option.label),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await context.read<AppController>().setThemeStyle(value);
+                },
+              ),
+            ],
           ),
         ),
       ],

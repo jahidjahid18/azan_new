@@ -1,6 +1,7 @@
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 
 class AppSettings {
   const AppSettings({
@@ -8,12 +9,14 @@ class AppSettings {
     required this.notificationsEnabled,
     required this.notificationSoundMode,
     required this.themeMode,
+    required this.themeStyle,
   });
 
   final CalculationMethodOption calculationMethod;
   final bool notificationsEnabled;
   final NotificationSoundMode notificationSoundMode;
   final ThemeModeOption themeMode;
+  final ThemeStyleOption themeStyle;
 
   factory AppSettings.defaults() {
     return const AppSettings(
@@ -21,6 +24,7 @@ class AppSettings {
       notificationsEnabled: true,
       notificationSoundMode: NotificationSoundMode.notificationOnly,
       themeMode: ThemeModeOption.system,
+      themeStyle: ThemeStyleOption.glassBlue,
     );
   }
 
@@ -29,6 +33,7 @@ class AppSettings {
     bool? notificationsEnabled,
     NotificationSoundMode? notificationSoundMode,
     ThemeModeOption? themeMode,
+    ThemeStyleOption? themeStyle,
   }) {
     return AppSettings(
       calculationMethod: calculationMethod ?? this.calculationMethod,
@@ -36,6 +41,7 @@ class AppSettings {
       notificationSoundMode:
           notificationSoundMode ?? this.notificationSoundMode,
       themeMode: themeMode ?? this.themeMode,
+      themeStyle: themeStyle ?? this.themeStyle,
     );
   }
 
@@ -45,6 +51,7 @@ class AppSettings {
       'notificationsEnabled': notificationsEnabled,
       'notificationSoundMode': notificationSoundMode.key,
       'themeMode': themeMode.key,
+      'themeStyle': themeStyle.key,
     };
   }
 
@@ -58,6 +65,7 @@ class AppSettings {
         map['notificationSoundMode'] as String?,
       ),
       themeMode: ThemeModeOptionX.fromKey(map['themeMode'] as String?),
+      themeStyle: ThemeStyleOptionX.fromKey(map['themeStyle'] as String?),
     );
   }
 }

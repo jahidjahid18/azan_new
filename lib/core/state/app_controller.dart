@@ -20,6 +20,7 @@ import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
 import 'package:azan_app/features/quran/data/models/quran_reader_preferences.dart';
 import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/foundation.dart';
 
 class AppController extends ChangeNotifier {
@@ -81,6 +82,7 @@ class AppController extends ChangeNotifier {
   int get tasbihCount => _tasbihCount;
   DailyContentItem? get dailyContent => _dailyContent;
   ThemeModeOption get themeMode => _settings.themeMode;
+  ThemeStyleOption get themeStyle => _settings.themeStyle;
   List<QuranBookmark> get quranBookmarks => _quranBookmarks;
   QuranReadPosition? get quranLastRead => _quranLastRead;
   List<SavedDailyItem> get dailyFavorites => _dailyFavorites;
@@ -193,6 +195,12 @@ class AppController extends ChangeNotifier {
 
   Future<void> setThemeMode(ThemeModeOption mode) async {
     _settings = _settings.copyWith(themeMode: mode);
+    await _hiveService.saveSettings(_settings);
+    notifyListeners();
+  }
+
+  Future<void> setThemeStyle(ThemeStyleOption style) async {
+    _settings = _settings.copyWith(themeStyle: style);
     await _hiveService.saveSettings(_settings);
     notifyListeners();
   }
