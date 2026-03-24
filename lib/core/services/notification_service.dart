@@ -32,6 +32,7 @@ class NotificationService {
     required bool enabled,
     required NotificationSoundMode soundMode,
     required List<PrayerInfo> upcomingPrayers,
+    required Map<String, Map<String, bool>> completionByDate,
   }) async {
     await _plugin.cancelAllPendingNotifications();
 
@@ -40,7 +41,31 @@ class NotificationService {
     }
 
     var notificationId = 1000;
+    final now = DateTime.now();
+
     for (final prayer in upcomingPrayers) {
+      final dateKey = _dateKey(prayer.time);
+      final isCompleted = completionByDate[dateKey]?[prayer.name] ?? false;
+      if (isCompleted) {
+        continue;
+      }
+
+      final preReminderTime = prayer.time.subtract(
+        const Duration(minutes: AppConstants.reminderBeforeMinutes),
+      );
+      if (preReminderTime.isAfter(now)) {
+        await _plugin.zonedSchedule(
+          id: notificationId++,
+          title: '${prayer.name} in ${AppConstants.reminderBeforeMinutes} min',
+          body: 'Prepare for ${prayer.name} prayer.',
+          scheduledDate: tz.TZDateTime.from(preReminderTime, tz.local),
+          notificationDetails: _detailsForSoundMode(
+            NotificationSoundMode.notificationOnly,
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      }
+
       await _plugin.zonedSchedule(
         id: notificationId++,
         title: '${prayer.name} Prayer',
@@ -49,7 +74,28 @@ class NotificationService {
         notificationDetails: _detailsForSoundMode(soundMode),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
+
+      final followUpTime = prayer.time.add(
+        const Duration(minutes: AppConstants.followUpReminderMinutes),
+      );
+      if (followUpTime.isAfter(now)) {
+        await _plugin.zonedSchedule(
+          id: notificationId++,
+          title: '${prayer.name} Check-in',
+          body: 'If prayed, mark ${prayer.name} as complete in Tracker.',
+          scheduledDate: tz.TZDateTime.from(followUpTime, tz.local),
+          notificationDetails: _detailsForSoundMode(
+            NotificationSoundMode.notificationOnly,
+          ),
+          androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        );
+      }
     }
+  }
+
+  String _dateKey(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return normalized.toIso8601String().split('T').first;
   }
 
   NotificationDetails _detailsForSoundMode(NotificationSoundMode soundMode) {

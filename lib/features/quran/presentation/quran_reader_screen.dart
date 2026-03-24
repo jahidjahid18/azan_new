@@ -35,11 +35,20 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   bool _isPlaying = false;
   late Set<String> _bookmarkKeys;
 
+  late double _fontSize;
+  late double _lineHeight;
+  late bool _nightMode;
+
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
     final surah = widget.surahs[_currentIndex];
+    final prefs = context.read<AppController>().quranReaderPreferences;
+
+    _fontSize = prefs.fontSize;
+    _lineHeight = prefs.lineHeight;
+    _nightMode = prefs.nightMode;
 
     _selectedAyahNumber = widget.initialAyahNumber.clamp(1, surah.ayahCount);
     _bookmarkKeys = context
@@ -71,13 +80,36 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     final isFirst = _currentIndex == 0;
     final isLast = _currentIndex == widget.surahs.length - 1;
 
+    final backgroundColor = _nightMode
+        ? const Color(0xFF10131A)
+        : Theme.of(context).colorScheme.surface.withValues(alpha: 0.55);
+
     return Scaffold(
-      appBar: AppBar(title: Text('${surah.number}. ${surah.nameEnglish}')),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        title: Text('${surah.number}. ${surah.nameEnglish}'),
+        actions: <Widget>[
+          IconButton(
+            tooltip: _nightMode ? 'Day mode' : 'Night mode',
+            onPressed: () => _toggleNightMode(),
+            icon: Icon(
+              _nightMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+            ),
+          ),
+          IconButton(
+            tooltip: 'Reader settings',
+            onPressed: _openReaderSettings,
+            icon: const Icon(Icons.tune_rounded),
+          ),
+        ],
+      ),
       body: Column(
         children: <Widget>[
           Container(
             width: double.infinity,
-            color: Theme.of(context).colorScheme.primaryContainer,
+            color: Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.45),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -126,9 +158,10 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                     decoration: BoxDecoration(
                       color: isSelectedAyah
                           ? Theme.of(context).colorScheme.primaryContainer
-                          : Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerLowest,
+                                .withValues(alpha: 0.55)
+                          : Theme.of(context).colorScheme.surface.withValues(
+                              alpha: _nightMode ? 0.28 : 0.52,
+                            ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
@@ -163,9 +196,11 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                           ayah.text,
                           textDirection: TextDirection.rtl,
                           textAlign: TextAlign.right,
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge?.copyWith(height: 1.8),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                height: _lineHeight,
+                                fontSize: _fontSize,
+                              ),
                         ),
                       ],
                     ),
@@ -313,6 +348,81 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       ayahNumber: ayahNumber,
       surahNameEnglish: surah.nameEnglish,
       surahNameArabic: surah.nameArabic,
+    );
+  }
+
+  Future<void> _toggleNightMode() async {
+    setState(() {
+      _nightMode = !_nightMode;
+    });
+    await context.read<AppController>().updateQuranReaderPreferences(
+      nightMode: _nightMode,
+    );
+  }
+
+  Future<void> _openReaderSettings() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Row(
+                    children: <Widget>[
+                      const Text('Font Size'),
+                      const Spacer(),
+                      Text(_fontSize.toStringAsFixed(0)),
+                    ],
+                  ),
+                  Slider(
+                    value: _fontSize,
+                    min: 22,
+                    max: 44,
+                    divisions: 11,
+                    onChanged: (value) {
+                      setState(() => _fontSize = value);
+                      setModalState(() {});
+                    },
+                    onChangeEnd: (value) {
+                      context
+                          .read<AppController>()
+                          .updateQuranReaderPreferences(fontSize: value);
+                    },
+                  ),
+                  Row(
+                    children: <Widget>[
+                      const Text('Line Height'),
+                      const Spacer(),
+                      Text(_lineHeight.toStringAsFixed(1)),
+                    ],
+                  ),
+                  Slider(
+                    value: _lineHeight,
+                    min: 1.3,
+                    max: 2.4,
+                    divisions: 11,
+                    onChanged: (value) {
+                      setState(() => _lineHeight = value);
+                      setModalState(() {});
+                    },
+                    onChangeEnd: (value) {
+                      context
+                          .read<AppController>()
+                          .updateQuranReaderPreferences(lineHeight: value);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

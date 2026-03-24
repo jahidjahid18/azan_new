@@ -1,5 +1,9 @@
 import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/core/widgets/glass_card.dart';
+import 'package:azan_app/features/azkar/data/models/saved_azkar_item.dart';
+import 'package:azan_app/features/daily/data/models/saved_daily_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/quran/data/models/quran_surah.dart';
 import 'package:azan_app/features/quran/data/quran_repository.dart';
 import 'package:azan_app/features/quran/presentation/quran_reader_screen.dart';
@@ -44,63 +48,95 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
           );
         }
 
-        final controller = context.read<AppController>();
         final surahs = snapshot.data!;
-        final lastRead = controller.quranLastRead;
-        final bookmarks = controller.quranBookmarks;
 
-        return ListView(
-          padding: const EdgeInsets.all(12),
-          children: <Widget>[
-            if (lastRead != null)
-              _ResumeReadingCard(
-                surahName: lastRead.surahNameEnglish,
-                ayahNumber: lastRead.ayahNumber,
-                onTap: () => _openReader(
-                  surahs: surahs,
-                  surahNumber: lastRead.surahNumber,
-                  initialAyahNumber: lastRead.ayahNumber,
+        return DefaultTabController(
+          length: 2,
+          child: Column(
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: TabBar(
+                  tabs: <Widget>[
+                    Tab(text: 'Surahs'),
+                    Tab(text: 'Saved'),
+                  ],
                 ),
               ),
-            if (lastRead != null) const SizedBox(height: 8),
-            if (bookmarks.isNotEmpty)
-              _BookmarksCard(
-                count: bookmarks.length,
-                onView: () => _showBookmarks(
-                  context: context,
-                  surahs: surahs,
-                  bookmarks: bookmarks,
+              Expanded(
+                child: TabBarView(
+                  children: <Widget>[
+                    _buildSurahTab(context: context, surahs: surahs),
+                    _SavedContentTab(
+                      onOpenReader:
+                          ({
+                            required int surahNumber,
+                            required int initialAyahNumber,
+                          }) {
+                            _openReader(
+                              surahs: surahs,
+                              surahNumber: surahNumber,
+                              initialAyahNumber: initialAyahNumber,
+                            );
+                          },
+                    ),
+                  ],
                 ),
               ),
-            if (bookmarks.isNotEmpty) const SizedBox(height: 10),
-            ...List<Widget>.generate(surahs.length, (index) {
-              final surah = surahs[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListTile(
-                    leading: CircleAvatar(child: Text('${surah.number}')),
-                    title: Text(surah.nameEnglish),
-                    subtitle: Text('${surah.ayahCount} ayah(s)'),
-                    trailing: Text(
-                      surah.nameArabic,
-                      textDirection: TextDirection.rtl,
-                    ),
-                    onTap: () => _openReader(
-                      surahs: surahs,
-                      surahNumber: surah.number,
-                      initialAyahNumber: 1,
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ],
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _buildSurahTab({
+    required BuildContext context,
+    required List<QuranSurah> surahs,
+  }) {
+    final lastRead = context.select<AppController, QuranReadPosition?>(
+      (c) => c.quranLastRead,
+    );
+
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: <Widget>[
+        if (lastRead != null)
+          _ResumeReadingCard(
+            surahName: lastRead.surahNameEnglish,
+            ayahNumber: lastRead.ayahNumber,
+            onTap: () => _openReader(
+              surahs: surahs,
+              surahNumber: lastRead.surahNumber,
+              initialAyahNumber: lastRead.ayahNumber,
+            ),
+          ),
+        if (lastRead != null) const SizedBox(height: 10),
+        ...List<Widget>.generate(surahs.length, (index) {
+          final surah = surahs[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: GlassCard(
+              borderRadius: 12,
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: CircleAvatar(child: Text('${surah.number}')),
+                title: Text(surah.nameEnglish),
+                subtitle: Text('${surah.ayahCount} ayah(s)'),
+                trailing: Text(
+                  surah.nameArabic,
+                  textDirection: TextDirection.rtl,
+                ),
+                onTap: () => _openReader(
+                  surahs: surahs,
+                  surahNumber: surah.number,
+                  initialAyahNumber: 1,
+                ),
+              ),
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -123,45 +159,134 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
     );
 
     if (!mounted) return;
-    setState(() {
-      // Re-read bookmarks and last-read values from AppController.
-    });
+    setState(() {});
   }
+}
 
-  void _showBookmarks({
-    required BuildContext context,
-    required List<QuranSurah> surahs,
-    required List<QuranBookmark> bookmarks,
-  }) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return ListView.separated(
-          padding: const EdgeInsets.all(12),
-          itemCount: bookmarks.length,
-          separatorBuilder: (context, index) => const Divider(height: 1),
-          itemBuilder: (context, index) {
-            final bookmark = bookmarks[index];
-            return ListTile(
-              title: Text(bookmark.surahNameEnglish),
-              subtitle: Text('Ayah ${bookmark.ayahNumber}'),
-              trailing: Text(
-                bookmark.surahNameArabic,
-                textDirection: TextDirection.rtl,
-              ),
-              onTap: () {
-                Navigator.of(context).pop();
-                _openReader(
-                  surahs: surahs,
-                  surahNumber: bookmark.surahNumber,
-                  initialAyahNumber: bookmark.ayahNumber,
-                );
-              },
-            );
-          },
-        );
-      },
+class _SavedContentTab extends StatelessWidget {
+  const _SavedContentTab({required this.onOpenReader});
+
+  final void Function({
+    required int surahNumber,
+    required int initialAyahNumber,
+  })
+  onOpenReader;
+
+  @override
+  Widget build(BuildContext context) {
+    final bookmarks = context.select<AppController, List<QuranBookmark>>(
+      (controller) => controller.quranBookmarks,
+    );
+    final dailyFavorites = context.select<AppController, List<SavedDailyItem>>(
+      (controller) => controller.dailyFavorites,
+    );
+    final azkarFavorites = context.select<AppController, List<SavedAzkarItem>>(
+      (controller) => controller.azkarFavorites,
+    );
+
+    final hasAnySaved =
+        bookmarks.isNotEmpty ||
+        dailyFavorites.isNotEmpty ||
+        azkarFavorites.isNotEmpty;
+
+    if (!hasAnySaved) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20),
+          child: Text(
+            'No saved items yet. Use the heart/bookmark icons to save.',
+          ),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: <Widget>[
+        if (bookmarks.isNotEmpty)
+          _SavedSection(
+            title: 'Saved Ayah',
+            children: bookmarks
+                .map(
+                  (bookmark) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(bookmark.surahNameEnglish),
+                    subtitle: Text('Ayah ${bookmark.ayahNumber}'),
+                    trailing: Text(
+                      bookmark.surahNameArabic,
+                      textDirection: TextDirection.rtl,
+                    ),
+                    onTap: () => onOpenReader(
+                      surahNumber: bookmark.surahNumber,
+                      initialAyahNumber: bookmark.ayahNumber,
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        if (dailyFavorites.isNotEmpty)
+          _SavedSection(
+            title: 'Saved Daily Content',
+            children: dailyFavorites
+                .map(
+                  (item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(item.title),
+                    subtitle: Text(item.reference),
+                    trailing: Text(item.type.toUpperCase()),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+        if (azkarFavorites.isNotEmpty)
+          _SavedSection(
+            title: 'Saved Azkar',
+            children: azkarFavorites
+                .map(
+                  (item) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      item.text,
+                      textDirection: TextDirection.rtl,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text('${item.category} • x${item.repeat}'),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+      ],
+    );
+  }
+}
+
+class _SavedSection extends StatelessWidget {
+  const _SavedSection({required this.title, required this.children});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: GlassCard(
+        borderRadius: 14,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 8),
+            ...children,
+          ],
+        ),
+      ),
     );
   }
 }
@@ -179,34 +304,14 @@ class _ResumeReadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Theme.of(context).colorScheme.primaryContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    return GlassCard(
+      borderRadius: 12,
       child: ListTile(
+        contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.play_circle_fill_rounded),
         title: const Text('Resume Reading'),
         subtitle: Text('$surahName • Ayah $ayahNumber'),
         onTap: onTap,
-      ),
-    );
-  }
-}
-
-class _BookmarksCard extends StatelessWidget {
-  const _BookmarksCard({required this.count, required this.onView});
-
-  final int count;
-  final VoidCallback onView;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: ListTile(
-        leading: const Icon(Icons.bookmark_rounded),
-        title: const Text('Bookmarks'),
-        subtitle: Text('$count saved ayah(s)'),
-        trailing: TextButton(onPressed: onView, child: const Text('View')),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/core/widgets/glass_card.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -165,6 +166,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   'Azan mode requires `android/app/src/main/res/raw/azan.mp3`.',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  'Smart reminders: 15 minutes before prayer and gentle tracker check-in after prayer.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ],
           ),
@@ -230,18 +236,15 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 10),
-            child,
-          ],
-        ),
+    return GlassCard(
+      borderRadius: 14,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 10),
+          child,
+        ],
       ),
     );
   }

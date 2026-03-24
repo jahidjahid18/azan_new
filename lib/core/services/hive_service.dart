@@ -1,7 +1,10 @@
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/models/app_location.dart';
 import 'package:azan_app/core/models/app_settings.dart';
+import 'package:azan_app/features/azkar/data/models/saved_azkar_item.dart';
+import 'package:azan_app/features/daily/data/models/saved_daily_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_reader_preferences.dart';
 import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -102,5 +105,60 @@ class HiveService {
 
   Future<void> saveAzkarTracker(Map<String, dynamic> tracker) async {
     await _box.put(AppConstants.azkarTrackerStorageKey, tracker);
+  }
+
+  List<SavedDailyItem> loadDailyFavorites() {
+    final stored = _box.get(AppConstants.dailyFavoritesStorageKey);
+    if (stored is! List) {
+      return <SavedDailyItem>[];
+    }
+
+    return stored
+        .whereType<Map>()
+        .map((item) => SavedDailyItem.fromMap(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
+
+  Future<void> saveDailyFavorites(List<SavedDailyItem> items) async {
+    await _box.put(
+      AppConstants.dailyFavoritesStorageKey,
+      items.map((item) => item.toMap()).toList(growable: false),
+    );
+  }
+
+  List<SavedAzkarItem> loadAzkarFavorites() {
+    final stored = _box.get(AppConstants.azkarFavoritesStorageKey);
+    if (stored is! List) {
+      return <SavedAzkarItem>[];
+    }
+
+    return stored
+        .whereType<Map>()
+        .map((item) => SavedAzkarItem.fromMap(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
+
+  Future<void> saveAzkarFavorites(List<SavedAzkarItem> items) async {
+    await _box.put(
+      AppConstants.azkarFavoritesStorageKey,
+      items.map((item) => item.toMap()).toList(growable: false),
+    );
+  }
+
+  QuranReaderPreferences loadQuranReaderPreferences() {
+    final stored = _box.get(AppConstants.quranReaderPrefsStorageKey);
+    if (stored is Map) {
+      return QuranReaderPreferences.fromMap(Map<String, dynamic>.from(stored));
+    }
+    return QuranReaderPreferences.defaults();
+  }
+
+  Future<void> saveQuranReaderPreferences(
+    QuranReaderPreferences preferences,
+  ) async {
+    await _box.put(
+      AppConstants.quranReaderPrefsStorageKey,
+      preferences.toMap(),
+    );
   }
 }

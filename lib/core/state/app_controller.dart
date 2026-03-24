@@ -12,9 +12,12 @@ import 'package:azan_app/core/services/home_widget_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
+import 'package:azan_app/features/azkar/data/models/saved_azkar_item.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
+import 'package:azan_app/features/daily/data/models/saved_daily_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_reader_preferences.dart';
 import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:flutter/foundation.dart';
@@ -55,6 +58,10 @@ class AppController extends ChangeNotifier {
   List<QuranBookmark> _quranBookmarks = <QuranBookmark>[];
   QuranReadPosition? _quranLastRead;
   Map<String, dynamic> _azkarTracker = <String, dynamic>{};
+  List<SavedDailyItem> _dailyFavorites = <SavedDailyItem>[];
+  List<SavedAzkarItem> _azkarFavorites = <SavedAzkarItem>[];
+  QuranReaderPreferences _quranReaderPreferences =
+      QuranReaderPreferences.defaults();
 
   String _lastWidgetSignature = '';
 
@@ -76,6 +83,9 @@ class AppController extends ChangeNotifier {
   ThemeModeOption get themeMode => _settings.themeMode;
   List<QuranBookmark> get quranBookmarks => _quranBookmarks;
   QuranReadPosition? get quranLastRead => _quranLastRead;
+  List<SavedDailyItem> get dailyFavorites => _dailyFavorites;
+  List<SavedAzkarItem> get azkarFavorites => _azkarFavorites;
+  QuranReaderPreferences get quranReaderPreferences => _quranReaderPreferences;
 
   Future<void> initialize() async {
     try {
@@ -89,6 +99,9 @@ class AppController extends ChangeNotifier {
       _quranBookmarks = _hiveService.loadQuranBookmarks();
       _quranLastRead = _hiveService.loadQuranLastRead();
       _azkarTracker = _hiveService.loadAzkarTracker();
+      _dailyFavorites = _hiveService.loadDailyFavorites();
+      _azkarFavorites = _hiveService.loadAzkarFavorites();
+      _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
 
       if (_location == null) {
         await _setLocationFromGps(showErrorsAsStartupError: true);
@@ -236,6 +249,7 @@ class AppController extends ChangeNotifier {
         enabled: false,
         soundMode: _settings.notificationSoundMode,
         upcomingPrayers: const <PrayerInfo>[],
+        completionByDate: const <String, Map<String, bool>>{},
       );
       return;
     }
@@ -250,6 +264,7 @@ class AppController extends ChangeNotifier {
       enabled: _settings.notificationsEnabled,
       soundMode: _settings.notificationSoundMode,
       upcomingPrayers: upcomingPrayers,
+      completionByDate: _completionByDateForNotifications(),
     );
   }
 
@@ -358,6 +373,7 @@ class AppController extends ChangeNotifier {
     current[prayerName] = completed;
     _prayerTracker[key] = current;
     await _hiveService.savePrayerTracker(_prayerTracker);
+    await _refreshNotificationSchedule();
     notifyListeners();
   }
 
@@ -380,6 +396,39 @@ class AppController extends ChangeNotifier {
 
     if (total == 0) return 0;
     return completed / total;
+  }
+
+  double prayerCompletionPercentForDate(DateTime date) {
+    final tracker = prayerTrackerForDate(date);
+    final completedCount = tracker.values.where((value) => value).length;
+    return completedCount / AppConstants.prayerOrder.length;
+  }
+
+  int currentPrayerStreakDays() {
+    var streak = 0;
+    for (var i = 0; i < 365; i++) {
+      final date = DateTime.now().subtract(Duration(days: i));
+      final isFullDayComplete = prayerCompletionPercentForDate(date) >= 1;
+      if (!isFullDayComplete) {
+        break;
+      }
+      streak += 1;
+    }
+    return streak;
+  }
+
+  List<double> last30DaysCompletion() {
+    final values = <double>[];
+    for (var i = 29; i >= 0; i--) {
+      final date = DateTime.now().subtract(Duration(days: i));
+      values.add(prayerCompletionPercentForDate(date));
+    }
+    return values;
+  }
+
+  int completedPrayersToday() {
+    final today = prayerTrackerForDate(DateTime.now());
+    return today.values.where((value) => value).length;
   }
 
   bool isQuranBookmarked({required int surahNumber, required int ayahNumber}) {
@@ -487,9 +536,97 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool isDailyFavorite(DailyContentItem item) {
+    final id = '${item.type}:${item.title}:${item.reference}';
+    return _dailyFavorites.any((favorite) => favorite.id == id);
+  }
+
+  Future<void> toggleDailyFavorite(DailyContentItem item) async {
+    final candidate = SavedDailyItem.fromDailyContent(item);
+    final index = _dailyFavorites.indexWhere(
+      (favorite) => favorite.id == candidate.id,
+    );
+
+    if (index >= 0) {
+      final updated = List<SavedDailyItem>.from(_dailyFavorites)
+        ..removeAt(index);
+      _dailyFavorites = updated;
+    } else {
+      final updated = List<SavedDailyItem>.from(_dailyFavorites)
+        ..insert(0, candidate);
+      _dailyFavorites = updated;
+    }
+
+    await _hiveService.saveDailyFavorites(_dailyFavorites);
+    notifyListeners();
+  }
+
+  bool isAzkarFavorite(String id) {
+    return _azkarFavorites.any((favorite) => favorite.id == id);
+  }
+
+  Future<void> toggleAzkarFavorite({
+    required String id,
+    required String category,
+    required String text,
+    required String source,
+    required int repeat,
+  }) async {
+    final index = _azkarFavorites.indexWhere((favorite) => favorite.id == id);
+    if (index >= 0) {
+      final updated = List<SavedAzkarItem>.from(_azkarFavorites)
+        ..removeAt(index);
+      _azkarFavorites = updated;
+    } else {
+      final updated = List<SavedAzkarItem>.from(_azkarFavorites)
+        ..insert(
+          0,
+          SavedAzkarItem(
+            id: id,
+            category: category,
+            text: text,
+            source: source,
+            repeat: repeat,
+            savedAt: DateTime.now(),
+          ),
+        );
+      _azkarFavorites = updated;
+    }
+
+    await _hiveService.saveAzkarFavorites(_azkarFavorites);
+    notifyListeners();
+  }
+
+  Future<void> updateQuranReaderPreferences({
+    double? fontSize,
+    double? lineHeight,
+    bool? nightMode,
+  }) async {
+    _quranReaderPreferences = _quranReaderPreferences.copyWith(
+      fontSize: fontSize,
+      lineHeight: lineHeight,
+      nightMode: nightMode,
+    );
+    await _hiveService.saveQuranReaderPreferences(_quranReaderPreferences);
+    notifyListeners();
+  }
+
   Future<void> _refreshDailyContent() async {
     _dailyContent = await _dailyContentService.getContentForDate(_now);
     notifyListeners();
+  }
+
+  Map<String, Map<String, bool>> _completionByDateForNotifications() {
+    final typed = <String, Map<String, bool>>{};
+    for (final entry in _prayerTracker.entries) {
+      if (entry.value is! Map) continue;
+      final rawMap = Map<String, dynamic>.from(entry.value as Map);
+      typed[entry.key] = <String, bool>{
+        for (final prayer in AppConstants.prayerOrder)
+          prayer: rawMap[prayer] as bool? ?? false,
+      };
+    }
+    return typed;
   }
 
   Future<void> _syncHomeWidgetIfNeeded({bool force = false}) async {

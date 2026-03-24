@@ -1,4 +1,5 @@
 import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/core/widgets/glass_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,28 +21,25 @@ class TasbihScreen extends StatelessWidget {
           const SizedBox(height: 20),
           Expanded(
             child: Center(
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(
-                      '${controller.tasbihCount}',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+              child: GlassCard(
+                borderRadius: 18,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(
+                        '${controller.tasbihCount}',
+                        style: Theme.of(context).textTheme.displayLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Tap below to count',
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Tap below to count',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

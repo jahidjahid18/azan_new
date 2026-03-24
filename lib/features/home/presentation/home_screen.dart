@@ -1,6 +1,7 @@
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/utils/duration_formatter.dart';
+import 'package:azan_app/core/widgets/glass_card.dart';
 import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/calendar/presentation/hijri_date_card.dart';
 import 'package:azan_app/features/daily/presentation/daily_content_card.dart';
@@ -39,10 +40,24 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           HijriDateCard(now: controller.now),
           const SizedBox(height: 12),
-          if (controller.dailyContent != null)
-            DailyContentCard(item: controller.dailyContent!),
+          _DailyGoalCard(
+            completed: controller.completedPrayersToday(),
+            total: 5,
+            streakDays: controller.currentPrayerStreakDays(),
+          ),
           const SizedBox(height: 12),
-          _QuickActionsRow(),
+          if (controller.dailyContent != null)
+            DailyContentCard(
+              item: controller.dailyContent!,
+              isFavorite: controller.isDailyFavorite(controller.dailyContent!),
+              onToggleFavorite: () async {
+                await context.read<AppController>().toggleDailyFavorite(
+                  controller.dailyContent!,
+                );
+              },
+            ),
+          const SizedBox(height: 12),
+          const _QuickActionsRow(),
           if (controller.location != null) ...<Widget>[
             const SizedBox(height: 18),
             Text(
@@ -77,6 +92,8 @@ class HomeScreen extends StatelessWidget {
 }
 
 class _QuickActionsRow extends StatelessWidget {
+  const _QuickActionsRow();
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -130,6 +147,62 @@ class _QuickActionsRow extends StatelessWidget {
   }
 }
 
+class _DailyGoalCard extends StatelessWidget {
+  const _DailyGoalCard({
+    required this.completed,
+    required this.total,
+    required this.streakDays,
+  });
+
+  final int completed;
+  final int total;
+  final int streakDays;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = completed / total;
+
+    return GlassCard(
+      borderRadius: 14,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Text(
+                'Daily Goal',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.20),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text('Streak: $streakDays day(s)'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text('Complete all 5 prayers today'),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(value: progress),
+          const SizedBox(height: 6),
+          Text('$completed/$total prayers marked complete'),
+        ],
+      ),
+    );
+  }
+}
+
 class _HeaderCard extends StatelessWidget {
   const _HeaderCard({
     required this.city,
@@ -152,7 +225,7 @@ class _HeaderCard extends StatelessWidget {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: <Color>[Color(0xFF1D976C), Color(0xFF0F5E4A)],
+          colors: <Color>[Color(0xFF2A78F8), Color(0xFF0D3A9A)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -206,32 +279,30 @@ class _PrayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final backgroundColor = isNext
-        ? Theme.of(context).colorScheme.primaryContainer
-        : Theme.of(context).colorScheme.surface;
+    final iconColor = isNext
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurfaceVariant;
 
-    return Card(
-      color: backgroundColor,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: ListTile(
-        leading: Icon(
-          Icons.access_time_rounded,
-          color: isNext
-              ? Theme.of(context).colorScheme.onPrimaryContainer
-              : Theme.of(context).colorScheme.primary,
-        ),
-        title: Text(
-          prayer.name,
-          style: TextStyle(
-            fontWeight: isNext ? FontWeight.w700 : FontWeight.w500,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: GlassCard(
+        borderRadius: 14,
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Icon(Icons.access_time_rounded, color: iconColor),
+          title: Text(
+            prayer.name,
+            style: TextStyle(
+              fontWeight: isNext ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
-        ),
-        subtitle: prayer.isObligatory
-            ? null
-            : const Text('Additional time (not fard prayer)'),
-        trailing: Text(
-          DateFormat('hh:mm a').format(prayer.time),
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          subtitle: prayer.isObligatory
+              ? null
+              : const Text('Additional time (not fard prayer)'),
+          trailing: Text(
+            DateFormat('hh:mm a').format(prayer.time),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
       ),
     );
@@ -245,20 +316,17 @@ class _EmptyLocationState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: <Widget>[
-            const Icon(Icons.location_off_rounded, size: 38),
-            const SizedBox(height: 10),
-            Text(
-              message ??
-                  'Location not available yet. Open Settings to set location manually or fetch GPS.',
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+    return GlassCard(
+      child: Column(
+        children: <Widget>[
+          const Icon(Icons.location_off_rounded, size: 38),
+          const SizedBox(height: 10),
+          Text(
+            message ??
+                'Location not available yet. Open Settings to set location manually or fetch GPS.',
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

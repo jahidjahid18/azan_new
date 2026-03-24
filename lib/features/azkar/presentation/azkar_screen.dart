@@ -1,4 +1,5 @@
 import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/core/widgets/glass_card.dart';
 import 'package:azan_app/features/azkar/data/azkar_service.dart';
 import 'package:azan_app/features/azkar/data/models/azkar_item.dart';
 import 'package:flutter/material.dart';
@@ -55,6 +56,7 @@ class _AzkarScreenState extends State<AzkarScreen> {
           DateTime.now(),
           _category,
         );
+        final favoriteIds = controller.azkarFavorites.map((e) => e.id).toSet();
 
         return Scaffold(
           appBar: AppBar(
@@ -110,56 +112,79 @@ class _AzkarScreenState extends State<AzkarScreen> {
                     final item = items[index];
                     final completed = counts[item.id] ?? 0;
                     final progress = (completed / item.repeat).clamp(0.0, 1.0);
+                    final isFavorite = favoriteIds.contains(item.id);
 
-                    return Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: <Widget>[
-                            Text(
-                              item.text,
-                              textDirection: TextDirection.rtl,
-                              textAlign: TextAlign.right,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.titleLarge?.copyWith(height: 1.6),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              item.source,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                            const SizedBox(height: 10),
-                            LinearProgressIndicator(value: progress),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: <Widget>[
-                                Text('Count: $completed / ${item.repeat}'),
-                                const Spacer(),
-                                FilledButton.tonalIcon(
-                                  onPressed: completed >= item.repeat
-                                      ? null
-                                      : () async {
-                                          await controller.incrementAzkarCount(
-                                            date: DateTime.now(),
-                                            category: _category,
-                                            itemId: item.id,
-                                            maxCount: item.repeat,
-                                          );
-                                          if (!mounted) return;
-                                          setState(() {});
-                                        },
-                                  icon: const Icon(Icons.add_rounded),
-                                  label: const Text('Recite'),
+                    return GlassCard(
+                      borderRadius: 14,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  item.source,
+                                  style: Theme.of(context).textTheme.bodySmall,
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                              ),
+                              IconButton(
+                                tooltip: isFavorite
+                                    ? 'Remove favorite'
+                                    : 'Save favorite',
+                                onPressed: () async {
+                                  await controller.toggleAzkarFavorite(
+                                    id: item.id,
+                                    category: _category,
+                                    text: item.text,
+                                    source: item.source,
+                                    repeat: item.repeat,
+                                  );
+                                  if (!mounted) return;
+                                  setState(() {});
+                                },
+                                icon: Icon(
+                                  isFavorite
+                                      ? Icons.favorite_rounded
+                                      : Icons.favorite_border_rounded,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            item.text,
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.right,
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleLarge?.copyWith(height: 1.6),
+                          ),
+                          const SizedBox(height: 10),
+                          LinearProgressIndicator(value: progress),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: <Widget>[
+                              Text('Count: $completed / ${item.repeat}'),
+                              const Spacer(),
+                              FilledButton.tonalIcon(
+                                onPressed: completed >= item.repeat
+                                    ? null
+                                    : () async {
+                                        await controller.incrementAzkarCount(
+                                          date: DateTime.now(),
+                                          category: _category,
+                                          itemId: item.id,
+                                          maxCount: item.repeat,
+                                        );
+                                        if (!mounted) return;
+                                        setState(() {});
+                                      },
+                                icon: const Icon(Icons.add_rounded),
+                                label: const Text('Recite'),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     );
                   },
