@@ -336,7 +336,7 @@ class _SavedContentTab extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    subtitle: Text('${item.category} • x${item.repeat}'),
+                    subtitle: Text('${item.category} - x${item.repeat}'),
                   ),
                 )
                 .toList(growable: false),
@@ -395,7 +395,7 @@ class _ResumeReadingCard extends StatelessWidget {
         contentPadding: EdgeInsets.zero,
         leading: const Icon(Icons.play_circle_fill_rounded),
         title: const Text('Resume Reading'),
-        subtitle: Text('$surahName • Ayah $ayahNumber'),
+        subtitle: Text('$surahName - Ayah $ayahNumber'),
         onTap: onTap,
       ),
     );
