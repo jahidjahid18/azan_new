@@ -33,6 +33,7 @@ class NotificationService {
     required NotificationSoundMode soundMode,
     required List<PrayerInfo> upcomingPrayers,
     required Map<String, Map<String, bool>> completionByDate,
+    required Map<String, int> prayerOffsetsMinutes,
   }) async {
     await _plugin.cancelAllPendingNotifications();
 
@@ -44,13 +45,15 @@ class NotificationService {
     final now = DateTime.now();
 
     for (final prayer in upcomingPrayers) {
-      final dateKey = _dateKey(prayer.time);
+      final offset = prayerOffsetsMinutes[prayer.name] ?? 0;
+      final adjustedPrayerTime = prayer.time.add(Duration(minutes: offset));
+      final dateKey = _dateKey(adjustedPrayerTime);
       final isCompleted = completionByDate[dateKey]?[prayer.name] ?? false;
       if (isCompleted) {
         continue;
       }
 
-      final preReminderTime = prayer.time.subtract(
+      final preReminderTime = adjustedPrayerTime.subtract(
         const Duration(minutes: AppConstants.reminderBeforeMinutes),
       );
       if (preReminderTime.isAfter(now)) {
@@ -70,12 +73,12 @@ class NotificationService {
         id: notificationId++,
         title: '${prayer.name} Prayer',
         body: 'It is time for ${prayer.name}.',
-        scheduledDate: tz.TZDateTime.from(prayer.time, tz.local),
+        scheduledDate: tz.TZDateTime.from(adjustedPrayerTime, tz.local),
         notificationDetails: _detailsForSoundMode(soundMode),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       );
 
-      final followUpTime = prayer.time.add(
+      final followUpTime = adjustedPrayerTime.add(
         const Duration(minutes: AppConstants.followUpReminderMinutes),
       );
       if (followUpTime.isAfter(now)) {

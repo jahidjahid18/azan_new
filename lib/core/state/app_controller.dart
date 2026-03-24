@@ -83,6 +83,7 @@ class AppController extends ChangeNotifier {
   DailyContentItem? get dailyContent => _dailyContent;
   ThemeModeOption get themeMode => _settings.themeMode;
   ThemeStyleOption get themeStyle => _settings.themeStyle;
+  Map<String, int> get prayerOffsetsMinutes => _settings.prayerOffsetsMinutes;
   List<QuranBookmark> get quranBookmarks => _quranBookmarks;
   QuranReadPosition? get quranLastRead => _quranLastRead;
   List<SavedDailyItem> get dailyFavorites => _dailyFavorites;
@@ -205,6 +206,18 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setPrayerOffsetMinutes({
+    required String prayerName,
+    required int minutes,
+  }) async {
+    final updated = Map<String, int>.from(_settings.prayerOffsetsMinutes);
+    updated[prayerName] = minutes;
+    _settings = _settings.copyWith(prayerOffsetsMinutes: updated);
+    await _hiveService.saveSettings(_settings);
+    await _refreshNotificationSchedule();
+    notifyListeners();
+  }
+
   Future<void> _setLocationFromGps({
     required bool showErrorsAsStartupError,
   }) async {
@@ -258,6 +271,7 @@ class AppController extends ChangeNotifier {
         soundMode: _settings.notificationSoundMode,
         upcomingPrayers: const <PrayerInfo>[],
         completionByDate: const <String, Map<String, bool>>{},
+        prayerOffsetsMinutes: const <String, int>{},
       );
       return;
     }
@@ -273,6 +287,7 @@ class AppController extends ChangeNotifier {
       soundMode: _settings.notificationSoundMode,
       upcomingPrayers: upcomingPrayers,
       completionByDate: _completionByDateForNotifications(),
+      prayerOffsetsMinutes: _settings.prayerOffsetsMinutes,
     );
   }
 

@@ -220,12 +220,13 @@ class _HeaderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeFormat = DateFormat('hh:mm:ss a');
     final prayerTimeFormat = DateFormat('hh:mm a');
+    final scheme = Theme.of(context).colorScheme;
 
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: <Color>[Color(0xFF2A78F8), Color(0xFF0D3A9A)],
+        gradient: LinearGradient(
+          colors: <Color>[scheme.primary, scheme.secondary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -279,29 +280,56 @@ class _PrayerTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final iconColor = isNext
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurfaceVariant;
+    final scheme = Theme.of(context).colorScheme;
+    final cardColor = isNext
+        ? scheme.primary.withValues(alpha: 0.18)
+        : scheme.surface;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GlassCard(
         borderRadius: 14,
-        child: ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Icon(Icons.access_time_rounded, color: iconColor),
-          title: Text(
-            prayer.name,
-            style: TextStyle(
-              fontWeight: isNext ? FontWeight.w700 : FontWeight.w500,
-            ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(12),
           ),
-          subtitle: prayer.isObligatory
-              ? null
-              : const Text('Additional time (not fard prayer)'),
-          trailing: Text(
-            DateFormat('hh:mm a').format(prayer.time),
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isNext
+                        ? scheme.primary.withValues(alpha: 0.26)
+                        : scheme.surfaceContainerHighest.withValues(
+                            alpha: 0.45,
+                          ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    prayer.name,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: isNext ? scheme.primary : scheme.onSurface,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  DateFormat('hh:mm a').format(prayer.time),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                    color: isNext ? scheme.primary : scheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

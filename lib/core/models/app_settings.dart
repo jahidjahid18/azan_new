@@ -10,6 +10,7 @@ class AppSettings {
     required this.notificationSoundMode,
     required this.themeMode,
     required this.themeStyle,
+    required this.prayerOffsetsMinutes,
   });
 
   final CalculationMethodOption calculationMethod;
@@ -17,6 +18,7 @@ class AppSettings {
   final NotificationSoundMode notificationSoundMode;
   final ThemeModeOption themeMode;
   final ThemeStyleOption themeStyle;
+  final Map<String, int> prayerOffsetsMinutes;
 
   factory AppSettings.defaults() {
     return const AppSettings(
@@ -25,6 +27,7 @@ class AppSettings {
       notificationSoundMode: NotificationSoundMode.notificationOnly,
       themeMode: ThemeModeOption.system,
       themeStyle: ThemeStyleOption.glassBlue,
+      prayerOffsetsMinutes: <String, int>{},
     );
   }
 
@@ -34,6 +37,7 @@ class AppSettings {
     NotificationSoundMode? notificationSoundMode,
     ThemeModeOption? themeMode,
     ThemeStyleOption? themeStyle,
+    Map<String, int>? prayerOffsetsMinutes,
   }) {
     return AppSettings(
       calculationMethod: calculationMethod ?? this.calculationMethod,
@@ -42,6 +46,7 @@ class AppSettings {
           notificationSoundMode ?? this.notificationSoundMode,
       themeMode: themeMode ?? this.themeMode,
       themeStyle: themeStyle ?? this.themeStyle,
+      prayerOffsetsMinutes: prayerOffsetsMinutes ?? this.prayerOffsetsMinutes,
     );
   }
 
@@ -52,6 +57,7 @@ class AppSettings {
       'notificationSoundMode': notificationSoundMode.key,
       'themeMode': themeMode.key,
       'themeStyle': themeStyle.key,
+      'prayerOffsetsMinutes': prayerOffsetsMinutes,
     };
   }
 
@@ -66,6 +72,25 @@ class AppSettings {
       ),
       themeMode: ThemeModeOptionX.fromKey(map['themeMode'] as String?),
       themeStyle: ThemeStyleOptionX.fromKey(map['themeStyle'] as String?),
+      prayerOffsetsMinutes: _parsePrayerOffsets(
+        map['prayerOffsetsMinutes'] as Map?,
+      ),
     );
+  }
+
+  static Map<String, int> _parsePrayerOffsets(Map? map) {
+    if (map == null) return <String, int>{};
+    final parsed = <String, int>{};
+    for (final entry in map.entries) {
+      final value = entry.value;
+      if (value is int) {
+        parsed[entry.key.toString()] = value;
+      } else if (value is num) {
+        parsed[entry.key.toString()] = value.round();
+      } else {
+        parsed[entry.key.toString()] = int.tryParse(value.toString()) ?? 0;
+      }
+    }
+    return parsed;
   }
 }

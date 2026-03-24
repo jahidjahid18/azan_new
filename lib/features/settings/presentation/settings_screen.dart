@@ -31,6 +31,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final controller = context.watch<AppController>();
     final location = controller.location;
+    final selectedStyle = controller.themeStyle;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -206,6 +207,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
           title: 'Appearance',
           child: Column(
             children: <Widget>[
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: ThemeStyleOption.values
+                    .map((option) {
+                      final selected = option == selectedStyle;
+                      return _ThemePreviewChip(
+                        label: option.label,
+                        selected: selected,
+                        colors: _stylePreviewColors(option),
+                        onTap: () async {
+                          await context.read<AppController>().setThemeStyle(
+                            option,
+                          );
+                        },
+                      );
+                    })
+                    .toList(growable: false),
+              ),
+              const SizedBox(height: 10),
               DropdownButtonFormField<ThemeModeOption>(
                 initialValue: controller.themeMode,
                 decoration: const InputDecoration(
@@ -248,8 +269,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 12),
+        _SectionCard(
+          title: 'Prayer Time Adjustments',
+          child: Column(
+            children: <Widget>[
+              Text(
+                'Adjust notification time per prayer (-20 to +20 minutes).',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 8),
+              ...<String>['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((
+                prayer,
+              ) {
+                final value = controller.prayerOffsetsMinutes[prayer] ?? 0;
+                return _PrayerOffsetRow(
+                  prayerName: prayer,
+                  minutes: value,
+                  onChanged: (nextValue) async {
+                    await context.read<AppController>().setPrayerOffsetMinutes(
+                      prayerName: prayer,
+                      minutes: nextValue,
+                    );
+                  },
+                );
+              }),
+            ],
+          ),
+        ),
       ],
     );
+  }
+
+  List<Color> _stylePreviewColors(ThemeStyleOption option) {
+    return switch (option) {
+      ThemeStyleOption.glassBlue => const <Color>[
+        Color(0xFFB4D4FF),
+        Color(0xFF2A78F8),
+      ],
+      ThemeStyleOption.emerald => const <Color>[
+        Color(0xFFA7E5CB),
+        Color(0xFF198A66),
+      ],
+      ThemeStyleOption.sunset => const <Color>[
+        Color(0xFFFFC09E),
+        Color(0xFFE06B2E),
+      ],
+      ThemeStyleOption.monochrome => const <Color>[
+        Color(0xFFC6D2DC),
+        Color(0xFF556070),
+      ],
+    };
   }
 }
 
@@ -271,6 +341,89 @@ class _SectionCard extends StatelessWidget {
           child,
         ],
       ),
+    );
+  }
+}
+
+class _ThemePreviewChip extends StatelessWidget {
+  const _ThemePreviewChip({
+    required this.label,
+    required this.selected,
+    required this.colors,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final List<Color> colors;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: onTap,
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: selected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.white.withValues(alpha: 0.35),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: <Widget>[
+            Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                gradient: LinearGradient(colors: colors),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(child: Text(label)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PrayerOffsetRow extends StatelessWidget {
+  const _PrayerOffsetRow({
+    required this.prayerName,
+    required this.minutes,
+    required this.onChanged,
+  });
+
+  final String prayerName;
+  final int minutes;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            Text(prayerName),
+            const Spacer(),
+            Text('${minutes >= 0 ? '+' : ''}$minutes min'),
+          ],
+        ),
+        Slider(
+          min: -20,
+          max: 20,
+          divisions: 40,
+          value: minutes.toDouble(),
+          onChanged: (value) => onChanged(value.round()),
+        ),
+      ],
     );
   }
 }

@@ -211,6 +211,8 @@ class _CompassBody extends StatelessWidget {
             'Offset: ${offset.toStringAsFixed(1)} deg',
             style: Theme.of(context).textTheme.titleMedium,
           ),
+          const SizedBox(height: 6),
+          _CompassQualityBadge(offset: offset),
           const SizedBox(height: 8),
           const Text(
             'Tip: If direction looks unstable, move your phone in a figure-8.',
@@ -218,6 +220,31 @@ class _CompassBody extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CompassQualityBadge extends StatelessWidget {
+  const _CompassQualityBadge({required this.offset});
+
+  final double offset;
+
+  @override
+  Widget build(BuildContext context) {
+    final magnitude = offset.abs();
+    final (label, color) = magnitude <= 5
+        ? ('Sensor quality: Good', Colors.green)
+        : magnitude <= 15
+        ? ('Sensor quality: Medium', Colors.orange)
+        : ('Sensor quality: Low', Colors.redAccent);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label),
     );
   }
 }

@@ -20,11 +20,19 @@ class QuranSurahListScreen extends StatefulWidget {
 class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
   final QuranRepository _repository = QuranRepository();
   late Future<List<QuranSurah>> _surahsFuture;
+  final TextEditingController _searchController = TextEditingController();
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
     _surahsFuture = _repository.loadSurahs();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -98,9 +106,28 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
       (c) => c.quranLastRead,
     );
 
+    final filteredSurahs = surahs
+        .where((surah) {
+          if (_search.trim().isEmpty) return true;
+          final query = _search.toLowerCase();
+          return surah.nameEnglish.toLowerCase().contains(query) ||
+              surah.nameArabic.contains(_search) ||
+              surah.number.toString() == query;
+        })
+        .toList(growable: false);
+
     return ListView(
       padding: const EdgeInsets.all(12),
       children: <Widget>[
+        TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Search Surah by name or number',
+            prefixIcon: Icon(Icons.search_rounded),
+          ),
+          onChanged: (value) => setState(() => _search = value),
+        ),
+        const SizedBox(height: 10),
         if (lastRead != null)
           _ResumeReadingCard(
             surahName: lastRead.surahNameEnglish,
@@ -112,8 +139,8 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
             ),
           ),
         if (lastRead != null) const SizedBox(height: 10),
-        ...List<Widget>.generate(surahs.length, (index) {
-          final surah = surahs[index];
+        ...List<Widget>.generate(filteredSurahs.length, (index) {
+          final surah = filteredSurahs[index];
           return Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: GlassCard(
