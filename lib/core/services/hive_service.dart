@@ -1,6 +1,8 @@
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/models/app_location.dart';
 import 'package:azan_app/core/models/app_settings.dart';
+import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 class HiveService {
@@ -57,5 +59,48 @@ class HiveService {
 
   Future<void> savePrayerTracker(Map<String, dynamic> data) async {
     await _box.put(AppConstants.prayerTrackerStorageKey, data);
+  }
+
+  List<QuranBookmark> loadQuranBookmarks() {
+    final stored = _box.get(AppConstants.quranBookmarksStorageKey);
+    if (stored is! List) {
+      return <QuranBookmark>[];
+    }
+
+    return stored
+        .whereType<Map>()
+        .map((item) => QuranBookmark.fromMap(Map<String, dynamic>.from(item)))
+        .toList(growable: false);
+  }
+
+  Future<void> saveQuranBookmarks(List<QuranBookmark> bookmarks) async {
+    await _box.put(
+      AppConstants.quranBookmarksStorageKey,
+      bookmarks.map((bookmark) => bookmark.toMap()).toList(growable: false),
+    );
+  }
+
+  QuranReadPosition? loadQuranLastRead() {
+    final stored = _box.get(AppConstants.quranLastReadStorageKey);
+    if (stored is Map) {
+      return QuranReadPosition.fromMap(Map<String, dynamic>.from(stored));
+    }
+    return null;
+  }
+
+  Future<void> saveQuranLastRead(QuranReadPosition lastRead) async {
+    await _box.put(AppConstants.quranLastReadStorageKey, lastRead.toMap());
+  }
+
+  Map<String, dynamic> loadAzkarTracker() {
+    final stored = _box.get(AppConstants.azkarTrackerStorageKey);
+    if (stored is Map) {
+      return Map<String, dynamic>.from(stored);
+    }
+    return <String, dynamic>{};
+  }
+
+  Future<void> saveAzkarTracker(Map<String, dynamic> tracker) async {
+    await _box.put(AppConstants.azkarTrackerStorageKey, tracker);
   }
 }

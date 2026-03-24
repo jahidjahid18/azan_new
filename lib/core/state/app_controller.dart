@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/enums/calculation_method_option.dart';
@@ -7,11 +8,14 @@ import 'package:azan_app/core/models/app_location.dart';
 import 'package:azan_app/core/models/app_settings.dart';
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/services/hive_service.dart';
+import 'package:azan_app/core/services/home_widget_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
+import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:flutter/foundation.dart';
 
@@ -22,17 +26,20 @@ class AppController extends ChangeNotifier {
     required PrayerService prayerService,
     required NotificationService notificationService,
     required DailyContentService dailyContentService,
+    required HomeWidgetService homeWidgetService,
   }) : _hiveService = hiveService,
        _locationService = locationService,
        _prayerService = prayerService,
        _notificationService = notificationService,
-       _dailyContentService = dailyContentService;
+       _dailyContentService = dailyContentService,
+       _homeWidgetService = homeWidgetService;
 
   final HiveService _hiveService;
   final LocationService _locationService;
   final PrayerService _prayerService;
   final NotificationService _notificationService;
   final DailyContentService _dailyContentService;
+  final HomeWidgetService _homeWidgetService;
 
   AppSettings _settings = AppSettings.defaults();
   AppLocation? _location;
@@ -45,6 +52,11 @@ class AppController extends ChangeNotifier {
   int _tasbihCount = 0;
   DailyContentItem? _dailyContent;
   Map<String, dynamic> _prayerTracker = <String, dynamic>{};
+  List<QuranBookmark> _quranBookmarks = <QuranBookmark>[];
+  QuranReadPosition? _quranLastRead;
+  Map<String, dynamic> _azkarTracker = <String, dynamic>{};
+
+  String _lastWidgetSignature = '';
 
   bool _isLoading = true;
   bool _isBusy = false;
@@ -62,6 +74,8 @@ class AppController extends ChangeNotifier {
   int get tasbihCount => _tasbihCount;
   DailyContentItem? get dailyContent => _dailyContent;
   ThemeModeOption get themeMode => _settings.themeMode;
+  List<QuranBookmark> get quranBookmarks => _quranBookmarks;
+  QuranReadPosition? get quranLastRead => _quranLastRead;
 
   Future<void> initialize() async {
     try {
@@ -72,6 +86,9 @@ class AppController extends ChangeNotifier {
       _location = _hiveService.loadLocation();
       _tasbihCount = _hiveService.loadTasbihCount();
       _prayerTracker = _hiveService.loadPrayerTracker();
+      _quranBookmarks = _hiveService.loadQuranBookmarks();
+      _quranLastRead = _hiveService.loadQuranLastRead();
+      _azkarTracker = _hiveService.loadAzkarTracker();
 
       if (_location == null) {
         await _setLocationFromGps(showErrorsAsStartupError: true);
@@ -80,6 +97,7 @@ class AppController extends ChangeNotifier {
       _recalculatePrayers();
       _dailyContent = await _dailyContentService.getContentForDate(_now);
       await _refreshNotificationSchedule();
+      await _syncHomeWidgetIfNeeded(force: true);
       _startTickerIfNeeded();
     } catch (_) {
       _startupError =
@@ -95,6 +113,7 @@ class AppController extends ChangeNotifier {
       await _setLocationFromGps(showErrorsAsStartupError: false);
       _recalculatePrayers();
       await _refreshNotificationSchedule();
+      await _syncHomeWidgetIfNeeded(force: true);
       _startTickerIfNeeded();
     });
   }
@@ -131,6 +150,7 @@ class AppController extends ChangeNotifier {
 
       _recalculatePrayers();
       await _refreshNotificationSchedule();
+      await _syncHomeWidgetIfNeeded(force: true);
       _startTickerIfNeeded();
     });
   }
@@ -140,6 +160,7 @@ class AppController extends ChangeNotifier {
     await _hiveService.saveSettings(_settings);
     _recalculatePrayers();
     await _refreshNotificationSchedule();
+    await _syncHomeWidgetIfNeeded(force: true);
     notifyListeners();
   }
 
@@ -236,6 +257,13 @@ class AppController extends ChangeNotifier {
     _ticker?.cancel();
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       final previousDate = DateTime(_now.year, _now.month, _now.day);
+      final previousMinute = DateTime(
+        _now.year,
+        _now.month,
+        _now.day,
+        _now.hour,
+        _now.minute,
+      );
 
       _now = DateTime.now();
       _nextPrayerCountdown = _nextPrayer == null
@@ -243,6 +271,14 @@ class AppController extends ChangeNotifier {
           : _nextPrayer!.time.difference(_now);
 
       final currentDate = DateTime(_now.year, _now.month, _now.day);
+      final currentMinute = DateTime(
+        _now.year,
+        _now.month,
+        _now.day,
+        _now.hour,
+        _now.minute,
+      );
+
       if (currentDate.isAfter(previousDate) ||
           _nextPrayerCountdown.isNegative) {
         _recalculatePrayers();
@@ -250,6 +286,9 @@ class AppController extends ChangeNotifier {
           unawaited(_refreshDailyContent());
           unawaited(_refreshNotificationSchedule());
         }
+        unawaited(_syncHomeWidgetIfNeeded(force: true));
+      } else if (currentMinute.isAfter(previousMinute)) {
+        unawaited(_syncHomeWidgetIfNeeded());
       }
 
       notifyListeners();
@@ -343,14 +382,152 @@ class AppController extends ChangeNotifier {
     return completed / total;
   }
 
+  bool isQuranBookmarked({required int surahNumber, required int ayahNumber}) {
+    return _quranBookmarks.any(
+      (bookmark) =>
+          bookmark.surahNumber == surahNumber &&
+          bookmark.ayahNumber == ayahNumber,
+    );
+  }
+
+  Future<void> toggleQuranBookmark({
+    required int surahNumber,
+    required int ayahNumber,
+    required String surahNameEnglish,
+    required String surahNameArabic,
+  }) async {
+    final existingIndex = _quranBookmarks.indexWhere(
+      (bookmark) =>
+          bookmark.surahNumber == surahNumber &&
+          bookmark.ayahNumber == ayahNumber,
+    );
+
+    if (existingIndex >= 0) {
+      final updated = List<QuranBookmark>.from(_quranBookmarks)
+        ..removeAt(existingIndex);
+      _quranBookmarks = updated;
+    } else {
+      final updated = List<QuranBookmark>.from(_quranBookmarks)
+        ..insert(
+          0,
+          QuranBookmark(
+            surahNumber: surahNumber,
+            ayahNumber: ayahNumber,
+            surahNameEnglish: surahNameEnglish,
+            surahNameArabic: surahNameArabic,
+            updatedAt: DateTime.now(),
+          ),
+        );
+      _quranBookmarks = updated;
+    }
+
+    await _hiveService.saveQuranBookmarks(_quranBookmarks);
+    notifyListeners();
+  }
+
+  Future<void> setQuranLastRead({
+    required int surahNumber,
+    required int ayahNumber,
+    required String surahNameEnglish,
+    required String surahNameArabic,
+  }) async {
+    _quranLastRead = QuranReadPosition(
+      surahNumber: surahNumber,
+      ayahNumber: ayahNumber,
+      surahNameEnglish: surahNameEnglish,
+      surahNameArabic: surahNameArabic,
+      updatedAt: DateTime.now(),
+    );
+
+    await _hiveService.saveQuranLastRead(_quranLastRead!);
+    notifyListeners();
+  }
+
+  Map<String, int> azkarCountsForDateCategory(DateTime date, String category) {
+    final key = _azkarTrackerKey(date, category);
+    final raw = _azkarTracker[key];
+
+    if (raw is! Map) {
+      return <String, int>{};
+    }
+
+    return raw.map<String, int>((dynamic k, dynamic v) {
+      final value = v is int ? v : int.tryParse(v.toString()) ?? 0;
+      return MapEntry<String, int>(k.toString(), value);
+    });
+  }
+
+  Future<void> incrementAzkarCount({
+    required DateTime date,
+    required String category,
+    required String itemId,
+    required int maxCount,
+  }) async {
+    final key = _azkarTrackerKey(date, category);
+    final current = Map<String, int>.from(
+      azkarCountsForDateCategory(date, category),
+    );
+
+    final existing = current[itemId] ?? 0;
+    final next = existing < maxCount ? existing + 1 : maxCount;
+    current[itemId] = next;
+
+    _azkarTracker[key] = current;
+    await _hiveService.saveAzkarTracker(_azkarTracker);
+    notifyListeners();
+  }
+
+  Future<void> resetAzkarCategory({
+    required DateTime date,
+    required String category,
+  }) async {
+    final key = _azkarTrackerKey(date, category);
+    _azkarTracker.remove(key);
+    await _hiveService.saveAzkarTracker(_azkarTracker);
+    notifyListeners();
+  }
+
   Future<void> _refreshDailyContent() async {
     _dailyContent = await _dailyContentService.getContentForDate(_now);
     notifyListeners();
   }
 
+  Future<void> _syncHomeWidgetIfNeeded({bool force = false}) async {
+    if (kIsWeb || !Platform.isAndroid || _location == null) {
+      return;
+    }
+
+    final minuteKey =
+        '${_now.year}-${_now.month}-${_now.day} ${_now.hour}:${_now.minute}';
+    final nextPrayerKey = _nextPrayer == null
+        ? 'none'
+        : '${_nextPrayer!.name}-${_nextPrayer!.time.toIso8601String()}';
+
+    final signature = '${_location!.cityName}|$nextPrayerKey|$minuteKey';
+    if (!force && signature == _lastWidgetSignature) {
+      return;
+    }
+
+    _lastWidgetSignature = signature;
+
+    try {
+      await _homeWidgetService.updateNextPrayerWidget(
+        cityName: _location!.cityName,
+        nextPrayer: _nextPrayer,
+        countdown: _nextPrayerCountdown,
+      );
+    } catch (_) {
+      // Ignore widget update failures to keep app resilient.
+    }
+  }
+
   String _dateKey(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
     return normalized.toIso8601String().split('T').first;
+  }
+
+  String _azkarTrackerKey(DateTime date, String category) {
+    return '${_dateKey(date)}::$category';
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'package:azan_app/app.dart';
 import 'package:azan_app/core/services/hive_service.dart';
+import 'package:azan_app/core/services/home_widget_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
@@ -21,6 +22,7 @@ Future<void> main() async {
         prayerService: PrayerService(),
         notificationService: NotificationService(),
         dailyContentService: DailyContentService(),
+        homeWidgetService: HomeWidgetService(),
       )..initialize(),
       child: const AzanApp(),
     ),

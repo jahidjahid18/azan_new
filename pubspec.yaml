@@ -52,6 +52,7 @@ dependencies:
   google_maps_flutter: ^2.16.0
   http: ^1.6.0
   url_launcher: ^6.3.2
+  home_widget: ^0.9.0
 
 dev_dependencies:
   flutter_test:
@@ -78,6 +79,7 @@ flutter:
   assets:
     - assets/data/quran_ar.json
     - assets/data/daily_content.json
+    - assets/data/azkar.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

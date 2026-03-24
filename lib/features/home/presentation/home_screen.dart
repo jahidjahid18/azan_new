@@ -1,6 +1,7 @@
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/utils/duration_formatter.dart';
+import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/calendar/presentation/hijri_date_card.dart';
 import 'package:azan_app/features/daily/presentation/daily_content_card.dart';
 import 'package:azan_app/features/mosque/presentation/mosque_finder_screen.dart';
@@ -78,33 +79,50 @@ class HomeScreen extends StatelessWidget {
 class _QuickActionsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Column(
       children: <Widget>[
-        Expanded(
-          child: FilledButton.tonalIcon(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const PrayerTrackerScreen(),
-                ),
-              );
-            },
-            icon: const Icon(Icons.checklist_rounded),
-            label: const Text('Tracker'),
-          ),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: FilledButton.tonalIcon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const PrayerTrackerScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.checklist_rounded),
+                label: const Text('Tracker'),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FilledButton.tonalIcon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const MosqueFinderScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.map_outlined),
+                label: const Text('Mosques'),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 10),
-        Expanded(
+        const SizedBox(height: 10),
+        SizedBox(
+          width: double.infinity,
           child: FilledButton.tonalIcon(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const MosqueFinderScreen(),
-                ),
+                MaterialPageRoute<void>(builder: (_) => const AzkarScreen()),
               );
             },
-            icon: const Icon(Icons.map_outlined),
-            label: const Text('Mosques'),
+            icon: const Icon(Icons.auto_stories_rounded),
+            label: const Text('Daily Azkar'),
           ),
         ),
       ],

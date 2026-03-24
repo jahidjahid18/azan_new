@@ -1,18 +1,24 @@
+import 'dart:async';
+
+import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/features/audio/models/quran_reciter.dart';
 import 'package:azan_app/features/audio/services/quran_audio_service.dart';
 import 'package:azan_app/features/audio/widgets/quran_player_bar.dart';
 import 'package:azan_app/features/quran/data/models/quran_surah.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class QuranReaderScreen extends StatefulWidget {
   const QuranReaderScreen({
     super.key,
     required this.surahs,
     required this.initialIndex,
+    this.initialAyahNumber = 1,
   });
 
   final List<QuranSurah> surahs;
   final int initialIndex;
+  final int initialAyahNumber;
 
   @override
   State<QuranReaderScreen> createState() => _QuranReaderScreenState();
@@ -27,11 +33,23 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   bool _isAudioLoading = false;
   String? _audioError;
   bool _isPlaying = false;
+  late Set<String> _bookmarkKeys;
 
   @override
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex;
+    final surah = widget.surahs[_currentIndex];
+
+    _selectedAyahNumber = widget.initialAyahNumber.clamp(1, surah.ayahCount);
+    _bookmarkKeys = context
+        .read<AppController>()
+        .quranBookmarks
+        .map((bookmark) => bookmark.key)
+        .toSet();
+
+    _saveLastRead(_selectedAyahNumber);
+
     _audioService.player.playerStateStream.listen((state) {
       if (!mounted) return;
       setState(() {
@@ -94,9 +112,15 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
               itemBuilder: (context, index) {
                 final ayah = surah.ayahs[index];
                 final isSelectedAyah = ayah.number == _selectedAyahNumber;
+                final bookmarkKey = _bookmarkKey(surah.number, ayah.number);
+                final isBookmarked = _bookmarkKeys.contains(bookmarkKey);
+
                 return InkWell(
                   borderRadius: BorderRadius.circular(12),
-                  onTap: () async => _playAyah(ayah.number),
+                  onTap: () async {
+                    _saveLastRead(ayah.number);
+                    await _playAyah(ayah.number);
+                  },
                   child: Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
@@ -115,6 +139,17 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                             Text(
                               'Ayah ${ayah.number}',
                               style: Theme.of(context).textTheme.labelMedium,
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              visualDensity: VisualDensity.compact,
+                              icon: Icon(
+                                isBookmarked
+                                    ? Icons.bookmark_rounded
+                                    : Icons.bookmark_border_rounded,
+                                size: 20,
+                              ),
+                              onPressed: () => _toggleBookmark(ayah.number),
                             ),
                             const Spacer(),
                             const Icon(
@@ -190,6 +225,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     await _audioService.player.stop();
     _isPlaying = false;
     _scrollController.jumpTo(0);
+    _saveLastRead(1);
   }
 
   Future<void> _playAyah(int ayahNumber) async {
@@ -238,13 +274,17 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   Future<void> _playPreviousAyah() async {
     if (_selectedAyahNumber <= 1) return;
-    await _playAyah(_selectedAyahNumber - 1);
+    final nextAyah = _selectedAyahNumber - 1;
+    _saveLastRead(nextAyah);
+    await _playAyah(nextAyah);
   }
 
   Future<void> _playNextAyah() async {
     final maxAyah = widget.surahs[_currentIndex].ayahCount;
     if (_selectedAyahNumber >= maxAyah) return;
-    await _playAyah(_selectedAyahNumber + 1);
+    final nextAyah = _selectedAyahNumber + 1;
+    _saveLastRead(nextAyah);
+    await _playAyah(nextAyah);
   }
 
   Future<void> _changeReciter(QuranReciter reciter) async {
@@ -254,5 +294,41 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     if (_audioService.player.audioSource != null) {
       await _playAyah(_selectedAyahNumber);
     }
+  }
+
+  Future<void> _toggleBookmark(int ayahNumber) async {
+    final surah = widget.surahs[_currentIndex];
+    final key = _bookmarkKey(surah.number, ayahNumber);
+
+    setState(() {
+      if (_bookmarkKeys.contains(key)) {
+        _bookmarkKeys.remove(key);
+      } else {
+        _bookmarkKeys.add(key);
+      }
+    });
+
+    await context.read<AppController>().toggleQuranBookmark(
+      surahNumber: surah.number,
+      ayahNumber: ayahNumber,
+      surahNameEnglish: surah.nameEnglish,
+      surahNameArabic: surah.nameArabic,
+    );
+  }
+
+  void _saveLastRead(int ayahNumber) {
+    final surah = widget.surahs[_currentIndex];
+    unawaited(
+      context.read<AppController>().setQuranLastRead(
+        surahNumber: surah.number,
+        ayahNumber: ayahNumber,
+        surahNameEnglish: surah.nameEnglish,
+        surahNameArabic: surah.nameArabic,
+      ),
+    );
+  }
+
+  String _bookmarkKey(int surahNumber, int ayahNumber) {
+    return '$surahNumber:$ayahNumber';
   }
 }

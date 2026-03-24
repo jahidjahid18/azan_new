@@ -6,6 +6,9 @@ class AppConstants {
   static const String locationStorageKey = 'location';
   static const String tasbihStorageKey = 'tasbih_count';
   static const String prayerTrackerStorageKey = 'prayer_tracker';
+  static const String quranBookmarksStorageKey = 'quran_bookmarks';
+  static const String quranLastReadStorageKey = 'quran_last_read';
+  static const String azkarTrackerStorageKey = 'azkar_tracker';
 
   static const int notificationHorizonDays = 30;
 
