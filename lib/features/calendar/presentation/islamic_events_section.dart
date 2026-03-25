@@ -63,21 +63,24 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
         ),
         const SizedBox(height: 8),
         if (chipEvents.isNotEmpty) ...<Widget>[
-          SizedBox(
-            height: 66,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: chipEvents.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final event = chipEvents[index];
-                return _EventChip(
-                  title: _eventLabel(context, event.type),
-                  days: event.eventDate.difference(today).inDays,
-                  color: event.chipColor,
-                );
-              },
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: chipEvents.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 2.25,
             ),
+            itemBuilder: (context, index) {
+              final event = chipEvents[index];
+              return _EventCard(
+                title: _eventLabel(context, event.type),
+                days: event.eventDate.difference(today).inDays,
+                color: event.chipColor,
+              );
+            },
           ),
           const SizedBox(height: 12),
         ],
@@ -270,8 +273,8 @@ class IslamicEventsFilter {
   }
 }
 
-class _EventChip extends StatelessWidget {
-  const _EventChip({
+class _EventCard extends StatelessWidget {
+  const _EventCard({
     required this.title,
     required this.days,
     required this.color,
@@ -284,31 +287,33 @@ class _EventChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Container(
-      constraints: const BoxConstraints(minWidth: 132),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    return DecoratedBox(
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            l10n.tr('eventInDays', <String, String>{'days': '$days'}),
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              l10n.tr('eventInDays', <String, String>{'days': '$days'}),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.labelMedium,
+            ),
+          ],
+        ),
       ),
     );
   }

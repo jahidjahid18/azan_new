@@ -29,8 +29,8 @@ class AppSettings {
       calculationMethod: CalculationMethodOption.muslimWorldLeague,
       notificationsEnabled: true,
       notificationSoundMode: NotificationSoundMode.notificationOnly,
-      themeMode: ThemeModeOption.system,
-      themeStyle: ThemeStyleOption.muslimPro,
+      themeMode: ThemeModeOption.light,
+      themeStyle: ThemeStyleOption.sunset,
       appLanguage: AppLanguage.english,
       visiblePrayerNames: AppConstants.defaultVisiblePrayerNames,
     );
