@@ -103,7 +103,22 @@ extension AppLanguageX on AppLanguage {
     AppLanguage.thai => 'th',
   };
 
-  Locale get locale => Locale(code);
+  String get appUiCode => switch (this) {
+    AppLanguage.tatar => 'ru',
+    AppLanguage.bashkir => 'ru',
+    AppLanguage.berber => 'ar',
+    AppLanguage.chechen => 'ru',
+    AppLanguage.divehi => 'ar',
+    AppLanguage.hausa => 'sw',
+    AppLanguage.kurdish => 'tr',
+    AppLanguage.sindhi => 'ur',
+    AppLanguage.somali => 'sw',
+    AppLanguage.tajik => 'fa',
+    AppLanguage.uyghur => 'zh',
+    _ => code,
+  };
+
+  Locale get locale => Locale(appUiCode);
 
   String get englishName => switch (this) {
     AppLanguage.english => 'English',
@@ -218,4 +233,10 @@ extension AppLanguageX on AppLanguage {
       orElse: () => AppLanguage.english,
     );
   }
+}
+
+List<AppLanguage> get appLanguagesAlphabetical {
+  final languages = List<AppLanguage>.from(AppLanguage.values);
+  languages.sort((a, b) => a.englishName.compareTo(b.englishName));
+  return languages;
 }

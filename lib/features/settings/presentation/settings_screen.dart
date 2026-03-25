@@ -239,7 +239,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             initialValue: controller.appLanguage,
             isExpanded: true,
             decoration: InputDecoration(labelText: l10n.tr('appLanguage')),
-            items: AppLanguage.values
+            items: appLanguagesAlphabetical
                 .map(
                   (language) => DropdownMenuItem<AppLanguage>(
                     value: language,

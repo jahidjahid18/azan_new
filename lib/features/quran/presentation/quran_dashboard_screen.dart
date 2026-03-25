@@ -390,7 +390,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
       builder: (context) {
         return ListView(
           shrinkWrap: true,
-          children: AppLanguage.values
+          children: appLanguagesAlphabetical
               .map(
                 (language) => ListTile(
                   leading: Icon(

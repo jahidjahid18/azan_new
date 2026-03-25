@@ -1,14 +1,18 @@
+import 'dart:convert';
+
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 class AppLocalizations {
-  const AppLocalizations(this.locale);
+  const AppLocalizations(this.locale, this._activeValues);
 
   final Locale locale;
+  final Map<String, String> _activeValues;
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
@@ -78,15 +82,16 @@ class AppLocalizations {
       AppLocalizations,
     );
     if (localization == null) {
-      return const AppLocalizations(Locale('en'));
+      return AppLocalizations(
+        const Locale('en'),
+        _localizedValues['en'] ?? <String, String>{},
+      );
     }
     return localization;
   }
 
   String tr(String key, [Map<String, String> params = const {}]) {
-    final languageCode = locale.languageCode;
-    final localized = _localizedValues[languageCode]?[key];
-    var value = localized ?? _localizedValues['en']![key] ?? key;
+    var value = _activeValues[key] ?? key;
     params.forEach((paramKey, paramValue) {
       value = value.replaceAll('{$paramKey}', paramValue);
     });
@@ -155,6 +160,35 @@ class AppLocalizations {
   }
 }
 
+class _AssetLocalizationService {
+  static final Map<String, Map<String, String>> _memoryCache =
+      <String, Map<String, String>>{};
+
+  static Future<Map<String, String>> load(String languageCode) async {
+    if (_memoryCache[languageCode] != null) {
+      return _memoryCache[languageCode]!;
+    }
+    try {
+      final raw = await rootBundle.loadString(
+        'assets/data/app_ui_locales/$languageCode.json',
+      );
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        _memoryCache[languageCode] = <String, String>{};
+        return _memoryCache[languageCode]!;
+      }
+      final parsed = decoded.map(
+        (key, value) => MapEntry(key, value?.toString() ?? ''),
+      );
+      _memoryCache[languageCode] = parsed;
+      return parsed;
+    } catch (_) {
+      _memoryCache[languageCode] = <String, String>{};
+      return _memoryCache[languageCode]!;
+    }
+  }
+}
+
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
@@ -165,8 +199,16 @@ class _AppLocalizationsDelegate
   );
 
   @override
-  Future<AppLocalizations> load(Locale locale) {
-    return Future<AppLocalizations>.value(AppLocalizations(locale));
+  Future<AppLocalizations> load(Locale locale) async {
+    final englishValues = _localizedValues['en'] ?? <String, String>{};
+    final staticValues =
+        _localizedValues[locale.languageCode] ?? <String, String>{};
+    final assetValues = await _AssetLocalizationService.load(locale.languageCode);
+    return AppLocalizations(locale, <String, String>{
+      ...englishValues,
+      ...staticValues,
+      ...assetValues,
+    });
   }
 
   @override
