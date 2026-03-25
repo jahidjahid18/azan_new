@@ -237,12 +237,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         AppSurfaceCard(
           child: DropdownButtonFormField<AppLanguage>(
             initialValue: controller.appLanguage,
+            isExpanded: true,
             decoration: InputDecoration(labelText: l10n.tr('appLanguage')),
             items: AppLanguage.values
                 .map(
                   (language) => DropdownMenuItem<AppLanguage>(
                     value: language,
-                    child: Text(language.nativeName),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(child: Text(language.englishName)),
+                        const SizedBox(width: 12),
+                        Text(language.nativeName),
+                      ],
+                    ),
                   ),
                 )
                 .toList(),

@@ -82,6 +82,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                 surahs: surahs,
                 index: surahIndex,
                 initialAyah: ayahNumber,
+                withTransliteration: true,
                 withTranslation: true,
               ),
             ),
@@ -269,6 +270,15 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                   const SizedBox(height: 10),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
+                    title: Text(context.l10n.tr('showTransliteration')),
+                    value: current.showTransliteration,
+                    onChanged: (value) {
+                      current = current.copyWith(showTransliteration: value);
+                      setBottomState(() {});
+                    },
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
                     title: Text(context.l10n.tr('showTranslation')),
                     value: current.showTranslation,
                     onChanged: (value) {
@@ -313,6 +323,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                         arabicFontSize: current.arabicFontSize,
                         translationFontSize: current.translationFontSize,
                         lineHeight: current.lineHeight,
+                        showTransliteration: current.showTransliteration,
                         showTranslation: current.showTranslation,
                         fontPreset: current.fontPreset,
                       );
@@ -336,6 +347,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
     required List<QuranSurah> surahs,
     required int index,
     required int initialAyah,
+    required bool withTransliteration,
     required bool withTranslation,
     bool autoPlay = false,
   }) {
@@ -345,6 +357,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
           surahs: surahs,
           initialIndex: index,
           initialAyahNumber: initialAyah,
+          initialShowTransliteration: withTransliteration,
           initialShowTranslation: withTranslation,
           autoPlayOnOpen: autoPlay,
         ),
@@ -385,7 +398,13 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
                         ? Icons.radio_button_checked_rounded
                         : Icons.radio_button_off_rounded,
                   ),
-                  title: Text(language.nativeName),
+                  title: Row(
+                    children: <Widget>[
+                      Expanded(child: Text(language.englishName)),
+                      const SizedBox(width: 12),
+                      Text(language.nativeName),
+                    ],
+                  ),
                   onTap: () async {
                     final navigator = Navigator.of(context);
                     await controller.setAppLanguage(language);

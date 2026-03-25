@@ -21,6 +21,7 @@ class QuranReaderScreen extends StatefulWidget {
     required this.surahs,
     required this.initialIndex,
     this.initialAyahNumber = 1,
+    this.initialShowTransliteration = true,
     this.initialShowTranslation = true,
     this.autoPlayOnOpen = false,
   });
@@ -28,6 +29,7 @@ class QuranReaderScreen extends StatefulWidget {
   final List<QuranSurah> surahs;
   final int initialIndex;
   final int initialAyahNumber;
+  final bool initialShowTransliteration;
   final bool initialShowTranslation;
   final bool autoPlayOnOpen;
 
@@ -48,6 +50,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   bool _isCompletingAyah = false;
 
   late bool _showTranslation;
+  late bool _showTransliteration;
   late double _arabicFontSize;
   late double _translationFontSize;
   late double _lineHeight;
@@ -57,6 +60,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   Map<int, GlobalKey> _ayahKeys = <int, GlobalKey>{};
 
   bool get _supportsTranslationToggle => widget.initialShowTranslation;
+  bool get _supportsTransliterationToggle => widget.initialShowTransliteration;
 
   @override
   void initState() {
@@ -66,6 +70,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     _lastSavedAyah = widget.initialAyahNumber;
 
     final prefs = context.read<AppController>().quranReaderPreferences;
+    _showTransliteration =
+        widget.initialShowTransliteration && prefs.showTransliteration;
     _showTranslation = widget.initialShowTranslation && prefs.showTranslation;
     _arabicFontSize = prefs.arabicFontSize;
     _translationFontSize = prefs.translationFontSize;
@@ -185,6 +191,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                           surahName: surah.nameEnglish,
                           ayahNumber: ayah.number,
                           arabicText: ayah.text,
+                          transliterationText: ayah.transliteration,
                           translationText: ayah.translation,
                         ),
                         child: AnimatedContainer(
@@ -249,6 +256,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                                         surahName: surah.nameEnglish,
                                         ayahNumber: ayah.number,
                                         arabicText: ayah.text,
+                                        transliterationText:
+                                            ayah.transliteration,
                                         translationText: ayah.translation,
                                       ),
                                       icon: Icon(
@@ -279,6 +288,38 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                                         fontSize: _arabicFontSize,
                                       ),
                                 ),
+                                if (_showTransliteration &&
+                                    (ayah.transliteration ?? '')
+                                        .trim()
+                                        .isNotEmpty)
+                                  Container(
+                                    width: double.infinity,
+                                    margin: const EdgeInsets.only(top: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .secondary
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      ayah.transliteration!,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                            fontSize: _translationFontSize - 1,
+                                            height: 1.5,
+                                          ),
+                                    ),
+                                  ),
                                 if (_showTranslation &&
                                     (ayah.translation ?? '').trim().isNotEmpty)
                                   Padding(
@@ -392,6 +433,17 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
+                    if (_supportsTransliterationToggle)
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(context.l10n.tr('showTransliteration')),
+                        value: _showTransliteration,
+                        onChanged: (value) {
+                          setState(() => _showTransliteration = value);
+                          setBottomState(() {});
+                          _scheduleSavePreferences();
+                        },
+                      ),
                     if (_supportsTranslationToggle)
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
@@ -625,6 +677,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
         arabicFontSize: _arabicFontSize,
         translationFontSize: _translationFontSize,
         lineHeight: _lineHeight,
+        showTransliteration: _showTransliteration,
         showTranslation: _showTranslation,
         fontPreset: context
             .read<AppController>()
@@ -639,12 +692,18 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     required String surahName,
     required int ayahNumber,
     required String arabicText,
+    String? transliterationText,
     String? translationText,
   }) async {
     final buffer = StringBuffer()
       ..writeln('$surahName - ${context.l10n.tr('ayah')} $ayahNumber')
       ..writeln()
       ..writeln(arabicText);
+    if ((transliterationText ?? '').trim().isNotEmpty) {
+      buffer
+        ..writeln()
+        ..writeln(transliterationText!.trim());
+    }
     if ((translationText ?? '').trim().isNotEmpty) {
       buffer
         ..writeln()

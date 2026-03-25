@@ -29,6 +29,18 @@ class AppLocalizations {
     Locale('ur'),
     Locale('hi'),
     Locale('tr'),
+    Locale('bn'),
+    Locale('fa'),
+    Locale('fr'),
+    Locale('de'),
+    Locale('es'),
+    Locale('ru'),
+    Locale('it'),
+    Locale('pt'),
+    Locale('nl'),
+    Locale('zh'),
+    Locale('ja'),
+    Locale('ko'),
   ];
 
   static AppLocalizations of(BuildContext context) {
@@ -272,7 +284,8 @@ _localizedValues = <String, Map<String, String>>{
     'quranAudioSubtitle': 'Open any surah and start recitation with ayah sync',
     'quranDailyAyahSubtitle': 'A new ayah every day for reflection',
     'quranSearchSubtitle': 'Search by surah name, ayah number, or keyword',
-    'quranReadingSettingsSubtitle': 'Adjust font size and translation display',
+    'quranReadingSettingsSubtitle':
+        'Adjust font size and transliteration/translation display',
     'searchSurahAyah': 'Search surah or ayah (Arabic/translation)',
     'failedLoadQuran': 'Failed to load Quran data. Please restart the app.',
     'resumeReading': 'Resume Reading',
@@ -286,6 +299,8 @@ _localizedValues = <String, Map<String, String>>{
     'previous': 'Previous',
     'next': 'Next',
     'readerSettings': 'Reader Settings',
+    'showTransliteration': 'Show transliteration',
+    'hideTransliteration': 'Hide transliteration',
     'showTranslation': 'Show translation',
     'hideTranslation': 'Hide translation',
     'arabicFontSize': 'Arabic font size: {size}',

@@ -83,6 +83,7 @@ flutter:
   assets:
     - assets/data/quran_ar.json
     - assets/data/quran_en_translation.json
+    - assets/data/quran_transliteration_en.json
     - assets/data/quran_translations/
     - assets/data/daily_content.json
     - assets/data/azkar.json

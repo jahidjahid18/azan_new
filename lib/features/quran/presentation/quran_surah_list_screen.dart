@@ -487,6 +487,7 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
           surahs: surahs,
           initialIndex: index,
           initialAyahNumber: initialAyah,
+          initialShowTransliteration: _showTranslation,
           initialShowTranslation: _showTranslation,
           autoPlayOnOpen: widget.mode == QuranLibraryMode.audio,
         ),

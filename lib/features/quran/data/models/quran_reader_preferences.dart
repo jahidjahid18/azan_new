@@ -5,6 +5,7 @@ class QuranReaderPreferences {
     required this.arabicFontSize,
     required this.translationFontSize,
     required this.lineHeight,
+    required this.showTransliteration,
     required this.showTranslation,
     required this.fontPreset,
   });
@@ -12,6 +13,7 @@ class QuranReaderPreferences {
   final double arabicFontSize;
   final double translationFontSize;
   final double lineHeight;
+  final bool showTransliteration;
   final bool showTranslation;
   final ArabicFontPreset fontPreset;
 
@@ -20,6 +22,7 @@ class QuranReaderPreferences {
       arabicFontSize: 30,
       translationFontSize: 15,
       lineHeight: 1.8,
+      showTransliteration: true,
       showTranslation: true,
       fontPreset: ArabicFontPreset.uthmani,
     );
@@ -29,6 +32,7 @@ class QuranReaderPreferences {
     double? arabicFontSize,
     double? translationFontSize,
     double? lineHeight,
+    bool? showTransliteration,
     bool? showTranslation,
     ArabicFontPreset? fontPreset,
   }) {
@@ -36,6 +40,7 @@ class QuranReaderPreferences {
       arabicFontSize: arabicFontSize ?? this.arabicFontSize,
       translationFontSize: translationFontSize ?? this.translationFontSize,
       lineHeight: lineHeight ?? this.lineHeight,
+      showTransliteration: showTransliteration ?? this.showTransliteration,
       showTranslation: showTranslation ?? this.showTranslation,
       fontPreset: fontPreset ?? this.fontPreset,
     );
@@ -50,6 +55,7 @@ class QuranReaderPreferences {
       translationFontSize:
           (map['translation_font_size'] as num?)?.toDouble() ?? 15,
       lineHeight: (map['line_height'] as num?)?.toDouble() ?? 1.8,
+      showTransliteration: map['show_transliteration'] as bool? ?? true,
       showTranslation: map['show_translation'] as bool? ?? true,
       fontPreset: ArabicFontPresetX.fromKey(map['font_preset'] as String?),
     );
@@ -60,6 +66,7 @@ class QuranReaderPreferences {
       'arabic_font_size': arabicFontSize,
       'translation_font_size': translationFontSize,
       'line_height': lineHeight,
+      'show_transliteration': showTransliteration,
       'show_translation': showTranslation,
       'font_preset': fontPreset.key,
     };
