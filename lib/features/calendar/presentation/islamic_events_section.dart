@@ -18,6 +18,7 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
   List<IslamicEventModel> _cachedEvents = <IslamicEventModel>[];
 
   static const List<int> _filterDayOptions = <int>[30, 60, 90, 180, 365];
+  static const int _maxChipEvents = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +33,16 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
 
     final chipEvents = filteredEvents
         .where((event) => event.showInChips)
+        .take(_maxChipEvents)
         .toList(growable: false);
+    final chipEventKeys = chipEvents
+        .map((event) => _eventKey(event))
+        .toSet();
     final listEvents = filteredEvents
-        .where((event) => event.showInMainList)
+        .where(
+          (event) =>
+              event.showInMainList && !chipEventKeys.contains(_eventKey(event)),
+        )
         .toList(growable: false);
 
     if (chipEvents.isEmpty && listEvents.isEmpty) {
@@ -63,24 +71,31 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
         ),
         const SizedBox(height: 8),
         if (chipEvents.isNotEmpty) ...<Widget>[
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: chipEvents.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 2.25,
+          SizedBox(
+            height: 52,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: chipEvents
+                    .asMap()
+                    .entries
+                    .map((entry) {
+                      final index = entry.key;
+                      final event = entry.value;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          right: index == chipEvents.length - 1 ? 0 : 8,
+                        ),
+                        child: _EventChip(
+                          title: _eventLabel(context, event.type),
+                          days: event.eventDate.difference(today).inDays,
+                          color: event.chipColor,
+                        ),
+                      );
+                    })
+                    .toList(growable: false),
+              ),
             ),
-            itemBuilder: (context, index) {
-              final event = chipEvents[index];
-              return _EventCard(
-                title: _eventLabel(context, event.type),
-                days: event.eventDate.difference(today).inDays,
-                color: event.chipColor,
-              );
-            },
           ),
           const SizedBox(height: 12),
         ],
@@ -89,13 +104,6 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  '${l10n.tr('upcomingEvens')} (${_selectedDays.toString()} ${l10n.tr('daysShort')})',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 10),
                 ...listEvents.asMap().entries.map((entry) {
                   final index = entry.key;
                   final event = entry.value;
@@ -122,13 +130,23 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
     return _cachedEvents;
   }
 
+  String _eventKey(IslamicEventModel event) {
+    return '${event.type.name}-${event.eventDate.toIso8601String()}';
+  }
+
   String _eventLabel(BuildContext context, IslamicEventType type) {
     final l10n = context.l10n;
     return switch (type) {
       IslamicEventType.ramadan => l10n.tr('ramadanLabel'),
       IslamicEventType.eidAlFitr => l10n.tr('eidAlFitrLabel'),
       IslamicEventType.eidAlAdha => l10n.tr('eidAlAdhaLabel'),
+      IslamicEventType.islamicNewYear => l10n.tr('islamicNewYearLabel'),
       IslamicEventType.ashura => l10n.tr('ashuraLabel'),
+      IslamicEventType.mawlid => l10n.tr('mawlidLabel'),
+      IslamicEventType.israMiraj => l10n.tr('israMirajLabel'),
+      IslamicEventType.midShaban => l10n.tr('midShabanLabel'),
+      IslamicEventType.dayOfArafah => l10n.tr('dayOfArafahLabel'),
+      IslamicEventType.tashreeqDays => l10n.tr('tashreeqDaysLabel'),
       IslamicEventType.jumuah => l10n.tr('jumuahLabel'),
     };
   }
@@ -233,7 +251,19 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
   }
 }
 
-enum IslamicEventType { ramadan, eidAlFitr, eidAlAdha, ashura, jumuah }
+enum IslamicEventType {
+  ramadan,
+  eidAlFitr,
+  eidAlAdha,
+  islamicNewYear,
+  ashura,
+  mawlid,
+  israMiraj,
+  midShaban,
+  dayOfArafah,
+  tashreeqDays,
+  jumuah,
+}
 
 /// Example event model used by the filtering system.
 class IslamicEventModel {
@@ -273,8 +303,8 @@ class IslamicEventsFilter {
   }
 }
 
-class _EventCard extends StatelessWidget {
-  const _EventCard({
+class _EventChip extends StatelessWidget {
+  const _EventChip({
     required this.title,
     required this.days,
     required this.color,
@@ -287,33 +317,32 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return DecoratedBox(
+    return Container(
+      constraints: const BoxConstraints(minWidth: 120),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(24),
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.tr('eventInDays', <String, String>{'days': '$days'}),
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelMedium,
-            ),
-          ],
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            l10n.tr('eventInDays', <String, String>{'days': '$days'}),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+        ],
       ),
     );
   }
@@ -374,6 +403,34 @@ class _IslamicEventsCalculator {
     final hijri = HijriCalendar.fromDate(now);
     return <IslamicEventModel>[
       IslamicEventModel(
+        type: IslamicEventType.islamicNewYear,
+        eventDate: _hijriToDate(hijri, now, month: 1, day: 1),
+        chipColor: const Color(0xFFEAF6FF),
+      ),
+      IslamicEventModel(
+        type: IslamicEventType.ashura,
+        eventDate: _hijriToDate(hijri, now, month: 1, day: 10),
+        chipColor: const Color(0xFFFCEFF2),
+        showInChips: false,
+      ),
+      IslamicEventModel(
+        type: IslamicEventType.mawlid,
+        eventDate: _hijriToDate(hijri, now, month: 3, day: 12),
+        chipColor: const Color(0xFFF2F1FF),
+      ),
+      IslamicEventModel(
+        type: IslamicEventType.israMiraj,
+        eventDate: _hijriToDate(hijri, now, month: 7, day: 27),
+        chipColor: const Color(0xFFEFFAF8),
+        showInChips: false,
+      ),
+      IslamicEventModel(
+        type: IslamicEventType.midShaban,
+        eventDate: _hijriToDate(hijri, now, month: 8, day: 15),
+        chipColor: const Color(0xFFFFF7EB),
+        showInChips: false,
+      ),
+      IslamicEventModel(
         type: IslamicEventType.ramadan,
         eventDate: _hijriToDate(hijri, now, month: 9, day: 1),
         chipColor: const Color(0xFFE8F7EF),
@@ -389,9 +446,15 @@ class _IslamicEventsCalculator {
         chipColor: const Color(0xFFFFF4E8),
       ),
       IslamicEventModel(
-        type: IslamicEventType.ashura,
-        eventDate: _hijriToDate(hijri, now, month: 1, day: 10),
-        chipColor: const Color(0xFFFCEFF2),
+        type: IslamicEventType.dayOfArafah,
+        eventDate: _hijriToDate(hijri, now, month: 12, day: 9),
+        chipColor: const Color(0xFFE8F6FF),
+        showInChips: false,
+      ),
+      IslamicEventModel(
+        type: IslamicEventType.tashreeqDays,
+        eventDate: _hijriToDate(hijri, now, month: 12, day: 11),
+        chipColor: const Color(0xFFFFF1E8),
         showInChips: false,
       ),
       IslamicEventModel(
