@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widgetContainer"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/prayer_widget_bg"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <TextView
+        android:id="@+id/widgetCity"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Prayer Times"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widgetNextPrayerName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Fajr"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widgetNextPrayerTime"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="05:46 AM"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widgetCountdown"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="In 01:45:12"
+        android:textColor="#D8F5EA"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/widgetRamadanCountdown"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text=""
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/widgetUpdatedAt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Updated 24 Mar, 2:30 PM"
+        android:textColor="#D8F5EA"
+        android:textSize="10sp" />
+</LinearLayout>
