@@ -11,6 +11,7 @@ import 'package:azan_app/features/settings/presentation/settings_screen.dart';
 import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:flutter/material.dart';
+import 'package:hijri/hijri_calendar.dart';
 import 'package:provider/provider.dart';
 
 class AzanApp extends StatelessWidget {
@@ -54,9 +55,11 @@ class _MainScaffoldState extends State<_MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
+    final now = context.watch<AppController>().now;
     final l10n = context.l10n;
     final showBanner = _currentTab == 0 || _currentTab == 4;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
     final titles = <String>[
       l10n.tr('titlePrayerTimes'),
       l10n.tr('titleQuran'),
@@ -66,7 +69,24 @@ class _MainScaffoldState extends State<_MainScaffold> {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: Text(titles[_currentTab])),
+      appBar: AppBar(
+        toolbarHeight: 72,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            Text(titles[_currentTab]),
+            const SizedBox(height: 2),
+            Text(
+              '${l10n.tr('hijriDate')}: $hijriDate',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.secondary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
       body: AppGradientBackground(
         useAlternative: _currentTab == 1 || _currentTab == 3,
         child: SafeArea(

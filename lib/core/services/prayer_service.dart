@@ -14,8 +14,14 @@ class PrayerService {
       date: date,
       calculationMethod: calculationMethod,
     );
+    final sunnahTimes = SunnahTimes(prayerTimes);
 
     return <PrayerInfo>[
+      PrayerInfo(
+        name: 'Imsak',
+        time: prayerTimes.fajr.subtract(const Duration(minutes: 10)),
+        isObligatory: false,
+      ),
       PrayerInfo(name: 'Fajr', time: prayerTimes.fajr),
       PrayerInfo(
         name: 'Sunrise',
@@ -26,6 +32,16 @@ class PrayerService {
       PrayerInfo(name: 'Asr', time: prayerTimes.asr),
       PrayerInfo(name: 'Maghrib', time: prayerTimes.maghrib),
       PrayerInfo(name: 'Isha', time: prayerTimes.isha),
+      PrayerInfo(
+        name: 'Midnight',
+        time: sunnahTimes.middleOfTheNight,
+        isObligatory: false,
+      ),
+      PrayerInfo(
+        name: 'Qiyam',
+        time: sunnahTimes.lastThirdOfTheNight,
+        isObligatory: false,
+      ),
     ];
   }
 

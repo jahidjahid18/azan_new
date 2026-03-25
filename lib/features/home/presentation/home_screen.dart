@@ -1,11 +1,12 @@
 import 'package:azan_app/core/models/prayer_info.dart';
+import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/utils/duration_formatter.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
-import 'package:azan_app/features/calendar/presentation/hijri_date_card.dart';
+import 'package:azan_app/features/calendar/presentation/islamic_events_section.dart';
 import 'package:azan_app/features/daily/presentation/daily_content_card.dart';
 import 'package:azan_app/features/mosque/presentation/mosque_finder_screen.dart';
 import 'package:azan_app/features/tracker/presentation/prayer_tracker_screen.dart';
@@ -22,6 +23,10 @@ class HomeScreen extends StatelessWidget {
     final controller = context.watch<AppController>();
     final l10n = context.l10n;
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
+    final visiblePrayers = _visiblePrayers(
+      allPrayers: controller.todayPrayers,
+      visibleNames: controller.visiblePrayerNames,
+    );
 
     if (controller.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -44,7 +49,7 @@ class HomeScreen extends StatelessWidget {
           ] else
             _EmptyLocationState(message: controller.startupError),
           const SizedBox(height: 12),
-          HijriDateCard(now: controller.now),
+          IslamicEventsSection(now: controller.now),
           const SizedBox(height: 12),
           if (controller.dailyContent != null)
             DailyContentCard(item: controller.dailyContent!),
@@ -60,11 +65,16 @@ class HomeScreen extends StatelessWidget {
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: l10n.tr('prayerDisplayFilter'),
+                  onPressed: () => _openPrayerFilter(context, controller),
+                  icon: const Icon(Icons.tune_rounded),
+                ),
+                IconButton(
                   tooltip: l10n.tr('copyTodaySchedule'),
                   onPressed: () => _copyPrayerSchedule(
                     context: context,
                     city: controller.location!.cityName,
-                    prayers: controller.todayPrayers,
+                    prayers: visiblePrayers,
                   ),
                   icon: const Icon(Icons.copy_all_rounded),
                 ),
@@ -75,7 +85,7 @@ class HomeScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            ...controller.todayPrayers.map(
+            ...visiblePrayers.map(
               (prayer) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: _PrayerTimeCard(
@@ -96,6 +106,119 @@ class HomeScreen extends StatelessWidget {
         prayer.time.year == nextPrayer.time.year &&
         prayer.time.month == nextPrayer.time.month &&
         prayer.time.day == nextPrayer.time.day;
+  }
+
+  List<PrayerInfo> _visiblePrayers({
+    required List<PrayerInfo> allPrayers,
+    required List<String> visibleNames,
+  }) {
+    final visibleSet = visibleNames.toSet();
+    return allPrayers
+        .where((prayer) => visibleSet.contains(prayer.name))
+        .toList();
+  }
+
+  void _openPrayerFilter(BuildContext context, AppController controller) {
+    final l10n = context.l10n;
+    final selected = controller.visiblePrayerNames.toSet();
+    final allOptions = <String>[
+      ...AppConstants.mandatoryPrayerNames,
+      ...AppConstants.optionalPrayerNames,
+    ];
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (sheetContext, setBottomState) {
+            return Padding(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                6,
+                16,
+                16 + MediaQuery.of(sheetContext).viewPadding.bottom,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    l10n.tr('prayerDisplayFilter'),
+                    style: Theme.of(sheetContext).textTheme.titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    l10n.tr('prayerDisplayFilterSub'),
+                    style: Theme.of(sheetContext).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 12),
+                  ...allOptions.map((name) {
+                    final isMandatory = AppConstants.mandatoryPrayerNames
+                        .contains(name);
+                    return CheckboxListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      title: Text(l10n.prayerName(name)),
+                      subtitle: isMandatory
+                          ? Text(l10n.tr('obligatoryPrayer'))
+                          : null,
+                      value: selected.contains(name),
+                      onChanged: (checked) {
+                        final isChecked = checked ?? false;
+                        setBottomState(() {
+                          if (isChecked) {
+                            selected.add(name);
+                            return;
+                          }
+                          if (isMandatory) {
+                            final mandatorySelected = AppConstants
+                                .mandatoryPrayerNames
+                                .where(selected.contains)
+                                .length;
+                            if (mandatorySelected <= 1) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    l10n.tr('mandatoryPrayersRequired'),
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+                          selected.remove(name);
+                        });
+                      },
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () async {
+                        await controller.setVisiblePrayerNames(
+                          selected.toList(),
+                        );
+                        if (!context.mounted) return;
+                        Navigator.of(sheetContext).pop();
+                      },
+                      child: Text(l10n.tr('save')),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _copyPrayerSchedule({

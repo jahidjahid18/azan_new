@@ -100,12 +100,15 @@ class AppLocalizations {
 
   String prayerName(String prayerName) {
     final key = switch (prayerName.toLowerCase()) {
+      'imsak' => 'prayerImsak',
       'fajr' => 'prayerFajr',
       'sunrise' => 'prayerSunrise',
       'dhuhr' => 'prayerDhuhr',
       'asr' => 'prayerAsr',
       'maghrib' => 'prayerMaghrib',
       'isha' => 'prayerIsha',
+      'qiyam' => 'prayerQiyam',
+      'midnight' => 'prayerMidnight',
       _ => '',
     };
     if (key.isEmpty) return prayerName;
@@ -203,7 +206,9 @@ class _AppLocalizationsDelegate
     final englishValues = _localizedValues['en'] ?? <String, String>{};
     final staticValues =
         _localizedValues[locale.languageCode] ?? <String, String>{};
-    final assetValues = await _AssetLocalizationService.load(locale.languageCode);
+    final assetValues = await _AssetLocalizationService.load(
+      locale.languageCode,
+    );
     return AppLocalizations(locale, <String, String>{
       ...englishValues,
       ...staticValues,
@@ -238,6 +243,11 @@ _localizedValues = <String, Map<String, String>>{
     'startsIn': 'Starts in {duration}',
     'prayerTimes': 'Prayer Times',
     'copyTodaySchedule': 'Copy today schedule',
+    'prayerDisplayFilter': 'Prayer display',
+    'prayerDisplayFilterSub': 'Choose which prayer times to show',
+    'save': 'Save',
+    'mandatoryPrayersRequired':
+        'At least one mandatory prayer must remain selected.',
     'scheduleCopied': 'Schedule copied',
     'obligatoryPrayer': 'Obligatory prayer',
     'additionalPrayer': 'Additional',
@@ -251,6 +261,18 @@ _localizedValues = <String, Map<String, String>>{
     'hijriDate': 'Hijri Date',
     'ramadanStarted': 'Ramadan has started',
     'daysUntilRamadan': '{days} day(s) until Ramadan',
+    'upcomingIslamicEvents': 'Upcoming Islamic Events in 6 Months',
+    'upcomingEvens': 'Upcoming Evens',
+    'filterEvents': 'Filter Events',
+    'daysShort': 'days',
+    'apply': 'Apply',
+    'cancel': 'Cancel',
+    'ramadanLabel': 'Ramadan',
+    'eidAlFitrLabel': 'Eid al-Fitr',
+    'eidAlAdhaLabel': 'Eid al-Adha',
+    'ashuraLabel': 'Ashura',
+    'jumuahLabel': "Jumu'ah",
+    'eventInDays': '{days} day(s)',
     'tasbihCounter': 'Tasbih Counter',
     'tasbihSubtitle':
         'Tap the dhikr button to count. Your progress is saved automatically.',
@@ -422,11 +444,14 @@ _localizedValues = <String, Map<String, String>>{
     'themeStyleSunset': 'Sunset',
     'themeStyleMonochrome': 'Monochrome',
     'prayerFajr': 'Fajr',
+    'prayerImsak': 'Imsak',
     'prayerSunrise': 'Sunrise',
     'prayerDhuhr': 'Dhuhr',
     'prayerAsr': 'Asr',
     'prayerMaghrib': 'Maghrib',
     'prayerIsha': 'Isha',
+    'prayerQiyam': 'Qiyam',
+    'prayerMidnight': 'Midnight',
   },
   'ar': <String, String>{
     'titlePrayerTimes': 'مواقيت الصلاة',
