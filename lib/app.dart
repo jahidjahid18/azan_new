@@ -6,7 +6,7 @@ import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_gradient_background.dart';
 import 'package:azan_app/features/home/presentation/home_screen.dart';
 import 'package:azan_app/features/qibla/presentation/qibla_screen.dart';
-import 'package:azan_app/features/quran/presentation/quran_surah_list_screen.dart';
+import 'package:azan_app/features/quran/presentation/quran_dashboard_screen.dart';
 import 'package:azan_app/features/settings/presentation/settings_screen.dart';
 import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
@@ -46,7 +46,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
 
   static const List<Widget> _screens = <Widget>[
     HomeScreen(),
-    QuranSurahListScreen(),
+    QuranDashboardScreen(),
     TasbihScreen(),
     QiblaScreen(),
     SettingsScreen(),

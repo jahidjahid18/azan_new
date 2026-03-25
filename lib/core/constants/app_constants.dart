@@ -8,6 +8,7 @@ class AppConstants {
   static const String prayerTrackerStorageKey = 'prayer_tracker';
   static const String quranBookmarksStorageKey = 'quran_bookmarks';
   static const String quranLastReadStorageKey = 'quran_last_read';
+  static const String quranReaderPrefsStorageKey = 'quran_reader_prefs';
   static const String azkarTrackerStorageKey = 'azkar_tracker';
 
   static const int notificationHorizonDays = 30;
@@ -15,6 +16,7 @@ class AppConstants {
   static const String notificationChannelIdSilent = 'prayer_silent_channel';
   static const String notificationChannelIdAzan = 'prayer_azan_channel';
   static const String notificationChannelName = 'Prayer Alerts';
+  static const String developerSupportEmail = 'jahidjahid18@gmail.com';
 
   static const List<String> prayerOrder = <String>[
     'Fajr',

@@ -16,6 +16,7 @@ import 'package:azan_app/core/services/prayer_service.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_reader_preferences.dart';
 import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
@@ -53,6 +54,8 @@ class AppController extends ChangeNotifier {
   Map<String, dynamic> _prayerTracker = <String, dynamic>{};
   List<QuranBookmark> _quranBookmarks = <QuranBookmark>[];
   QuranReadPosition? _quranLastRead;
+  QuranReaderPreferences _quranReaderPreferences =
+      QuranReaderPreferences.defaults();
   Map<String, dynamic> _azkarTracker = <String, dynamic>{};
 
   bool _isLoading = true;
@@ -77,6 +80,7 @@ class AppController extends ChangeNotifier {
   List<QuranBookmark> get quranBookmarks =>
       List<QuranBookmark>.unmodifiable(_quranBookmarks);
   QuranReadPosition? get quranLastRead => _quranLastRead;
+  QuranReaderPreferences get quranReaderPreferences => _quranReaderPreferences;
 
   Future<void> initialize() async {
     try {
@@ -93,6 +97,7 @@ class AppController extends ChangeNotifier {
       _prayerTracker = _hiveService.loadPrayerTracker();
       _quranBookmarks = _hiveService.loadQuranBookmarks();
       _quranLastRead = _hiveService.loadQuranLastRead();
+      _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
       _azkarTracker = _hiveService.loadAzkarTracker();
 
       if (_location == null) {
@@ -275,6 +280,14 @@ class AppController extends ChangeNotifier {
       ayahNumber: ayahNumber,
     );
     await _hiveService.saveQuranLastRead(_quranLastRead!);
+    notifyListeners();
+  }
+
+  Future<void> setQuranReaderPreferences(
+    QuranReaderPreferences preferences,
+  ) async {
+    _quranReaderPreferences = preferences;
+    await _hiveService.saveQuranReaderPreferences(preferences);
     notifyListeners();
   }
 
@@ -526,6 +539,7 @@ class AppController extends ChangeNotifier {
     _prayerTracker = _hiveService.loadPrayerTracker();
     _quranBookmarks = _hiveService.loadQuranBookmarks();
     _quranLastRead = _hiveService.loadQuranLastRead();
+    _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
     _azkarTracker = _hiveService.loadAzkarTracker();
     _dailyContent = await _dailyContentService.getContentForDate(
       DateTime.now(),

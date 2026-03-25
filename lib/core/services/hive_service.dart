@@ -2,6 +2,7 @@ import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/models/app_location.dart';
 import 'package:azan_app/core/models/app_settings.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
+import 'package:azan_app/features/quran/data/models/quran_reader_preferences.dart';
 import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -91,6 +92,23 @@ class HiveService {
     await _box.put(AppConstants.quranLastReadStorageKey, position.toMap());
   }
 
+  QuranReaderPreferences loadQuranReaderPreferences() {
+    final stored = _box.get(AppConstants.quranReaderPrefsStorageKey);
+    if (stored is Map) {
+      return QuranReaderPreferences.fromMap(Map<String, dynamic>.from(stored));
+    }
+    return QuranReaderPreferences.defaults();
+  }
+
+  Future<void> saveQuranReaderPreferences(
+    QuranReaderPreferences preferences,
+  ) async {
+    await _box.put(
+      AppConstants.quranReaderPrefsStorageKey,
+      preferences.toMap(),
+    );
+  }
+
   Map<String, dynamic> loadAzkarTracker() {
     final stored = _box.get(AppConstants.azkarTrackerStorageKey);
     if (stored is Map) {
@@ -120,6 +138,9 @@ class HiveService {
       AppConstants.quranLastReadStorageKey: _box.get(
         AppConstants.quranLastReadStorageKey,
       ),
+      AppConstants.quranReaderPrefsStorageKey:
+          _box.get(AppConstants.quranReaderPrefsStorageKey) ??
+          <String, dynamic>{},
       AppConstants.azkarTrackerStorageKey:
           _box.get(AppConstants.azkarTrackerStorageKey) ?? <String, dynamic>{},
     };
@@ -153,6 +174,10 @@ class HiveService {
     await _box.put(
       AppConstants.quranLastReadStorageKey,
       backup[AppConstants.quranLastReadStorageKey],
+    );
+    await _box.put(
+      AppConstants.quranReaderPrefsStorageKey,
+      backup[AppConstants.quranReaderPrefsStorageKey] ?? <String, dynamic>{},
     );
     await _box.put(
       AppConstants.azkarTrackerStorageKey,

@@ -27,6 +27,24 @@ class QuranAudioService {
     await _player.play();
   }
 
+  Future<void> preCacheAyah({
+    required int surahNumber,
+    required int ayahNumber,
+    required QuranReciter reciter,
+  }) async {
+    if (ayahNumber < 1) return;
+    final url = _audioUrl(
+      reciterDirectory: reciter.directory,
+      surahNumber: surahNumber,
+      ayahNumber: ayahNumber,
+    );
+    try {
+      await _cacheManager.getSingleFile(url);
+    } catch (_) {
+      // Best effort pre-cache only.
+    }
+  }
+
   Future<void> togglePlayPause() async {
     if (_player.playing) {
       await _player.pause();

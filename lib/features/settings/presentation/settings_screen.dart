@@ -1,3 +1,4 @@
+import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/localization/app_language.dart';
@@ -9,6 +10,7 @@ import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -21,12 +23,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _cityController = TextEditingController();
+  final _suggestionController = TextEditingController();
 
   @override
   void dispose() {
     _latitudeController.dispose();
     _longitudeController.dispose();
     _cityController.dispose();
+    _suggestionController.dispose();
     super.dispose();
   }
 
@@ -131,6 +135,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: 16),
+        _buildQaAndFeedbackSection(context, l10n),
         const SizedBox(height: 16),
         _SectionTitle(
           title: l10n.tr('notifications'),
@@ -362,10 +368,191 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildQaAndFeedbackSection(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    return Column(
+      children: <Widget>[
+        _SectionTitle(
+          title: l10n.tr('helpQa'),
+          subtitle: l10n.tr('helpQaSub'),
+          icon: Icons.help_center_rounded,
+        ),
+        const SizedBox(height: 8),
+        AppSurfaceCard(
+          child: Column(
+            children: <Widget>[
+              _FaqTile(
+                question: l10n.tr('faqQiblaQuestion'),
+                answer: l10n.tr('faqQiblaAnswer'),
+              ),
+              _FaqTile(
+                question: l10n.tr('faqLocationQuestion'),
+                answer: l10n.tr('faqLocationAnswer'),
+              ),
+              _FaqTile(
+                question: l10n.tr('faqBackupQuestion'),
+                answer: l10n.tr('faqBackupAnswer'),
+              ),
+              _FaqTile(
+                question: l10n.tr('faqAudioQuestion'),
+                answer: l10n.tr('faqAudioAnswer'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        _SectionTitle(
+          title: l10n.tr('developerFeedback'),
+          subtitle: l10n.tr('developerFeedbackSub'),
+          icon: Icons.chat_rounded,
+        ),
+        const SizedBox(height: 8),
+        AppSurfaceCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                l10n.tr('developerFeedbackHint'),
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                AppConstants.developerSupportEmail,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _openSuggestionSheet,
+                  icon: const Icon(Icons.send_rounded),
+                  label: Text(l10n.tr('sendMessage')),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openSuggestionSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+        final l10n = context.l10n;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomInset),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                l10n.tr('sendSuggestionTitle'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _suggestionController,
+                maxLines: 5,
+                maxLength: 1000,
+                decoration: InputDecoration(
+                  hintText: l10n.tr('sendSuggestionHint'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final navigator = Navigator.of(context);
+                    final sent = await _sendSuggestion(
+                      _suggestionController.text,
+                    );
+                    if (!mounted) return;
+                    if (sent) {
+                      _suggestionController.clear();
+                      navigator.pop();
+                    }
+                  },
+                  icon: const Icon(Icons.mark_email_read_rounded),
+                  label: Text(l10n.tr('sendMessage')),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<bool> _sendSuggestion(String message) async {
+    final l10n = context.l10n;
+    final trimmed = message.trim();
+    if (trimmed.isEmpty) {
+      _showSnack(l10n.tr('suggestionEmpty'));
+      return false;
+    }
+
+    final uri = Uri(
+      scheme: 'mailto',
+      path: AppConstants.developerSupportEmail,
+      queryParameters: <String, String>{
+        'subject': l10n.tr('suggestionEmailSubject'),
+        'body': trimmed,
+      },
+    );
+
+    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!launched) {
+      _showSnack(l10n.tr('openEmailFailed'));
+      return false;
+    }
+    _showSnack(l10n.tr('suggestionSentPrompt'));
+    return true;
+  }
+
   void _showSnack(String message) {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class _FaqTile extends StatelessWidget {
+  const _FaqTile({required this.question, required this.answer});
+
+  final String question;
+  final String answer;
+
+  @override
+  Widget build(BuildContext context) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        tilePadding: EdgeInsets.zero,
+        childrenPadding: const EdgeInsets.only(bottom: 10),
+        title: Text(
+          question,
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+        ),
+        children: <Widget>[
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(answer, style: Theme.of(context).textTheme.bodyMedium),
+          ),
+        ],
+      ),
+    );
   }
 }
 

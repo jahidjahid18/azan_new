@@ -2,54 +2,65 @@ import 'package:azan_app/features/quran/data/models/arabic_font_preset.dart';
 
 class QuranReaderPreferences {
   const QuranReaderPreferences({
-    required this.fontSize,
+    required this.arabicFontSize,
+    required this.translationFontSize,
     required this.lineHeight,
-    required this.nightMode,
+    required this.showTranslation,
     required this.fontPreset,
   });
 
-  final double fontSize;
+  final double arabicFontSize;
+  final double translationFontSize;
   final double lineHeight;
-  final bool nightMode;
+  final bool showTranslation;
   final ArabicFontPreset fontPreset;
 
   factory QuranReaderPreferences.defaults() {
     return const QuranReaderPreferences(
-      fontSize: 30,
+      arabicFontSize: 30,
+      translationFontSize: 15,
       lineHeight: 1.8,
-      nightMode: false,
+      showTranslation: true,
       fontPreset: ArabicFontPreset.uthmani,
     );
   }
 
   QuranReaderPreferences copyWith({
-    double? fontSize,
+    double? arabicFontSize,
+    double? translationFontSize,
     double? lineHeight,
-    bool? nightMode,
+    bool? showTranslation,
     ArabicFontPreset? fontPreset,
   }) {
     return QuranReaderPreferences(
-      fontSize: fontSize ?? this.fontSize,
+      arabicFontSize: arabicFontSize ?? this.arabicFontSize,
+      translationFontSize: translationFontSize ?? this.translationFontSize,
       lineHeight: lineHeight ?? this.lineHeight,
-      nightMode: nightMode ?? this.nightMode,
+      showTranslation: showTranslation ?? this.showTranslation,
       fontPreset: fontPreset ?? this.fontPreset,
     );
   }
 
   factory QuranReaderPreferences.fromMap(Map<String, dynamic> map) {
     return QuranReaderPreferences(
-      fontSize: (map['font_size'] as num?)?.toDouble() ?? 30,
+      arabicFontSize:
+          (map['arabic_font_size'] as num?)?.toDouble() ??
+          (map['font_size'] as num?)?.toDouble() ??
+          30,
+      translationFontSize:
+          (map['translation_font_size'] as num?)?.toDouble() ?? 15,
       lineHeight: (map['line_height'] as num?)?.toDouble() ?? 1.8,
-      nightMode: map['night_mode'] as bool? ?? false,
+      showTranslation: map['show_translation'] as bool? ?? true,
       fontPreset: ArabicFontPresetX.fromKey(map['font_preset'] as String?),
     );
   }
 
   Map<String, dynamic> toMap() {
     return <String, dynamic>{
-      'font_size': fontSize,
+      'arabic_font_size': arabicFontSize,
+      'translation_font_size': translationFontSize,
       'line_height': lineHeight,
-      'night_mode': nightMode,
+      'show_translation': showTranslation,
       'font_preset': fontPreset.key,
     };
   }
