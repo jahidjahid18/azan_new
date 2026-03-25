@@ -15,7 +15,7 @@ class TasbihScreen extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 110 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomPadding),
       children: <Widget>[
         Text(
           l10n.tr('tasbihCounter'),

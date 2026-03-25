@@ -68,7 +68,7 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
         final todayAyah = _dailyAyah(surahs);
 
         return ListView(
-          padding: EdgeInsets.fromLTRB(14, 14, 14, 110 + bottomPadding),
+          padding: EdgeInsets.fromLTRB(14, 14, 14, 24 + bottomPadding),
           children: <Widget>[
             _HeaderCard(
               language: language,

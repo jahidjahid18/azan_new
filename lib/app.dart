@@ -12,6 +12,7 @@ import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 class AzanApp extends StatelessWidget {
@@ -60,6 +61,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
     final showBanner = _currentTab == 0 || _currentTab == 4;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
+    final currentTime = DateFormat('hh:mm:ss a').format(now);
     final titles = <String>[
       l10n.tr('titlePrayerTimes'),
       l10n.tr('titleQuran'),
@@ -78,7 +80,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
             Text(titles[_currentTab]),
             const SizedBox(height: 2),
             Text(
-              '${l10n.tr('hijriDate')}: $hijriDate',
+              '${l10n.tr('hijriDate')}: $hijriDate  |  $currentTime',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.secondary,
                 fontWeight: FontWeight.w600,
@@ -90,6 +92,8 @@ class _MainScaffoldState extends State<_MainScaffold> {
       body: AppGradientBackground(
         useAlternative: _currentTab == 1 || _currentTab == 3,
         child: SafeArea(
+          top: false,
+          bottom: false,
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 260),
             switchInCurve: Curves.easeOutCubic,

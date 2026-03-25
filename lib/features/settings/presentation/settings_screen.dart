@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 110 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomPadding),
       children: <Widget>[
         _SectionTitle(
           title: l10n.tr('location'),

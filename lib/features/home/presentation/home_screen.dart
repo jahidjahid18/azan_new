@@ -3,7 +3,6 @@ import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/theme/app_theme.dart';
-import 'package:azan_app/core/utils/duration_formatter.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/calendar/presentation/islamic_events_section.dart';
@@ -36,13 +35,12 @@ class HomeScreen extends StatelessWidget {
       onRefresh: () => context.read<AppController>().refreshLocationFromGps(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16, 12, 16, 110 + bottomPadding),
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomPadding),
         children: <Widget>[
           if (controller.location != null) ...<Widget>[
             _CityHeader(city: controller.location!.cityName),
             const SizedBox(height: 12),
             _NextPrayerCard(
-              now: controller.now,
               nextPrayer: controller.nextPrayer,
               countdown: controller.nextPrayerCountdown,
             ),
@@ -283,13 +281,8 @@ class _CityHeader extends StatelessWidget {
 }
 
 class _NextPrayerCard extends StatelessWidget {
-  const _NextPrayerCard({
-    required this.now,
-    required this.nextPrayer,
-    required this.countdown,
-  });
+  const _NextPrayerCard({required this.nextPrayer, required this.countdown});
 
-  final DateTime now;
   final PrayerInfo? nextPrayer;
   final Duration countdown;
 
@@ -297,10 +290,9 @@ class _NextPrayerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final prayerTimeFormat = DateFormat('hh:mm a');
-    final timeFormat = DateFormat('hh:mm:ss a');
     final scheme = Theme.of(context).colorScheme;
     final countdownLabel = l10n.tr('startsIn', <String, String>{
-      'duration': formatDuration(countdown),
+      'duration': _formatStableDuration(countdown),
     });
 
     return AnimatedContainer(
@@ -361,41 +353,43 @@ class _NextPrayerCard extends StatelessWidget {
                     ).textTheme.titleLarge?.copyWith(color: Colors.white),
                   ),
                 ),
-                Text(
-                  timeFormat.format(now),
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.85),
+                const SizedBox(width: 12),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 170),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppThemeColors.gold.withValues(alpha: 0.22),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    countdownLabel,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                    textAlign: TextAlign.right,
                   ),
                 ),
               ],
-            ),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppThemeColors.gold.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                transitionBuilder: (child, animation) =>
-                    FadeTransition(opacity: animation, child: child),
-                child: Text(
-                  countdownLabel,
-                  key: ValueKey<String>(countdownLabel),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatStableDuration(Duration duration) {
+    final safeDuration = duration.isNegative ? Duration.zero : duration;
+    final hours = safeDuration.inHours;
+    final minutes = safeDuration.inMinutes.remainder(60);
+    final seconds = safeDuration.inSeconds.remainder(60);
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
 

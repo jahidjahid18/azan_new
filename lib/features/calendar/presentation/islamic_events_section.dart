@@ -1,5 +1,4 @@
 import 'package:azan_app/core/localization/app_localizations.dart';
-import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -35,17 +34,8 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
         .where((event) => event.showInChips)
         .take(_maxChipEvents)
         .toList(growable: false);
-    final chipEventKeys = chipEvents
-        .map((event) => _eventKey(event))
-        .toSet();
-    final listEvents = filteredEvents
-        .where(
-          (event) =>
-              event.showInMainList && !chipEventKeys.contains(_eventKey(event)),
-        )
-        .toList(growable: false);
 
-    if (chipEvents.isEmpty && listEvents.isEmpty) {
+    if (chipEvents.isEmpty) {
       return const SizedBox.shrink();
     }
 
@@ -71,52 +61,22 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
         ),
         const SizedBox(height: 8),
         if (chipEvents.isNotEmpty) ...<Widget>[
-          SizedBox(
-            height: 52,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: chipEvents
-                    .asMap()
-                    .entries
-                    .map((entry) {
-                      final index = entry.key;
-                      final event = entry.value;
-                      return Padding(
-                        padding: EdgeInsets.only(
-                          right: index == chipEvents.length - 1 ? 0 : 8,
-                        ),
-                        child: _EventChip(
-                          title: _eventLabel(context, event.type),
-                          days: event.eventDate.difference(today).inDays,
-                          color: event.chipColor,
-                        ),
-                      );
-                    })
-                    .toList(growable: false),
+          ...chipEvents.asMap().entries.map((entry) {
+            final index = entry.key;
+            final event = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: index == chipEvents.length - 1 ? 0 : 8,
               ),
-            ),
-          ),
+              child: _EventChip(
+                title: _eventLabel(context, event.type),
+                days: event.eventDate.difference(today).inDays,
+                color: event.chipColor,
+              ),
+            );
+          }),
           const SizedBox(height: 12),
         ],
-        if (listEvents.isNotEmpty)
-          AppSurfaceCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                ...listEvents.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final event = entry.value;
-                  final days = event.eventDate.difference(today).inDays;
-                  return _EventListRow(
-                    title: _eventLabel(context, event.type),
-                    days: days,
-                    isLast: index == listEvents.length - 1,
-                  );
-                }),
-              ],
-            ),
-          ),
       ],
     );
   }
@@ -128,10 +88,6 @@ class _IslamicEventsSectionState extends State<IslamicEventsSection> {
     _cachedDate = today;
     _cachedEvents = _IslamicEventsCalculator.calculate(today);
     return _cachedEvents;
-  }
-
-  String _eventKey(IslamicEventModel event) {
-    return '${event.type.name}-${event.eventDate.toIso8601String()}';
   }
 
   String _eventLabel(BuildContext context, IslamicEventType type) {
@@ -318,22 +274,22 @@ class _EventChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return Container(
-      constraints: const BoxConstraints(minWidth: 120),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(
-            title,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+          Expanded(
+            child: Text(
+              title,
+              softWrap: true,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
           ),
           const SizedBox(width: 8),
           Text(
@@ -341,56 +297,6 @@ class _EventChip extends StatelessWidget {
             style: Theme.of(
               context,
             ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _EventListRow extends StatelessWidget {
-  const _EventListRow({
-    required this.title,
-    required this.days,
-    this.isLast = false,
-  });
-
-  final String title;
-  final int days;
-  final bool isLast;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: isLast
-              ? BorderSide.none
-              : BorderSide(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.outlineVariant.withValues(alpha: 0.35),
-                ),
-        ),
-      ),
-      child: Row(
-        children: <Widget>[
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ),
-          Text(
-            l10n.tr('eventInDays', <String, String>{'days': '$days'}),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.secondary,
-              fontWeight: FontWeight.w700,
-            ),
           ),
         ],
       ),
