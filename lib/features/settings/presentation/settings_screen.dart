@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 110 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomPadding),
       children: <Widget>[
         _SectionTitle(
           title: l10n.tr('location'),
@@ -237,12 +237,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
         AppSurfaceCard(
           child: DropdownButtonFormField<AppLanguage>(
             initialValue: controller.appLanguage,
+            isExpanded: true,
             decoration: InputDecoration(labelText: l10n.tr('appLanguage')),
-            items: AppLanguage.values
+            items: appLanguagesAlphabetical
                 .map(
                   (language) => DropdownMenuItem<AppLanguage>(
                     value: language,
-                    child: Text(language.nativeName),
+                    child: Row(
+                      children: <Widget>[
+                        Expanded(child: Text(language.englishName)),
+                        const SizedBox(width: 12),
+                        Text(language.nativeName),
+                      ],
+                    ),
                   ),
                 )
                 .toList(),

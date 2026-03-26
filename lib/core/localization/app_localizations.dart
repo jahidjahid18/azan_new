@@ -1,14 +1,18 @@
+import 'dart:convert';
+
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 class AppLocalizations {
-  const AppLocalizations(this.locale);
+  const AppLocalizations(this.locale, this._activeValues);
 
   final Locale locale;
+  final Map<String, String> _activeValues;
 
   static const LocalizationsDelegate<AppLocalizations> delegate =
       _AppLocalizationsDelegate();
@@ -29,6 +33,47 @@ class AppLocalizations {
     Locale('ur'),
     Locale('hi'),
     Locale('tr'),
+    Locale('bn'),
+    Locale('fa'),
+    Locale('fr'),
+    Locale('de'),
+    Locale('es'),
+    Locale('ru'),
+    Locale('it'),
+    Locale('pt'),
+    Locale('nl'),
+    Locale('zh'),
+    Locale('ja'),
+    Locale('ko'),
+    Locale('az'),
+    Locale('bs'),
+    Locale('cs'),
+    Locale('pl'),
+    Locale('ro'),
+    Locale('sv'),
+    Locale('sq'),
+    Locale('uz'),
+    Locale('tt'),
+    Locale('ug'),
+    Locale('am'),
+    Locale('ba'),
+    Locale('ber'),
+    Locale('bg'),
+    Locale('ce'),
+    Locale('dv'),
+    Locale('ha'),
+    Locale('ku'),
+    Locale('ml'),
+    Locale('my'),
+    Locale('no'),
+    Locale('ps'),
+    Locale('sd'),
+    Locale('si'),
+    Locale('so'),
+    Locale('sw'),
+    Locale('ta'),
+    Locale('tg'),
+    Locale('th'),
   ];
 
   static AppLocalizations of(BuildContext context) {
@@ -37,15 +82,16 @@ class AppLocalizations {
       AppLocalizations,
     );
     if (localization == null) {
-      return const AppLocalizations(Locale('en'));
+      return AppLocalizations(
+        const Locale('en'),
+        _localizedValues['en'] ?? <String, String>{},
+      );
     }
     return localization;
   }
 
   String tr(String key, [Map<String, String> params = const {}]) {
-    final languageCode = locale.languageCode;
-    final localized = _localizedValues[languageCode]?[key];
-    var value = localized ?? _localizedValues['en']![key] ?? key;
+    var value = _activeValues[key] ?? key;
     params.forEach((paramKey, paramValue) {
       value = value.replaceAll('{$paramKey}', paramValue);
     });
@@ -54,12 +100,15 @@ class AppLocalizations {
 
   String prayerName(String prayerName) {
     final key = switch (prayerName.toLowerCase()) {
+      'imsak' => 'prayerImsak',
       'fajr' => 'prayerFajr',
       'sunrise' => 'prayerSunrise',
       'dhuhr' => 'prayerDhuhr',
       'asr' => 'prayerAsr',
       'maghrib' => 'prayerMaghrib',
       'isha' => 'prayerIsha',
+      'qiyam' => 'prayerQiyam',
+      'midnight' => 'prayerMidnight',
       _ => '',
     };
     if (key.isEmpty) return prayerName;
@@ -114,6 +163,35 @@ class AppLocalizations {
   }
 }
 
+class _AssetLocalizationService {
+  static final Map<String, Map<String, String>> _memoryCache =
+      <String, Map<String, String>>{};
+
+  static Future<Map<String, String>> load(String languageCode) async {
+    if (_memoryCache[languageCode] != null) {
+      return _memoryCache[languageCode]!;
+    }
+    try {
+      final raw = await rootBundle.loadString(
+        'assets/data/app_ui_locales/$languageCode.json',
+      );
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) {
+        _memoryCache[languageCode] = <String, String>{};
+        return _memoryCache[languageCode]!;
+      }
+      final parsed = decoded.map(
+        (key, value) => MapEntry(key, value?.toString() ?? ''),
+      );
+      _memoryCache[languageCode] = parsed;
+      return parsed;
+    } catch (_) {
+      _memoryCache[languageCode] = <String, String>{};
+      return _memoryCache[languageCode]!;
+    }
+  }
+}
+
 class _AppLocalizationsDelegate
     extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
@@ -124,8 +202,18 @@ class _AppLocalizationsDelegate
   );
 
   @override
-  Future<AppLocalizations> load(Locale locale) {
-    return Future<AppLocalizations>.value(AppLocalizations(locale));
+  Future<AppLocalizations> load(Locale locale) async {
+    final englishValues = _localizedValues['en'] ?? <String, String>{};
+    final staticValues =
+        _localizedValues[locale.languageCode] ?? <String, String>{};
+    final assetValues = await _AssetLocalizationService.load(
+      locale.languageCode,
+    );
+    return AppLocalizations(locale, <String, String>{
+      ...englishValues,
+      ...staticValues,
+      ...assetValues,
+    });
   }
 
   @override
@@ -155,6 +243,11 @@ _localizedValues = <String, Map<String, String>>{
     'startsIn': 'Starts in {duration}',
     'prayerTimes': 'Prayer Times',
     'copyTodaySchedule': 'Copy today schedule',
+    'prayerDisplayFilter': 'Prayer display',
+    'prayerDisplayFilterSub': 'Choose which prayer times to show',
+    'save': 'Save',
+    'mandatoryPrayersRequired':
+        'At least one mandatory prayer must remain selected.',
     'scheduleCopied': 'Schedule copied',
     'obligatoryPrayer': 'Obligatory prayer',
     'additionalPrayer': 'Additional',
@@ -168,6 +261,26 @@ _localizedValues = <String, Map<String, String>>{
     'hijriDate': 'Hijri Date',
     'ramadanStarted': 'Ramadan has started',
     'daysUntilRamadan': '{days} day(s) until Ramadan',
+    'upcomingIslamicEvents': 'Upcoming Islamic Events in 6 Months',
+    'upcomingEvens': 'Upcoming Evens',
+    'filterEvents': 'Filter Events',
+    'eventTypes': 'Event Types',
+    'selectAtLeastOneEventType': 'Select at least one event type.',
+    'daysShort': 'days',
+    'apply': 'Apply',
+    'cancel': 'Cancel',
+    'ramadanLabel': 'Ramadan',
+    'eidAlFitrLabel': 'Eid al-Fitr',
+    'eidAlAdhaLabel': 'Eid al-Adha',
+    'islamicNewYearLabel': 'Islamic New Year',
+    'ashuraLabel': 'Ashura',
+    'mawlidLabel': "Prophet's Birthday",
+    'israMirajLabel': "Isra and Mi'raj",
+    'midShabanLabel': "Mid-Sha'ban",
+    'dayOfArafahLabel': 'Day of Arafah',
+    'tashreeqDaysLabel': 'Days of Tashreeq',
+    'jumuahLabel': "Jumu'ah",
+    'eventInDays': '{days} day(s)',
     'tasbihCounter': 'Tasbih Counter',
     'tasbihSubtitle':
         'Tap the dhikr button to count. Your progress is saved automatically.',
@@ -272,7 +385,8 @@ _localizedValues = <String, Map<String, String>>{
     'quranAudioSubtitle': 'Open any surah and start recitation with ayah sync',
     'quranDailyAyahSubtitle': 'A new ayah every day for reflection',
     'quranSearchSubtitle': 'Search by surah name, ayah number, or keyword',
-    'quranReadingSettingsSubtitle': 'Adjust font size and translation display',
+    'quranReadingSettingsSubtitle':
+        'Adjust font size and transliteration/translation display',
     'searchSurahAyah': 'Search surah or ayah (Arabic/translation)',
     'failedLoadQuran': 'Failed to load Quran data. Please restart the app.',
     'resumeReading': 'Resume Reading',
@@ -286,6 +400,8 @@ _localizedValues = <String, Map<String, String>>{
     'previous': 'Previous',
     'next': 'Next',
     'readerSettings': 'Reader Settings',
+    'showTransliteration': 'Show transliteration',
+    'hideTransliteration': 'Hide transliteration',
     'showTranslation': 'Show translation',
     'hideTranslation': 'Hide translation',
     'arabicFontSize': 'Arabic font size: {size}',
@@ -336,11 +452,14 @@ _localizedValues = <String, Map<String, String>>{
     'themeStyleSunset': 'Sunset',
     'themeStyleMonochrome': 'Monochrome',
     'prayerFajr': 'Fajr',
+    'prayerImsak': 'Imsak',
     'prayerSunrise': 'Sunrise',
     'prayerDhuhr': 'Dhuhr',
     'prayerAsr': 'Asr',
     'prayerMaghrib': 'Maghrib',
     'prayerIsha': 'Isha',
+    'prayerQiyam': 'Qiyam',
+    'prayerMidnight': 'Midnight',
   },
   'ar': <String, String>{
     'titlePrayerTimes': 'مواقيت الصلاة',

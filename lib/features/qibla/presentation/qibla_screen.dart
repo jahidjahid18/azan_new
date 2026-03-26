@@ -173,7 +173,7 @@ class _CompassBody extends StatelessWidget {
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
     final l10n = context.l10n;
     return ListView(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, 100 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + bottomPadding),
       children: <Widget>[
         Text(
           l10n.tr('qiblaCompass'),

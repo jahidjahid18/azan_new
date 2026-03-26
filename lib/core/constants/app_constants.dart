@@ -25,4 +25,27 @@ class AppConstants {
     'Maghrib',
     'Isha',
   ];
+
+  static const List<String> mandatoryPrayerNames = <String>[
+    'Fajr',
+    'Dhuhr',
+    'Asr',
+    'Maghrib',
+    'Isha',
+  ];
+
+  static const List<String> optionalPrayerNames = <String>[
+    'Imsak',
+    'Sunrise',
+    'Qiyam',
+    'Midnight',
+  ];
+
+  static const List<String> defaultVisiblePrayerNames = <String>[
+    'Fajr',
+    'Dhuhr',
+    'Asr',
+    'Maghrib',
+    'Isha',
+  ];
 }

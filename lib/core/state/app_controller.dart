@@ -77,6 +77,7 @@ class AppController extends ChangeNotifier {
   ThemeStyleOption get themeStyle => _settings.themeStyle;
   AppLanguage get appLanguage => _settings.appLanguage;
   Locale get locale => _settings.appLanguage.locale;
+  List<String> get visiblePrayerNames => _settings.visiblePrayerNames;
   List<QuranBookmark> get quranBookmarks =>
       List<QuranBookmark>.unmodifiable(_quranBookmarks);
   QuranReadPosition? get quranLastRead => _quranLastRead;
@@ -198,6 +199,23 @@ class AppController extends ChangeNotifier {
 
   Future<void> setAppLanguage(AppLanguage language) async {
     _settings = _settings.copyWith(appLanguage: language);
+    await _hiveService.saveSettings(_settings);
+    notifyListeners();
+  }
+
+  Future<void> setVisiblePrayerNames(List<String> names) async {
+    final valid = names
+        .where(
+          (name) =>
+              AppConstants.mandatoryPrayerNames.contains(name) ||
+              AppConstants.optionalPrayerNames.contains(name),
+        )
+        .toSet()
+        .toList();
+    if (valid.isEmpty) {
+      return;
+    }
+    _settings = _settings.copyWith(visiblePrayerNames: valid);
     await _hiveService.saveSettings(_settings);
     notifyListeners();
   }
