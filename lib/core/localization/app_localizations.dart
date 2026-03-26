@@ -153,11 +153,12 @@ class AppLocalizations {
 
   String themeStyleLabel(ThemeStyleOption option) {
     final key = switch (option) {
-      ThemeStyleOption.muslimPro => 'themeStyleMuslimPro',
-      ThemeStyleOption.glassBlue => 'themeStyleGlassBlue',
       ThemeStyleOption.emerald => 'themeStyleEmerald',
+      ThemeStyleOption.midnightDark => 'themeStyleMidnightDark',
+      ThemeStyleOption.ocean => 'themeStyleOcean',
       ThemeStyleOption.sunset => 'themeStyleSunset',
-      ThemeStyleOption.monochrome => 'themeStyleMonochrome',
+      ThemeStyleOption.glass => 'themeStyleGlass',
+      ThemeStyleOption.softUi => 'themeStyleSoftUi',
     };
     return tr(key);
   }
@@ -485,11 +486,12 @@ _localizedValues = <String, Map<String, String>>{
     'themeModeSystem': 'System',
     'themeModeLight': 'Light',
     'themeModeDark': 'Dark',
-    'themeStyleMuslimPro': 'Classic',
-    'themeStyleGlassBlue': 'Glassy Blue',
     'themeStyleEmerald': 'Emerald',
+    'themeStyleMidnightDark': 'Midnight Dark',
+    'themeStyleOcean': 'Ocean',
     'themeStyleSunset': 'Sunset',
-    'themeStyleMonochrome': 'Monochrome',
+    'themeStyleGlass': 'Glass',
+    'themeStyleSoftUi': 'Soft UI',
     'prayerFajr': 'Fajr',
     'prayerImsak': 'Imsak',
     'prayerSunrise': 'Sunrise',

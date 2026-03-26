@@ -110,10 +110,6 @@ class AppController extends ChangeNotifier {
       }
 
       _settings = _hiveService.loadSettings();
-      if (_settings.themeStyle == ThemeStyleOption.muslimPro) {
-        _settings = _settings.copyWith(themeStyle: ThemeStyleOption.sunset);
-        await _hiveService.saveSettings(_settings);
-      }
       await _migrateDefaultVisiblePrayersIfNeeded();
       final hiveLocation = _hiveService.loadLocation();
       _location = hiveLocation ?? await _locationSqliteService.loadLocation();

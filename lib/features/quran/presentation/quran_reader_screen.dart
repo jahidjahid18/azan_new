@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
-import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/audio/models/quran_reciter.dart';
 import 'package:azan_app/features/audio/presentation/quran_full_player_screen.dart';
@@ -851,7 +850,11 @@ class _ReaderTopPanel extends StatelessWidget {
           colors: <Color>[Color(0xFF0C1C36), Color(0xFF163259)],
         ),
         border: Border(
-          bottom: BorderSide(color: AppThemeColors.gold.withValues(alpha: 0.4)),
+          bottom: BorderSide(
+            color: Theme.of(
+              context,
+            ).colorScheme.secondary.withValues(alpha: 0.4),
+          ),
         ),
       ),
       child: Column(
@@ -874,7 +877,9 @@ class _ReaderTopPanel extends StatelessWidget {
               Icon(
                 Icons.star_rounded,
                 size: 16,
-                color: AppThemeColors.gold.withValues(alpha: 0.95),
+                color: Theme.of(
+                  context,
+                ).colorScheme.secondary.withValues(alpha: 0.95),
               ),
               const SizedBox(width: 6),
               Text(

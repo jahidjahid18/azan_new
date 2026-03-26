@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:azan_app/core/localization/app_language.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
-import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/quran/data/models/quran_surah.dart';
 import 'package:azan_app/features/quran/data/quran_repository.dart';
 import 'package:azan_app/features/quran/presentation/quran_reader_screen.dart';
 import 'package:azan_app/features/quran/presentation/quran_theme.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -58,6 +58,9 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
     final appController = context.watch<AppController>();
     final l10n = context.l10n;
     if (_loadedLanguage != appController.appLanguage) {
@@ -109,7 +112,7 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
           return ListView(
             padding: EdgeInsets.fromLTRB(12, 12, 12, 100 + bottomPadding),
             children: <Widget>[
-              _LibraryHeader(mode: widget.mode),
+              _LibraryHeader(mode: widget.mode, style: style),
               const SizedBox(height: 12),
               TextField(
                 controller: _searchController,
@@ -536,9 +539,10 @@ class _QuranSurahListScreenState extends State<QuranSurahListScreen> {
 }
 
 class _LibraryHeader extends StatelessWidget {
-  const _LibraryHeader({required this.mode});
+  const _LibraryHeader({required this.mode, required this.style});
 
   final QuranLibraryMode mode;
+  final ThemeStyleOption style;
 
   @override
   Widget build(BuildContext context) {
@@ -551,9 +555,13 @@ class _LibraryHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: QuranUiTheme.panelGradient,
+        gradient: QuranUiTheme.panelGradient(style),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppThemeColors.gold.withValues(alpha: 0.45)),
+        border: Border.all(
+          color: Theme.of(
+            context,
+          ).colorScheme.secondary.withValues(alpha: 0.45),
+        ),
       ),
       child: Row(
         children: <Widget>[
@@ -561,14 +569,16 @@ class _LibraryHeader extends StatelessWidget {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppThemeColors.gold.withValues(alpha: 0.22),
+              color: Theme.of(
+                context,
+              ).colorScheme.secondary.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(switch (mode) {
               QuranLibraryMode.translation => Icons.menu_book_rounded,
               QuranLibraryMode.arabicOnly => Icons.translate_rounded,
               QuranLibraryMode.audio => Icons.graphic_eq_rounded,
-            }, color: AppThemeColors.gold),
+            }, color: Theme.of(context).colorScheme.secondary),
           ),
           const SizedBox(width: 12),
           Expanded(

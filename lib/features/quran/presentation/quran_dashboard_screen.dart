@@ -9,6 +9,7 @@ import 'package:azan_app/features/quran/presentation/quran_reader_screen.dart';
 import 'package:azan_app/features/quran/presentation/quran_surah_list_screen.dart';
 import 'package:azan_app/features/quran/presentation/quran_theme.dart';
 import 'package:azan_app/features/quran/presentation/widgets/quran_option_card.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -197,7 +198,10 @@ class _QuranDashboardScreenState extends State<QuranDashboardScreen> {
           ),
           child: Container(
             decoration: BoxDecoration(
-              gradient: QuranUiTheme.softBackground,
+              gradient: QuranUiTheme.softBackground(
+                context,
+                context.read<AppController>().themeStyle,
+              ),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Padding(
@@ -428,14 +432,17 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: QuranUiTheme.heroGradient,
+        gradient: QuranUiTheme.heroGradient(style),
         borderRadius: BorderRadius.circular(22),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: QuranUiTheme.accentDark.withValues(alpha: 0.28),
+            color: QuranUiTheme.accentDark(context).withValues(alpha: 0.28),
             blurRadius: 28,
             offset: const Offset(0, 12),
           ),
@@ -508,6 +515,9 @@ class _ContinueReadingCardState extends State<_ContinueReadingCard> {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<AppController>();
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
     final lastRead = controller.quranLastRead;
     final hasLastRead = lastRead != null;
     final surahIndex = hasLastRead
@@ -538,7 +548,7 @@ class _ContinueReadingCardState extends State<_ContinueReadingCard> {
           onHighlightChanged: (value) => setState(() => _pressed = value),
           child: Ink(
             decoration: BoxDecoration(
-              gradient: QuranUiTheme.panelGradient,
+              gradient: QuranUiTheme.panelGradient(style),
               borderRadius: BorderRadius.circular(18),
             ),
             padding: const EdgeInsets.all(16),

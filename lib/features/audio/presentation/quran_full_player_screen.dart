@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:azan_app/core/localization/app_localizations.dart';
-import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/features/audio/models/quran_reciter.dart';
 import 'package:flutter/material.dart';
 
@@ -60,16 +59,20 @@ class _QuranFullPlayerScreenState extends State<QuranFullPlayerScreen> {
     final isPlaying = widget.isPlaying();
     final isLoading = widget.isLoading();
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.tr('quranPlayer'))),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: <Color>[
-              Color(0xFF051A14),
-              Color(0xFF0A3025),
-              Color(0xFF0F4737),
+              isDark
+                  ? scheme.primary.withValues(alpha: 0.3)
+                  : scheme.primary.withValues(alpha: 0.14),
+              isDark ? scheme.surface : scheme.surface.withValues(alpha: 0.95),
+              isDark ? scheme.surface.withValues(alpha: 0.96) : scheme.surface,
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -80,26 +83,22 @@ class _QuranFullPlayerScreenState extends State<QuranFullPlayerScreen> {
           child: Column(
             children: <Widget>[
               const Spacer(),
-              Icon(
-                Icons.graphic_eq_rounded,
-                color: AppThemeColors.gold,
-                size: 90,
-              ),
+              Icon(Icons.graphic_eq_rounded, color: scheme.secondary, size: 90),
               const SizedBox(height: 18),
               Text(
                 widget.surahName(),
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
+                  color: scheme.onSurface,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 '${l10n.tr('ayah')} $currentAyah / ${widget.maxAyahNumber}',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(color: Colors.white70),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: scheme.onSurface.withValues(alpha: 0.72),
+                ),
               ),
               const SizedBox(height: 24),
               Container(
@@ -108,18 +107,18 @@ class _QuranFullPlayerScreenState extends State<QuranFullPlayerScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: scheme.primary.withValues(alpha: isDark ? 0.25 : 0.1),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: AppThemeColors.gold.withValues(alpha: 0.5),
+                    color: scheme.secondary.withValues(alpha: 0.5),
                   ),
                 ),
                 child: DropdownButton<QuranReciter>(
                   value: reciter,
-                  dropdownColor: const Color(0xFF0F4737),
+                  dropdownColor: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                   underline: const SizedBox.shrink(),
-                  style: const TextStyle(color: Colors.white),
+                  style: TextStyle(color: scheme.onSurface),
                   items: kQuranReciters
                       .map(
                         (item) => DropdownMenuItem<QuranReciter>(
@@ -163,7 +162,7 @@ class _QuranFullPlayerScreenState extends State<QuranFullPlayerScreen> {
                           },
                     style: FilledButton.styleFrom(
                       shape: const CircleBorder(),
-                      backgroundColor: AppThemeColors.emerald,
+                      backgroundColor: scheme.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.all(26),
                     ),

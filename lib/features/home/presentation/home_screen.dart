@@ -326,7 +326,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       decoration: BoxDecoration(
         gradient: AppGradients.primaryFor(style),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppThemeColors.gold.withValues(alpha: 0.45)),
+        border: Border.all(color: scheme.secondary.withValues(alpha: 0.45)),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: scheme.secondary.withValues(alpha: 0.3),
@@ -351,7 +351,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                 const Spacer(),
                 Icon(
                   Icons.nights_stay_rounded,
-                  color: AppThemeColors.gold.withValues(alpha: 0.95),
+                  color: scheme.secondary.withValues(alpha: 0.95),
                 ),
               ],
             ),
@@ -386,7 +386,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                     vertical: 10,
                   ),
                   decoration: BoxDecoration(
-                    color: AppThemeColors.gold.withValues(alpha: 0.22),
+                    color: scheme.secondary.withValues(alpha: 0.22),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(

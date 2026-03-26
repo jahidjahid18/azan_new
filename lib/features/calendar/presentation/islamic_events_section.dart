@@ -1,5 +1,4 @@
 import 'package:azan_app/core/localization/app_localizations.dart';
-import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -282,8 +281,8 @@ class _EventChip extends StatelessWidget {
         color: isDark ? color.withValues(alpha: 0.16) : color,
         border: Border.all(
           color: isDark
-              ? AppThemeColors.softGold.withValues(alpha: 0.24)
-              : AppThemeColors.deepGreen.withValues(alpha: 0.08),
+              ? Theme.of(context).colorScheme.secondary.withValues(alpha: 0.3)
+              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
         ),
         borderRadius: BorderRadius.circular(14),
       ),

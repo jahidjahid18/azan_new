@@ -48,7 +48,7 @@ class TasbihScreen extends StatelessWidget {
               Text(
                 'SubhanAllah',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppThemeColors.gold,
+                  color: Theme.of(context).colorScheme.secondary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -112,7 +112,7 @@ class _TapCircle extends StatelessWidget {
               colors: <Color>[const Color(0xFF10213A), scheme.secondary],
             ),
             border: Border.all(
-              color: AppThemeColors.gold.withValues(alpha: 0.75),
+              color: scheme.secondary.withValues(alpha: 0.75),
               width: 2,
             ),
             boxShadow: <BoxShadow>[

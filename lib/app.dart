@@ -12,6 +12,7 @@ import 'package:azan_app/features/quran/presentation/quran_dashboard_screen.dart
 import 'package:azan_app/features/settings/presentation/settings_screen.dart';
 import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 import 'package:intl/intl.dart';
@@ -30,6 +31,8 @@ class AzanApp extends StatelessWidget {
       theme: AppTheme.light(appController.themeStyle),
       darkTheme: AppTheme.dark(appController.themeStyle),
       themeMode: appController.themeMode.flutterThemeMode,
+      themeAnimationDuration: const Duration(milliseconds: 420),
+      themeAnimationCurve: Curves.easeInOutCubic,
       locale: appController.locale,
       supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -79,6 +82,10 @@ class _MainScaffoldState extends State<_MainScaffold> {
     final now = _headerNow;
     final media = MediaQuery.of(context);
     final l10n = context.l10n;
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
+    final scheme = Theme.of(context).colorScheme;
     final showBanner = _currentTab == 0 || _currentTab == 4;
     final todayDate = DateFormat('EEEE, d MMMM').format(now);
     final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
@@ -142,9 +149,11 @@ class _MainScaffoldState extends State<_MainScaffold> {
           if (showBanner) const BannerAdWidget(),
           Container(
             decoration: BoxDecoration(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? const Color(0xFF0B251D).withValues(alpha: 0.98)
-                  : const Color(0xFFFEFFFD).withValues(alpha: 0.98),
+              color: AppTheme.shellNavBackground(
+                style: style,
+                brightness: Theme.of(context).brightness,
+                scheme: scheme,
+              ),
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(24),
               ),
@@ -157,8 +166,8 @@ class _MainScaffoldState extends State<_MainScaffold> {
               ),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.12),
-                  blurRadius: 18,
+                  color: scheme.secondary.withValues(alpha: 0.15),
+                  blurRadius: 20,
                   offset: const Offset(0, -4),
                 ),
               ],

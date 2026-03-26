@@ -32,6 +32,26 @@ class _AppGradientButtonState extends State<AppGradientButton> {
       (c) => c.themeStyle,
     );
     final secondary = Theme.of(context).colorScheme.secondary;
+    final buttonGradient = switch (style) {
+      ThemeStyleOption.softUi => LinearGradient(
+        colors: <Color>[
+          Theme.of(context).colorScheme.primary.withValues(alpha: 0.88),
+          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.88),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.midnightDark => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF1C1C1C),
+          Color(0xFF2A2A2A),
+          Color(0xFF393939),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      _ => AppGradients.primaryFor(style),
+    };
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
@@ -47,7 +67,7 @@ class _AppGradientButtonState extends State<AppGradientButton> {
           child: Ink(
             decoration: BoxDecoration(
               gradient: enabled
-                  ? AppGradients.primaryFor(style)
+                  ? buttonGradient
                   : LinearGradient(
                       colors: <Color>[
                         Colors.grey.withValues(alpha: 0.45),

@@ -1,7 +1,6 @@
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
-import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -99,7 +98,7 @@ class _ProgressCard extends StatelessWidget {
       gradient: LinearGradient(
         colors: <Color>[
           Theme.of(context).cardTheme.color ?? Colors.white,
-          AppThemeColors.softGold.withValues(alpha: 0.14),
+          Theme.of(context).colorScheme.secondary.withValues(alpha: 0.14),
         ],
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
