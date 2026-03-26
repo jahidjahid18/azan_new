@@ -4,9 +4,10 @@ import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/mosque/data/models/mosque_place.dart';
 import 'package:azan_app/features/mosque/data/mosque_service.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -82,28 +83,8 @@ class _MosqueFinderScreenState extends State<MosqueFinderScreen> {
             );
           }
 
-          final mosques = snapshot.data ?? <MosquePlace>[];
-          final markers = <Marker>{
-            Marker(
-              markerId: const MarkerId('you'),
-              position: _origin!,
-              infoWindow: InfoWindow(title: l10n.tr('yourLocation')),
-            ),
-            ...mosques.map(
-              (mosque) => Marker(
-                markerId: MarkerId(
-                  '${mosque.latitude}_${mosque.longitude}_${mosque.name}',
-                ),
-                position: LatLng(mosque.latitude, mosque.longitude),
-                onTap: () => _showMosqueDetails(mosque),
-                infoWindow: InfoWindow(
-                  title: mosque.name,
-                  snippet: mosque.address,
-                  onTap: () => _openInMaps(mosque),
-                ),
-              ),
-            ),
-          };
+          final mosques = (snapshot.data ?? <MosquePlace>[])
+            ..sort((a, b) => _distanceMeters(a).compareTo(_distanceMeters(b)));
 
           return Column(
             children: <Widget>[
@@ -135,14 +116,56 @@ class _MosqueFinderScreenState extends State<MosqueFinderScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(18),
-                    child: GoogleMap(
-                      initialCameraPosition: CameraPosition(
-                        target: _origin!,
-                        zoom: 13,
+                    child: FlutterMap(
+                      options: MapOptions(
+                        initialCenter: _origin!,
+                        initialZoom: 13,
                       ),
-                      myLocationButtonEnabled: true,
-                      myLocationEnabled: true,
-                      markers: markers,
+                      children: <Widget>[
+                        TileLayer(
+                          urlTemplate:
+                              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.example.azan_app',
+                          maxZoom: 19,
+                        ),
+                        MarkerLayer(
+                          markers: <Marker>[
+                            Marker(
+                              point: _origin!,
+                              width: 40,
+                              height: 40,
+                              child: Tooltip(
+                                message: l10n.tr('yourLocation'),
+                                child: const Icon(
+                                  Icons.my_location_rounded,
+                                  color: Color(0xFF1A73E8),
+                                  size: 26,
+                                ),
+                              ),
+                            ),
+                            ...mosques.map(
+                              (mosque) => Marker(
+                                point: LatLng(
+                                  mosque.latitude,
+                                  mosque.longitude,
+                                ),
+                                width: 42,
+                                height: 42,
+                                child: GestureDetector(
+                                  onTap: () => _showMosqueDetails(mosque),
+                                  child: Icon(
+                                    Icons.mosque_rounded,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.secondary,
+                                    size: 28,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -227,15 +250,19 @@ class _MosqueFinderScreenState extends State<MosqueFinderScreen> {
   }
 
   String _distanceFromOrigin(MosquePlace mosque) {
-    if (_origin == null) return '';
-    final meters = Geolocator.distanceBetween(
+    final meters = _distanceMeters(mosque);
+    if (meters < 1000) return '${meters.round()} m';
+    return '${(meters / 1000).toStringAsFixed(1)} km';
+  }
+
+  double _distanceMeters(MosquePlace mosque) {
+    if (_origin == null) return double.infinity;
+    return Geolocator.distanceBetween(
       _origin!.latitude,
       _origin!.longitude,
       mosque.latitude,
       mosque.longitude,
     );
-    if (meters < 1000) return '${meters.round()} m';
-    return '${(meters / 1000).toStringAsFixed(1)} km';
   }
 
   Future<void> _openInMaps(MosquePlace mosque) async {
