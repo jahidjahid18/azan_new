@@ -492,11 +492,18 @@ class _HeaderCard extends StatelessWidget {
   }
 }
 
-class _ContinueReadingCard extends StatelessWidget {
+class _ContinueReadingCard extends StatefulWidget {
   const _ContinueReadingCard({required this.surahs, required this.onResume});
 
   final List<QuranSurah> surahs;
   final void Function(int surahIndex, int ayahNumber) onResume;
+
+  @override
+  State<_ContinueReadingCard> createState() => _ContinueReadingCardState();
+}
+
+class _ContinueReadingCardState extends State<_ContinueReadingCard> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
@@ -506,52 +513,64 @@ class _ContinueReadingCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final surahIndex = (lastRead.surahNumber - 1).clamp(0, surahs.length - 1);
-    final surah = surahs[surahIndex];
+    final surahIndex = (lastRead.surahNumber - 1).clamp(
+      0,
+      widget.surahs.length - 1,
+    );
+    final surah = widget.surahs[surahIndex];
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () => onResume(surahIndex, lastRead.ayahNumber),
-      child: Ink(
-        decoration: BoxDecoration(
-          gradient: QuranUiTheme.panelGradient,
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      scale: _pressed ? 0.985 : 1,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
           borderRadius: BorderRadius.circular(18),
-        ),
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: <Widget>[
-            const Icon(Icons.play_circle_fill_rounded, color: Colors.white),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    context.l10n.tr('resumeReading'),
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${surah.nameEnglish} - ${context.l10n.tr('ayah')} ${lastRead.ayahNumber}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                  ),
-                ],
-              ),
+          onTap: () => widget.onResume(surahIndex, lastRead.ayahNumber),
+          onHighlightChanged: (value) => setState(() => _pressed = value),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: QuranUiTheme.panelGradient,
+              borderRadius: BorderRadius.circular(18),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Colors.white),
-          ],
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: <Widget>[
+                const Icon(Icons.play_circle_fill_rounded, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        context.l10n.tr('resumeReading'),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${surah.nameEnglish} - ${context.l10n.tr('ayah')} ${lastRead.ayahNumber}',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right_rounded, color: Colors.white),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-class _DashboardIconCard extends StatelessWidget {
+class _DashboardIconCard extends StatefulWidget {
   const _DashboardIconCard({
     required this.title,
     required this.icon,
@@ -563,50 +582,70 @@ class _DashboardIconCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_DashboardIconCard> createState() => _DashboardIconCardState();
+}
+
+class _DashboardIconCardState extends State<_DashboardIconCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.35),
-            ),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      scale: _pressed ? 0.985 : 1,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: widget.onTap,
+          onHighlightChanged: (value) => setState(() => _pressed = value),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: <Color>[
+                  Theme.of(context).cardTheme.color ?? Colors.white,
+                  scheme.secondary.withValues(alpha: 0.07),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: scheme.secondary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.35),
+              ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
                 ),
-                child: Icon(icon, color: scheme.secondary),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ],
+              ],
+            ),
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: scheme.secondary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(widget.icon, color: scheme.secondary),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
           ),
         ),
       ),

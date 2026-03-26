@@ -466,7 +466,7 @@ class _QuickActionsRow extends StatelessWidget {
   }
 }
 
-class _QuickActionButton extends StatelessWidget {
+class _QuickActionButton extends StatefulWidget {
   const _QuickActionButton({
     required this.icon,
     required this.label,
@@ -478,27 +478,48 @@ class _QuickActionButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_QuickActionButton> createState() => _QuickActionButtonState();
+}
+
+class _QuickActionButtonState extends State<_QuickActionButton> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: AppSurfaceCard(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          backgroundColor: Theme.of(context).cardTheme.color,
-          child: Column(
-            children: <Widget>[
-              Icon(icon, color: scheme.primary),
-              const SizedBox(height: 6),
-              Text(
-                label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      scale: _pressed ? 0.98 : 1,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: widget.onTap,
+          onHighlightChanged: (value) => setState(() => _pressed = value),
+          child: AppSurfaceCard(
+            radius: 18,
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            gradient: LinearGradient(
+              colors: <Color>[
+                Theme.of(context).cardTheme.color ?? Colors.white,
+                scheme.secondary.withValues(alpha: 0.08),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            child: Column(
+              children: <Widget>[
+                Icon(widget.icon, color: scheme.primary),
+                const SizedBox(height: 6),
+                Text(
+                  widget.label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -516,6 +537,20 @@ class _PrayerTimeCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final nextPrayerGradient = LinearGradient(
+      colors: isDark
+          ? <Color>[
+              scheme.primary.withValues(alpha: 0.62),
+              scheme.secondary.withValues(alpha: 0.34),
+            ]
+          : <Color>[
+              scheme.secondary.withValues(alpha: 0.2),
+              scheme.tertiary.withValues(alpha: 0.22),
+            ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
     final icon = switch (prayer.name.toLowerCase()) {
       'fajr' => Icons.nights_stay_rounded,
       'dhuhr' => Icons.wb_sunny_rounded,
@@ -528,7 +563,8 @@ class _PrayerTimeCard extends StatelessWidget {
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
       child: AppSurfaceCard(
-        backgroundColor: isNext ? const Color(0xFFEFFBF3) : Colors.white,
+        gradient: isNext ? nextPrayerGradient : null,
+        backgroundColor: isNext ? null : Theme.of(context).cardTheme.color,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: <Widget>[
@@ -536,7 +572,9 @@ class _PrayerTimeCard extends StatelessWidget {
               width: 4,
               height: 44,
               decoration: BoxDecoration(
-                color: isNext ? scheme.secondary : const Color(0xFFCBD5E1),
+                color: isNext
+                    ? scheme.tertiary
+                    : scheme.outlineVariant.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(30),
               ),
             ),
@@ -550,7 +588,7 @@ class _PrayerTimeCard extends StatelessWidget {
                       Icon(
                         icon,
                         size: 16,
-                        color: isNext ? scheme.secondary : scheme.primary,
+                        color: isNext ? scheme.tertiary : scheme.primary,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -574,7 +612,9 @@ class _PrayerTimeCard extends StatelessWidget {
               DateFormat('hh:mm a').format(prayer.time),
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: Theme.of(context).colorScheme.primary,
+                color: isNext && isDark
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.primary,
               ),
             ),
           ],

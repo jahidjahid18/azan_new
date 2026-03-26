@@ -30,13 +30,14 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: <Color>[
-            Color(0xFF0F172A),
-            Color(0xFF4F46E5),
-            Color(0xFF6366F1),
+            isDark ? const Color(0xFF041610) : const Color(0xFF0A3C2F),
+            isDark ? const Color(0xFF0A2E24) : const Color(0xFF0F5A45),
+            isDark ? const Color(0xFF114233) : const Color(0xFF148261),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,

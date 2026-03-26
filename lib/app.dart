@@ -136,6 +136,12 @@ class _MainScaffoldState extends State<_MainScaffold> {
           if (showBanner) const BannerAdWidget(),
           Container(
             decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? const Color(0xFF0B251D).withValues(alpha: 0.98)
+                  : const Color(0xFFFEFFFD).withValues(alpha: 0.98),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
               border: Border(
                 top: BorderSide(
                   color: Theme.of(
@@ -143,41 +149,66 @@ class _MainScaffoldState extends State<_MainScaffold> {
                   ).colorScheme.outlineVariant.withValues(alpha: 0.6),
                 ),
               ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 18,
+                  offset: const Offset(0, -4),
+                ),
+              ],
             ),
             child: Padding(
               padding: EdgeInsets.only(bottom: bottomInset),
-              child: NavigationBar(
-                selectedIndex: _currentTab,
-                onDestinationSelected: (index) {
-                  setState(() => _currentTab = index);
-                },
-                destinations: <NavigationDestination>[
-                  NavigationDestination(
-                    icon: const Icon(Icons.home_outlined),
-                    selectedIcon: const Icon(Icons.home_rounded),
-                    label: l10n.tr('navHome'),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+                child: NavigationBar(
+                  selectedIndex: _currentTab,
+                  onDestinationSelected: (index) {
+                    setState(() => _currentTab = index);
+                  },
+                  destinations: <NavigationDestination>[
+                    NavigationDestination(
+                      icon: const Icon(Icons.home_outlined),
+                      selectedIcon: const Icon(Icons.home_rounded),
+                      label: l10n.tr('navHome'),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.menu_book_outlined),
+                      selectedIcon: const Icon(Icons.menu_book_rounded),
+                      label: l10n.tr('navQuran'),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.touch_app_outlined),
+                      selectedIcon: const Icon(Icons.touch_app_rounded),
+                      label: l10n.tr('navTasbih'),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.explore_outlined),
+                      selectedIcon: const Icon(Icons.explore_rounded),
+                      label: l10n.tr('navQibla'),
+                    ),
+                    NavigationDestination(
+                      icon: const Icon(Icons.settings_outlined),
+                      selectedIcon: const Icon(Icons.settings_rounded),
+                      label: l10n.tr('navSettings'),
+                    ),
+                  ],
+                  animationDuration: const Duration(milliseconds: 320),
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  height: 72,
+                  backgroundColor: Colors.transparent,
+                  indicatorShape: const StadiumBorder(),
+                  elevation: 0,
+                  shadowColor: Colors.transparent,
+                  surfaceTintColor: Colors.transparent,
+                  overlayColor: WidgetStatePropertyAll(
+                    Theme.of(
+                      context,
+                    ).colorScheme.secondary.withValues(alpha: 0.12),
                   ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.menu_book_outlined),
-                    selectedIcon: const Icon(Icons.menu_book_rounded),
-                    label: l10n.tr('navQuran'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.touch_app_outlined),
-                    selectedIcon: const Icon(Icons.touch_app_rounded),
-                    label: l10n.tr('navTasbih'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.explore_outlined),
-                    selectedIcon: const Icon(Icons.explore_rounded),
-                    label: l10n.tr('navQibla'),
-                  ),
-                  NavigationDestination(
-                    icon: const Icon(Icons.settings_outlined),
-                    selectedIcon: const Icon(Icons.settings_rounded),
-                    label: l10n.tr('navSettings'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

@@ -1,4 +1,5 @@
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:hijri/hijri_calendar.dart';
 
@@ -273,11 +274,17 @@ class _EventChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color,
+        color: isDark ? color.withValues(alpha: 0.16) : color,
+        border: Border.all(
+          color: isDark
+              ? AppThemeColors.softGold.withValues(alpha: 0.24)
+              : AppThemeColors.deepGreen.withValues(alpha: 0.08),
+        ),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
@@ -311,40 +318,40 @@ class _IslamicEventsCalculator {
       IslamicEventModel(
         type: IslamicEventType.islamicNewYear,
         eventDate: _hijriToDate(hijri, now, month: 1, day: 1),
-        chipColor: const Color(0xFFEAF6FF),
+        chipColor: const Color(0xFFEFFAF5),
       ),
       IslamicEventModel(
         type: IslamicEventType.ashura,
         eventDate: _hijriToDate(hijri, now, month: 1, day: 10),
-        chipColor: const Color(0xFFFCEFF2),
+        chipColor: const Color(0xFFFFF6E8),
         showInChips: false,
       ),
       IslamicEventModel(
         type: IslamicEventType.mawlid,
         eventDate: _hijriToDate(hijri, now, month: 3, day: 12),
-        chipColor: const Color(0xFFF2F1FF),
+        chipColor: const Color(0xFFEFF8F2),
       ),
       IslamicEventModel(
         type: IslamicEventType.israMiraj,
         eventDate: _hijriToDate(hijri, now, month: 7, day: 27),
-        chipColor: const Color(0xFFEFFAF8),
+        chipColor: const Color(0xFFEAF9F3),
         showInChips: false,
       ),
       IslamicEventModel(
         type: IslamicEventType.midShaban,
         eventDate: _hijriToDate(hijri, now, month: 8, day: 15),
-        chipColor: const Color(0xFFFFF7EB),
+        chipColor: const Color(0xFFFFF7EA),
         showInChips: false,
       ),
       IslamicEventModel(
         type: IslamicEventType.ramadan,
         eventDate: _hijriToDate(hijri, now, month: 9, day: 1),
-        chipColor: const Color(0xFFE8F7EF),
+        chipColor: const Color(0xFFE7F8EF),
       ),
       IslamicEventModel(
         type: IslamicEventType.eidAlFitr,
         eventDate: _hijriToDate(hijri, now, month: 10, day: 1),
-        chipColor: const Color(0xFFEFF5FF),
+        chipColor: const Color(0xFFEDF9F3),
       ),
       IslamicEventModel(
         type: IslamicEventType.eidAlAdha,
@@ -354,19 +361,19 @@ class _IslamicEventsCalculator {
       IslamicEventModel(
         type: IslamicEventType.dayOfArafah,
         eventDate: _hijriToDate(hijri, now, month: 12, day: 9),
-        chipColor: const Color(0xFFE8F6FF),
+        chipColor: const Color(0xFFEAF8F2),
         showInChips: false,
       ),
       IslamicEventModel(
         type: IslamicEventType.tashreeqDays,
         eventDate: _hijriToDate(hijri, now, month: 12, day: 11),
-        chipColor: const Color(0xFFFFF1E8),
+        chipColor: const Color(0xFFFFF2E8),
         showInChips: false,
       ),
       IslamicEventModel(
         type: IslamicEventType.jumuah,
         eventDate: _nextJumuahDate(now),
-        chipColor: const Color(0xFFF6F0FF),
+        chipColor: const Color(0xFFEFFAF4),
         showInMainList: false,
       ),
     ];

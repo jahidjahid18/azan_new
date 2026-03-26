@@ -1,4 +1,5 @@
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/features/audio/models/quran_reciter.dart';
 import 'package:flutter/material.dart';
 
@@ -38,9 +39,17 @@ class QuranPlayerBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? const Color(0xFF0B1220)
-            : Colors.white,
+        gradient: Theme.of(context).brightness == Brightness.dark
+            ? const LinearGradient(
+                colors: <Color>[Color(0xFF0A2A21), Color(0xFF0F3B2F)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : const LinearGradient(
+                colors: <Color>[Color(0xFFFFFFFF), Color(0xFFF8FBF7)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
         border: Border(
           top: BorderSide(color: scheme.outlineVariant.withValues(alpha: 0.5)),
         ),
@@ -102,7 +111,7 @@ class QuranPlayerBar extends StatelessWidget {
                     horizontal: 18,
                     vertical: 12,
                   ),
-                  backgroundColor: scheme.secondary,
+                  backgroundColor: AppThemeColors.deepGreen,
                   foregroundColor: Colors.white,
                 ),
                 icon: isLoading

@@ -3,21 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppThemeColors {
-  static const Color darkGreen = Color(0xFF064E3B);
-  static const Color emerald = Color(0xFF10B981);
-  static const Color softTeal = Color(0xFF34D399);
-
-  static const Color darkBlue = Color(0xFF0F172A);
-  static const Color purple = Color(0xFF4F46E5);
-  static const Color indigo = Color(0xFF6366F1);
-
-  static const Color gold = Color(0xFFF59E0B);
+  static const Color deepGreen = Color(0xFF0A5C45);
+  static const Color emerald = Color(0xFF118C68);
+  static const Color softTeal = Color(0xFF2DB58A);
+  static const Color forestDark = Color(0xFF06261D);
+  static const Color forestMid = Color(0xFF0B3C2F);
+  static const Color gold = Color(0xFFD4A62A);
+  static const Color softGold = Color(0xFFE8C96B);
 }
 
 class AppGradients {
   static const LinearGradient primary = LinearGradient(
     colors: <Color>[
-      AppThemeColors.darkGreen,
+      AppThemeColors.deepGreen,
       AppThemeColors.emerald,
       AppThemeColors.softTeal,
     ],
@@ -27,34 +25,34 @@ class AppGradients {
 
   static const LinearGradient alternative = LinearGradient(
     colors: <Color>[
-      AppThemeColors.darkBlue,
-      AppThemeColors.purple,
-      AppThemeColors.indigo,
+      AppThemeColors.forestDark,
+      AppThemeColors.forestMid,
+      AppThemeColors.deepGreen,
     ],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
   static const LinearGradient lightBackgroundPrimary = LinearGradient(
-    colors: <Color>[Color(0xFFF2FBF7), Color(0xFFEFF8FF), Color(0xFFFFFFFF)],
+    colors: <Color>[Color(0xFFF1FBF6), Color(0xFFFAF7ED), Color(0xFFFFFFFF)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   static const LinearGradient lightBackgroundAlternative = LinearGradient(
-    colors: <Color>[Color(0xFFF3F5FF), Color(0xFFEFF4FF), Color(0xFFFFFFFF)],
+    colors: <Color>[Color(0xFFEEF9F4), Color(0xFFFFF9EE), Color(0xFFFFFFFF)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   static const LinearGradient darkBackgroundPrimary = LinearGradient(
-    colors: <Color>[Color(0xFF03140F), Color(0xFF083126), Color(0xFF0B3A2F)],
+    colors: <Color>[Color(0xFF041610), Color(0xFF08251D), Color(0xFF0D3529)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
 
   static const LinearGradient darkBackgroundAlternative = LinearGradient(
-    colors: <Color>[Color(0xFF0B1020), Color(0xFF1A1B43), Color(0xFF26276A)],
+    colors: <Color>[Color(0xFF041510), Color(0xFF0A2A21), Color(0xFF0D3A2D)],
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
@@ -62,26 +60,6 @@ class AppGradients {
 
 class AppTheme {
   static ThemeData light(ThemeStyleOption style) {
-    if (style == ThemeStyleOption.muslimPro) {
-      final scheme =
-          ColorScheme.fromSeed(
-            seedColor: AppThemeColors.darkBlue,
-            brightness: Brightness.light,
-          ).copyWith(
-            primary: AppThemeColors.darkBlue,
-            secondary: AppThemeColors.emerald,
-            tertiary: AppThemeColors.gold,
-            surface: const Color(0xFFF7FAFC),
-          );
-      return _baseTheme(
-        brightness: Brightness.light,
-        colorScheme: scheme,
-        textTheme: GoogleFonts.cairoTextTheme(),
-        scaffoldBackgroundColor: const Color(0xFFF7FAFC),
-        cardColor: Colors.white,
-      );
-    }
-
     final colors = _palette(style);
     final scheme =
         ColorScheme.fromSeed(
@@ -90,40 +68,21 @@ class AppTheme {
         ).copyWith(
           primary: colors.primary,
           secondary: colors.accent,
-          tertiary: AppThemeColors.gold,
-          surface: const Color(0xFFF8FAFC),
+          tertiary: AppThemeColors.softGold,
+          surface: const Color(0xFFFBFCF9),
         );
     return _baseTheme(
       brightness: Brightness.light,
       colorScheme: scheme,
-      textTheme: GoogleFonts.poppinsTextTheme(),
-      scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+      textTheme: style == ThemeStyleOption.muslimPro
+          ? GoogleFonts.cairoTextTheme()
+          : GoogleFonts.poppinsTextTheme(),
+      scaffoldBackgroundColor: const Color(0xFFFBFCF9),
       cardColor: Colors.white,
     );
   }
 
   static ThemeData dark(ThemeStyleOption style) {
-    if (style == ThemeStyleOption.muslimPro) {
-      final scheme =
-          ColorScheme.fromSeed(
-            seedColor: AppThemeColors.darkBlue,
-            brightness: Brightness.dark,
-          ).copyWith(
-            primary: const Color(0xFF1D2A47),
-            secondary: AppThemeColors.softTeal,
-            tertiary: AppThemeColors.gold,
-          );
-      return _baseTheme(
-        brightness: Brightness.dark,
-        colorScheme: scheme,
-        textTheme: GoogleFonts.cairoTextTheme(
-          ThemeData(brightness: Brightness.dark).textTheme,
-        ),
-        scaffoldBackgroundColor: const Color(0xFF070E1A),
-        cardColor: const Color(0xFF0F1A31),
-      );
-    }
-
     final colors = _palette(style);
     final scheme =
         ColorScheme.fromSeed(
@@ -132,16 +91,20 @@ class AppTheme {
         ).copyWith(
           primary: colors.primary,
           secondary: colors.accent,
-          tertiary: AppThemeColors.gold,
+          tertiary: AppThemeColors.softGold,
         );
     return _baseTheme(
       brightness: Brightness.dark,
       colorScheme: scheme,
-      textTheme: GoogleFonts.poppinsTextTheme(
-        ThemeData(brightness: Brightness.dark).textTheme,
-      ),
-      scaffoldBackgroundColor: const Color(0xFF050A14),
-      cardColor: const Color(0xFF0D1422),
+      textTheme: style == ThemeStyleOption.muslimPro
+          ? GoogleFonts.cairoTextTheme(
+              ThemeData(brightness: Brightness.dark).textTheme,
+            )
+          : GoogleFonts.poppinsTextTheme(
+              ThemeData(brightness: Brightness.dark).textTheme,
+            ),
+      scaffoldBackgroundColor: const Color(0xFF061A14),
+      cardColor: const Color(0xFF0D2A21),
     );
   }
 
@@ -179,7 +142,7 @@ class AppTheme {
             : colorScheme.onSurface,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: (textTheme.titleLarge ?? const TextStyle()).copyWith(
-          fontSize: 22,
+          fontSize: 23,
           fontWeight: FontWeight.w700,
           color: brightness == Brightness.light
               ? colorScheme.primary
@@ -190,6 +153,7 @@ class AppTheme {
         color: cardColor,
         elevation: 0,
         margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -197,17 +161,63 @@ class AppTheme {
             ? Colors.white
             : cardColor.withValues(alpha: 0.94),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: colorScheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide(color: colorScheme.secondary, width: 1.4),
         ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: colorScheme.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          shape: const StadiumBorder(),
+          textStyle: (textTheme.titleSmall ?? const TextStyle()).copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          shape: const StadiumBorder(),
+          side: BorderSide(
+            color: colorScheme.outline.withValues(alpha: 0.55),
+            width: 1.2,
+          ),
+          textStyle: (textTheme.titleSmall ?? const TextStyle()).copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Colors.white,
+          backgroundColor: colorScheme.secondary,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          shape: const StadiumBorder(),
+          elevation: 0,
+          textStyle: (textTheme.titleSmall ?? const TextStyle()).copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: brightness == Brightness.light
+            ? const Color(0xFFFCFEFD)
+            : const Color(0xFF0C241D),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        showDragHandle: true,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith<Color?>((states) {
@@ -225,17 +235,26 @@ class AppTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         elevation: 0,
-        height: 72,
+        height: 74,
         labelTextStyle: WidgetStatePropertyAll(
           (textTheme.bodySmall ?? const TextStyle()).copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
         ),
-        indicatorColor: colorScheme.secondary.withValues(alpha: 0.2),
+        indicatorShape: const StadiumBorder(),
+        indicatorColor: colorScheme.secondary.withValues(alpha: 0.22),
+        backgroundColor: Colors.transparent,
+      ),
+      dividerTheme: DividerThemeData(
+        color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
         backgroundColor: brightness == Brightness.light
-            ? Colors.white.withValues(alpha: 0.98)
-            : const Color(0xFF0B1220),
+            ? const Color(0xFF173A31)
+            : const Color(0xFF173A31),
+        contentTextStyle: textTheme.bodyMedium?.copyWith(color: Colors.white),
       ),
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: <TargetPlatform, PageTransitionsBuilder>{
@@ -249,24 +268,24 @@ class AppTheme {
   static _ThemePalette _palette(ThemeStyleOption style) {
     return switch (style) {
       ThemeStyleOption.muslimPro => const _ThemePalette(
-        primary: AppThemeColors.darkBlue,
-        accent: AppThemeColors.emerald,
+        primary: AppThemeColors.deepGreen,
+        accent: AppThemeColors.gold,
       ),
       ThemeStyleOption.glassBlue => const _ThemePalette(
-        primary: AppThemeColors.darkBlue,
-        accent: AppThemeColors.softTeal,
+        primary: Color(0xFF0B5A45),
+        accent: Color(0xFFCC9C1F),
       ),
       ThemeStyleOption.emerald => const _ThemePalette(
-        primary: AppThemeColors.darkGreen,
-        accent: AppThemeColors.emerald,
+        primary: Color(0xFF0A664D),
+        accent: Color(0xFFD4A62A),
       ),
       ThemeStyleOption.sunset => const _ThemePalette(
-        primary: Color(0xFF2A1A0F),
-        accent: Color(0xFFF59E0B),
+        primary: Color(0xFF0C5A43),
+        accent: Color(0xFFDAA63D),
       ),
       ThemeStyleOption.monochrome => const _ThemePalette(
-        primary: Color(0xFF111827),
-        accent: Color(0xFF4B5563),
+        primary: Color(0xFF214238),
+        accent: Color(0xFFB69034),
       ),
     };
   }

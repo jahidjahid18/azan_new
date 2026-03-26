@@ -67,9 +67,9 @@ class _QuranFullPlayerScreenState extends State<QuranFullPlayerScreen> {
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: <Color>[
-              Color(0xFF061127),
-              Color(0xFF0B1D38),
-              Color(0xFF10213A),
+              Color(0xFF051A14),
+              Color(0xFF0A3025),
+              Color(0xFF0F4737),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -116,7 +116,7 @@ class _QuranFullPlayerScreenState extends State<QuranFullPlayerScreen> {
                 ),
                 child: DropdownButton<QuranReciter>(
                   value: reciter,
-                  dropdownColor: const Color(0xFF10213A),
+                  dropdownColor: const Color(0xFF0F4737),
                   borderRadius: BorderRadius.circular(12),
                   underline: const SizedBox.shrink(),
                   style: const TextStyle(color: Colors.white),

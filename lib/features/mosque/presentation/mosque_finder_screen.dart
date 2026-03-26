@@ -1,5 +1,6 @@
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/mosque/data/models/mosque_place.dart';
 import 'package:azan_app/features/mosque/data/mosque_service.dart';
@@ -192,10 +193,17 @@ class _MosqueFinderScreenState extends State<MosqueFinderScreen> {
                                     child: Text(l10n.tr('details')),
                                   ),
                                   const SizedBox(width: 6),
-                                  FilledButton.tonalIcon(
-                                    onPressed: () => _openInMaps(mosque),
-                                    icon: const Icon(Icons.navigation_rounded),
-                                    label: Text(l10n.tr('open')),
+                                  SizedBox(
+                                    height: 40,
+                                    child: AppGradientButton(
+                                      onPressed: () => _openInMaps(mosque),
+                                      icon: Icons.navigation_rounded,
+                                      label: l10n.tr('open'),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -283,13 +291,13 @@ class _MosqueFinderScreenState extends State<MosqueFinderScreen> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: FilledButton.icon(
+                      child: AppGradientButton(
                         onPressed: () async {
                           Navigator.of(context).pop();
                           await _openInMaps(mosque);
                         },
-                        icon: const Icon(Icons.navigation_rounded),
-                        label: Text(context.l10n.tr('navigate')),
+                        icon: Icons.navigation_rounded,
+                        label: context.l10n.tr('navigate'),
                       ),
                     ),
                   ],

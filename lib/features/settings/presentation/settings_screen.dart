@@ -4,6 +4,7 @@ import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/localization/app_language.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
@@ -63,7 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 14),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
+                child: AppGradientButton(
                   onPressed: controller.isBusy
                       ? null
                       : () async {
@@ -75,8 +76,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             message ?? l10n.tr('locationUpdatedFromGps'),
                           );
                         },
-                  icon: const Icon(Icons.my_location_rounded),
-                  label: Text(l10n.tr('useCurrentLocation')),
+                  icon: Icons.my_location_rounded,
+                  label: l10n.tr('useCurrentLocation'),
                 ),
               ),
               const SizedBox(height: 16),
@@ -432,10 +433,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
+                child: AppGradientButton(
                   onPressed: _openSuggestionSheet,
-                  icon: const Icon(Icons.send_rounded),
-                  label: Text(l10n.tr('sendMessage')),
+                  icon: Icons.send_rounded,
+                  label: l10n.tr('sendMessage'),
                 ),
               ),
             ],
@@ -477,7 +478,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton.icon(
+                child: AppGradientButton(
                   onPressed: () async {
                     final navigator = Navigator.of(context);
                     final sent = await _sendSuggestion(
@@ -489,8 +490,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       navigator.pop();
                     }
                   },
-                  icon: const Icon(Icons.mark_email_read_rounded),
-                  label: Text(l10n.tr('sendMessage')),
+                  icon: Icons.mark_email_read_rounded,
+                  label: l10n.tr('sendMessage'),
                 ),
               ),
             ],
@@ -583,9 +584,14 @@ class _SectionTitle extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: Theme.of(
-              context,
-            ).colorScheme.secondary.withValues(alpha: 0.14),
+            gradient: LinearGradient(
+              colors: <Color>[
+                Theme.of(context).colorScheme.secondary.withValues(alpha: 0.22),
+                Theme.of(context).colorScheme.primary.withValues(alpha: 0.14),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, color: Theme.of(context).colorScheme.primary),

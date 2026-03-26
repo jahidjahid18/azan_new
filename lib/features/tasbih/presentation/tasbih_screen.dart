@@ -1,6 +1,7 @@
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/theme/app_theme.dart';
+import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -30,7 +31,7 @@ class TasbihScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         AppSurfaceCard(
-          backgroundColor: const Color(0xFF0F1F38),
+          gradient: AppGradients.alternative,
           child: Column(
             children: <Widget>[
               Text(
@@ -73,13 +74,10 @@ class TasbihScreen extends StatelessWidget {
         const SizedBox(height: 18),
         SizedBox(
           width: double.infinity,
-          child: OutlinedButton.icon(
+          child: AppGradientButton(
             onPressed: () => context.read<AppController>().resetTasbih(),
-            icon: const Icon(Icons.restart_alt_rounded),
-            label: Text(l10n.tr('resetCounter')),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-            ),
+            icon: Icons.restart_alt_rounded,
+            label: l10n.tr('resetCounter'),
           ),
         ),
       ],

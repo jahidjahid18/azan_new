@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class QuranOptionCard extends StatelessWidget {
+class QuranOptionCard extends StatefulWidget {
   const QuranOptionCard({
     super.key,
     required this.title,
@@ -15,63 +15,83 @@ class QuranOptionCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<QuranOptionCard> createState() => _QuranOptionCardState();
+}
+
+class _QuranOptionCardState extends State<QuranOptionCard> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardTheme.color,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: scheme.outlineVariant.withValues(alpha: 0.4),
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+      scale: _pressed ? 0.985 : 1,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: widget.onTap,
+          onHighlightChanged: (value) => setState(() => _pressed = value),
+          child: Ink(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: <Color>[
+                  Theme.of(context).cardTheme.color ?? Colors.white,
+                  scheme.secondary.withValues(alpha: 0.06),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: scheme.outlineVariant.withValues(alpha: 0.4),
+              ),
+              boxShadow: <BoxShadow>[
+                BoxShadow(
+                  color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            boxShadow: <BoxShadow>[
-              BoxShadow(
-                color: const Color(0xFF0F172A).withValues(alpha: 0.08),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(14),
-          child: Row(
-            children: <Widget>[
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: scheme.secondary.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: <Widget>[
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: scheme.secondary.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(widget.icon, color: scheme.secondary),
                 ),
-                child: Icon(icon, color: scheme.secondary),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.subtitle,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Icon(Icons.chevron_right_rounded),
-            ],
+                const Icon(Icons.chevron_right_rounded),
+              ],
+            ),
           ),
         ),
       ),

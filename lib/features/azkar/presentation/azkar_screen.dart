@@ -1,5 +1,6 @@
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/azkar/data/azkar_service.dart';
 import 'package:azan_app/features/azkar/data/models/azkar_item.dart';
@@ -147,22 +148,29 @@ class _AzkarScreenState extends State<AzkarScreen> {
                               }),
                             ),
                             const Spacer(),
-                            FilledButton.tonalIcon(
-                              onPressed: isComplete
-                                  ? null
-                                  : () async {
-                                      await context
-                                          .read<AppController>()
-                                          .incrementAzkarCount(
-                                            date: DateTime.now(),
-                                            category: _selectedCategory,
-                                            itemId: item.id,
-                                            maxCount: item.repeat,
-                                          );
-                                    },
-                              icon: const Icon(Icons.add_rounded),
-                              label: Text(
-                                isComplete ? l10n.tr('done') : l10n.tr('count'),
+                            SizedBox(
+                              height: 42,
+                              child: AppGradientButton(
+                                onPressed: isComplete
+                                    ? null
+                                    : () async {
+                                        await context
+                                            .read<AppController>()
+                                            .incrementAzkarCount(
+                                              date: DateTime.now(),
+                                              category: _selectedCategory,
+                                              itemId: item.id,
+                                              maxCount: item.repeat,
+                                            );
+                                      },
+                                icon: Icons.add_rounded,
+                                label: isComplete
+                                    ? l10n.tr('done')
+                                    : l10n.tr('count'),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
                               ),
                             ),
                           ],
@@ -175,15 +183,15 @@ class _AzkarScreenState extends State<AzkarScreen> {
               const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: OutlinedButton.icon(
+                child: AppGradientButton(
                   onPressed: () async {
                     await context.read<AppController>().resetAzkarCategory(
                       date: DateTime.now(),
                       category: _selectedCategory,
                     );
                   },
-                  icon: const Icon(Icons.restart_alt_rounded),
-                  label: Text(l10n.tr('resetToday')),
+                  icon: Icons.restart_alt_rounded,
+                  label: l10n.tr('resetToday'),
                 ),
               ),
             ],

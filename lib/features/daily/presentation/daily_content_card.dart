@@ -1,4 +1,5 @@
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +13,14 @@ class DailyContentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     return AppSurfaceCard(
+      gradient: LinearGradient(
+        colors: <Color>[
+          Theme.of(context).cardTheme.color ?? Colors.white,
+          AppThemeColors.softGold.withValues(alpha: 0.12),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
