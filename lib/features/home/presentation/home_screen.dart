@@ -16,6 +16,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -28,6 +29,10 @@ class HomeScreen extends StatelessWidget {
     final visiblePrayers = _visiblePrayers(
       allPrayers: controller.todayPrayers,
       visibleNames: controller.visiblePrayerNames,
+    );
+    final currentPrayerWindow = _currentPrayerWindow(
+      prayers: visiblePrayers,
+      now: controller.now,
     );
 
     if (controller.isLoading) {
@@ -68,8 +73,19 @@ class HomeScreen extends StatelessWidget {
                     context: context,
                     city: controller.location!.cityName,
                     prayers: visiblePrayers,
+                    now: controller.now,
                   ),
                   icon: const Icon(Icons.copy_all_rounded),
+                ),
+                IconButton(
+                  tooltip: l10n.tr('shareTodaySchedule'),
+                  onPressed: () => _sharePrayerSchedule(
+                    context: context,
+                    city: controller.location!.cityName,
+                    prayers: visiblePrayers,
+                    now: controller.now,
+                  ),
+                  icon: const Icon(Icons.share_rounded),
                 ),
                 Text(
                   DateFormat('EEE, dd MMM').format(controller.now),
@@ -84,6 +100,11 @@ class HomeScreen extends StatelessWidget {
                 child: _PrayerTimeCard(
                   prayer: prayer,
                   isNext: _isSamePrayer(prayer, controller.nextPrayer),
+                  isCurrent: currentPrayerWindow?.prayer == prayer,
+                  now: controller.now,
+                  endsIn: currentPrayerWindow?.prayer == prayer
+                      ? currentPrayerWindow?.endsIn
+                      : null,
                 ),
               ),
             ),
@@ -113,6 +134,31 @@ class HomeScreen extends StatelessWidget {
     return allPrayers
         .where((prayer) => visibleSet.contains(prayer.name))
         .toList();
+  }
+
+  _CurrentPrayerWindow? _currentPrayerWindow({
+    required List<PrayerInfo> prayers,
+    required DateTime now,
+  }) {
+    if (prayers.length < 2) {
+      return null;
+    }
+
+    for (var index = 0; index < prayers.length - 1; index++) {
+      final current = prayers[index];
+      final next = prayers[index + 1];
+      final isStarted = !now.isBefore(current.time);
+      final notEnded = now.isBefore(next.time);
+      if (isStarted && notEnded) {
+        final remaining = next.time.difference(now);
+        return _CurrentPrayerWindow(
+          prayer: current,
+          endsIn: remaining.isNegative ? Duration.zero : remaining,
+        );
+      }
+    }
+
+    return null;
   }
 
   void _openPrayerFilter(BuildContext context, AppController controller) {
@@ -222,22 +268,59 @@ class HomeScreen extends StatelessWidget {
     required BuildContext context,
     required String city,
     required List<PrayerInfo> prayers,
+    required DateTime now,
   }) async {
+    final l10n = context.l10n;
+    final text = _buildPrayerScheduleText(
+      context: context,
+      city: city,
+      prayers: prayers,
+      now: now,
+    );
+    await Clipboard.setData(ClipboardData(text: text));
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.tr('scheduleCopied'))));
+  }
+
+  Future<void> _sharePrayerSchedule({
+    required BuildContext context,
+    required String city,
+    required List<PrayerInfo> prayers,
+    required DateTime now,
+  }) async {
+    final l10n = context.l10n;
+    final text = _buildPrayerScheduleText(
+      context: context,
+      city: city,
+      prayers: prayers,
+      now: now,
+    );
+    await Share.share(text);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(l10n.tr('scheduleShared'))));
+  }
+
+  String _buildPrayerScheduleText({
+    required BuildContext context,
+    required String city,
+    required List<PrayerInfo> prayers,
+    required DateTime now,
+  }) {
     final l10n = context.l10n;
     final formatter = DateFormat('hh:mm a');
     final lines = <String>[
       '${l10n.tr('prayerTimes')} - $city',
-      DateFormat('EEE, dd MMM yyyy').format(DateTime.now()),
+      DateFormat('EEE, dd MMM yyyy').format(now),
       '',
       ...prayers.map(
         (p) => '${l10n.prayerName(p.name)}: ${formatter.format(p.time)}',
       ),
     ];
-    await Clipboard.setData(ClipboardData(text: lines.join('\n')));
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.tr('scheduleCopied'))));
+    return lines.join('\n');
   }
 }
 
@@ -531,10 +614,19 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
 }
 
 class _PrayerTimeCard extends StatelessWidget {
-  const _PrayerTimeCard({required this.prayer, required this.isNext});
+  const _PrayerTimeCard({
+    required this.prayer,
+    required this.isNext,
+    required this.isCurrent,
+    required this.now,
+    required this.endsIn,
+  });
 
   final PrayerInfo prayer;
   final bool isNext;
+  final bool isCurrent;
+  final DateTime now;
+  final Duration? endsIn;
 
   @override
   Widget build(BuildContext context) {
@@ -544,12 +636,25 @@ class _PrayerTimeCard extends StatelessWidget {
     final nextPrayerGradient = LinearGradient(
       colors: isDark
           ? <Color>[
-              scheme.primary.withValues(alpha: 0.62),
-              scheme.secondary.withValues(alpha: 0.34),
+              scheme.primary.withValues(alpha: 0.38),
+              scheme.secondary.withValues(alpha: 0.2),
             ]
           : <Color>[
-              scheme.secondary.withValues(alpha: 0.2),
-              scheme.tertiary.withValues(alpha: 0.22),
+              scheme.secondary.withValues(alpha: 0.1),
+              scheme.tertiary.withValues(alpha: 0.12),
+            ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+    final currentPrayerGradient = LinearGradient(
+      colors: isDark
+          ? <Color>[
+              scheme.secondary.withValues(alpha: 0.36),
+              scheme.tertiary.withValues(alpha: 0.3),
+            ]
+          : <Color>[
+              scheme.primary.withValues(alpha: 0.2),
+              scheme.secondary.withValues(alpha: 0.24),
             ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
@@ -564,11 +669,11 @@ class _PrayerTimeCard extends StatelessWidget {
     };
     final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
       fontWeight: FontWeight.w700,
-      shadows: isNext
+      shadows: isCurrent
           ? <Shadow>[
               Shadow(
-                color: scheme.secondary.withValues(alpha: 0.42),
-                blurRadius: 14,
+                color: scheme.secondary.withValues(alpha: 0.28),
+                blurRadius: 10,
               ),
             ]
           : null,
@@ -577,8 +682,14 @@ class _PrayerTimeCard extends StatelessWidget {
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
       child: AppSurfaceCard(
-        gradient: isNext ? nextPrayerGradient : null,
-        backgroundColor: isNext ? null : Theme.of(context).cardTheme.color,
+        gradient: isCurrent
+            ? currentPrayerGradient
+            : isNext
+            ? nextPrayerGradient
+            : null,
+        backgroundColor: isNext || isCurrent
+            ? null
+            : Theme.of(context).cardTheme.color,
         enableEntranceAnimation: false,
         entranceDirection: AppCardEntranceDirection.none,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -586,10 +697,12 @@ class _PrayerTimeCard extends StatelessWidget {
           children: <Widget>[
             Container(
               width: 4,
-              height: 44,
+              height: isCurrent ? 50 : 44,
               decoration: BoxDecoration(
-                color: isNext
-                    ? scheme.tertiary
+                color: isCurrent
+                    ? scheme.secondary
+                    : isNext
+                    ? scheme.tertiary.withValues(alpha: 0.65)
                     : scheme.outlineVariant.withValues(alpha: 0.7),
                 borderRadius: BorderRadius.circular(30),
               ),
@@ -610,18 +723,13 @@ class _PrayerTimeCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: scheme.secondary.withValues(alpha: 0.18),
+                            color: scheme.secondary.withValues(
+                              alpha: isDark ? 0.14 : 0.1,
+                            ),
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(
-                              color: scheme.secondary.withValues(alpha: 0.38),
+                              color: scheme.secondary.withValues(alpha: 0.24),
                             ),
-                            boxShadow: <BoxShadow>[
-                              BoxShadow(
-                                color: scheme.secondary.withValues(alpha: 0.26),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
                           child: Text(
                             l10n.tr('nextPrayer'),
@@ -637,7 +745,11 @@ class _PrayerTimeCard extends StatelessWidget {
                       Icon(
                         icon,
                         size: 16,
-                        color: isNext ? scheme.tertiary : scheme.primary,
+                        color: isCurrent
+                            ? scheme.secondary
+                            : isNext
+                            ? scheme.tertiary.withValues(alpha: 0.8)
+                            : scheme.primary,
                       ),
                       const SizedBox(width: 6),
                       Text(l10n.prayerName(prayer.name), style: titleStyle),
@@ -653,46 +765,168 @@ class _PrayerTimeCard extends StatelessWidget {
                 ],
               ),
             ),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 240),
-              curve: Curves.easeOutCubic,
-              padding: EdgeInsets.symmetric(
-                horizontal: isNext ? 10 : 0,
-                vertical: isNext ? 6 : 0,
-              ),
-              decoration: isNext
-                  ? BoxDecoration(
-                      color: scheme.secondary.withValues(
-                        alpha: isDark ? 0.2 : 0.15,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: scheme.secondary.withValues(alpha: 0.35),
-                      ),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: scheme.secondary.withValues(alpha: 0.24),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    )
-                  : null,
-              child: Text(
-                DateFormat('hh:mm a').format(prayer.time),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: isNext && isDark
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.primary,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: <Widget>[
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOutCubic,
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isCurrent
+                        ? 12
+                        : isNext
+                        ? 8
+                        : 0,
+                    vertical: isCurrent
+                        ? 7
+                        : isNext
+                        ? 4
+                        : 0,
+                  ),
+                  decoration: isCurrent
+                      ? BoxDecoration(
+                          color: scheme.secondary.withValues(
+                            alpha: isDark ? 0.32 : 0.2,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: scheme.secondary.withValues(alpha: 0.52),
+                          ),
+                          boxShadow: <BoxShadow>[
+                            BoxShadow(
+                              color: scheme.secondary.withValues(alpha: 0.28),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        )
+                      : isNext
+                      ? BoxDecoration(
+                          color: scheme.secondary.withValues(
+                            alpha: isDark ? 0.14 : 0.1,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: scheme.secondary.withValues(alpha: 0.22),
+                          ),
+                        )
+                      : null,
+                  child: Text(
+                    DateFormat('hh:mm a').format(prayer.time),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: isCurrent && isDark
+                          ? Colors.white
+                          : isCurrent
+                          ? scheme.primary
+                          : isNext && isDark
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
                 ),
-              ),
+                if (isCurrent && endsIn != null) ...<Widget>[
+                  const SizedBox(height: 6),
+                  _buildEndsInChip(
+                    context: context,
+                    label: l10n.tr('endsIn', <String, String>{
+                      'duration': _formatStableDuration(endsIn!),
+                    }),
+                    remaining: endsIn!,
+                    isDark: isDark,
+                  ),
+                ],
+              ],
             ),
           ],
         ),
       ),
     );
   }
+
+  String _formatStableDuration(Duration duration) {
+    final safeDuration = duration.isNegative ? Duration.zero : duration;
+    final hours = safeDuration.inHours;
+    final minutes = safeDuration.inMinutes.remainder(60);
+    final seconds = safeDuration.inSeconds.remainder(60);
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildEndsInChip({
+    required BuildContext context,
+    required String label,
+    required Duration remaining,
+    required bool isDark,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    final safeDuration = remaining.isNegative ? Duration.zero : remaining;
+    final isCritical = safeDuration < const Duration(minutes: 30);
+    final isWarning = !isCritical && safeDuration < const Duration(hours: 2);
+
+    final bgColor = isCritical
+        ? const Color(0xFFDB4A43).withValues(alpha: isDark ? 0.74 : 0.16)
+        : isWarning
+        ? const Color(0xFFF4A840).withValues(alpha: isDark ? 0.72 : 0.18)
+        : scheme.secondary.withValues(alpha: 0.16);
+    final borderColor = isCritical
+        ? const Color(0xFFDB4A43).withValues(alpha: isDark ? 0.9 : 0.65)
+        : isWarning
+        ? const Color(0xFFF4A840).withValues(alpha: isDark ? 0.9 : 0.65)
+        : scheme.secondary.withValues(alpha: 0.35);
+    final glowColor = isCritical
+        ? const Color(0xFFDB4A43).withValues(alpha: isDark ? 0.34 : 0.3)
+        : isWarning
+        ? const Color(0xFFF4A840).withValues(alpha: isDark ? 0.28 : 0.24)
+        : scheme.secondary.withValues(alpha: 0.2);
+    final textColor = isCritical && isDark
+        ? Colors.white
+        : isCritical
+        ? const Color(0xFF8C201B)
+        : isWarning && isDark
+        ? Colors.white
+        : isWarning
+        ? const Color(0xFF8D4D00)
+        : Theme.of(context).colorScheme.onSurface;
+
+    final blinkOpacity = isCritical ? (now.second.isEven ? 1.0 : 0.72) : 1.0;
+
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 620),
+      curve: Curves.easeInOut,
+      opacity: blinkOpacity,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: glowColor,
+              blurRadius: isCritical ? 14 : 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: textColor,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CurrentPrayerWindow {
+  const _CurrentPrayerWindow({required this.prayer, required this.endsIn});
+
+  final PrayerInfo prayer;
+  final Duration endsIn;
 }
 
 class _EmptyLocationState extends StatelessWidget {
