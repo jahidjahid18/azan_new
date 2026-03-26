@@ -77,9 +77,9 @@ class _MainScaffoldState extends State<_MainScaffold> {
   @override
   Widget build(BuildContext context) {
     final now = _headerNow;
+    final media = MediaQuery.of(context);
     final l10n = context.l10n;
     final showBanner = _currentTab == 0 || _currentTab == 4;
-    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     final todayDate = DateFormat('EEEE, d MMMM').format(now);
     final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
     final currentTime = DateFormat('hh:mm:ss a').format(now);
@@ -116,16 +116,22 @@ class _MainScaffoldState extends State<_MainScaffold> {
       ),
       body: AppGradientBackground(
         useAlternative: _currentTab == 1 || _currentTab == 3,
-        child: SafeArea(
-          top: false,
-          bottom: false,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 260),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            child: KeyedSubtree(
-              key: ValueKey<int>(_currentTab),
-              child: _screens[_currentTab],
+        child: MediaQuery(
+          data: media.copyWith(
+            padding: media.padding.copyWith(bottom: 0),
+            viewPadding: media.viewPadding.copyWith(bottom: 0),
+          ),
+          child: SafeArea(
+            top: false,
+            bottom: false,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: KeyedSubtree(
+                key: ValueKey<int>(_currentTab),
+                child: _screens[_currentTab],
+              ),
             ),
           ),
         ),
@@ -157,57 +163,54 @@ class _MainScaffoldState extends State<_MainScaffold> {
                 ),
               ],
             ),
-            child: Padding(
-              padding: EdgeInsets.only(bottom: bottomInset),
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
-                ),
-                child: NavigationBar(
-                  selectedIndex: _currentTab,
-                  onDestinationSelected: (index) {
-                    setState(() => _currentTab = index);
-                  },
-                  destinations: <NavigationDestination>[
-                    NavigationDestination(
-                      icon: const Icon(Icons.home_outlined),
-                      selectedIcon: const Icon(Icons.home_rounded),
-                      label: l10n.tr('navHome'),
-                    ),
-                    NavigationDestination(
-                      icon: const Icon(Icons.menu_book_outlined),
-                      selectedIcon: const Icon(Icons.menu_book_rounded),
-                      label: l10n.tr('navQuran'),
-                    ),
-                    NavigationDestination(
-                      icon: const Icon(Icons.touch_app_outlined),
-                      selectedIcon: const Icon(Icons.touch_app_rounded),
-                      label: l10n.tr('navTasbih'),
-                    ),
-                    NavigationDestination(
-                      icon: const Icon(Icons.explore_outlined),
-                      selectedIcon: const Icon(Icons.explore_rounded),
-                      label: l10n.tr('navQibla'),
-                    ),
-                    NavigationDestination(
-                      icon: const Icon(Icons.settings_outlined),
-                      selectedIcon: const Icon(Icons.settings_rounded),
-                      label: l10n.tr('navSettings'),
-                    ),
-                  ],
-                  animationDuration: const Duration(milliseconds: 320),
-                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-                  height: 72,
-                  backgroundColor: Colors.transparent,
-                  indicatorShape: const StadiumBorder(),
-                  elevation: 0,
-                  shadowColor: Colors.transparent,
-                  surfaceTintColor: Colors.transparent,
-                  overlayColor: WidgetStatePropertyAll(
-                    Theme.of(
-                      context,
-                    ).colorScheme.secondary.withValues(alpha: 0.12),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
+              child: NavigationBar(
+                selectedIndex: _currentTab,
+                onDestinationSelected: (index) {
+                  setState(() => _currentTab = index);
+                },
+                destinations: <NavigationDestination>[
+                  NavigationDestination(
+                    icon: const Icon(Icons.home_outlined),
+                    selectedIcon: const Icon(Icons.home_rounded),
+                    label: l10n.tr('navHome'),
                   ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.menu_book_outlined),
+                    selectedIcon: const Icon(Icons.menu_book_rounded),
+                    label: l10n.tr('navQuran'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.touch_app_outlined),
+                    selectedIcon: const Icon(Icons.touch_app_rounded),
+                    label: l10n.tr('navTasbih'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.explore_outlined),
+                    selectedIcon: const Icon(Icons.explore_rounded),
+                    label: l10n.tr('navQibla'),
+                  ),
+                  NavigationDestination(
+                    icon: const Icon(Icons.settings_outlined),
+                    selectedIcon: const Icon(Icons.settings_rounded),
+                    label: l10n.tr('navSettings'),
+                  ),
+                ],
+                animationDuration: const Duration(milliseconds: 320),
+                labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                height: 72,
+                backgroundColor: Colors.transparent,
+                indicatorShape: const StadiumBorder(),
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                overlayColor: WidgetStatePropertyAll(
+                  Theme.of(
+                    context,
+                  ).colorScheme.secondary.withValues(alpha: 0.12),
                 ),
               ),
             ),
