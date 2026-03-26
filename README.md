@@ -16,6 +16,11 @@ daily engagement.
 - GPS location with permission flow
 - Local prayer times via `adhan`
 - Next prayer countdown
+- Automatic prohibited prayer windows (Makruh times) with active highlight:
+  - After Fajr -> Sunrise + 15 min
+  - Zenith (Dhuhr - 10 min -> Dhuhr)
+  - After Asr -> Maghrib
+- Settings toggle: show/hide prohibited times in the prayer list
 - Qibla compass via `flutter_qiblah`
 - Local prayer notifications (silent or azan sound)
 

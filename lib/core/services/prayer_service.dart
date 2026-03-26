@@ -1,9 +1,13 @@
 import 'package:adhan/adhan.dart';
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/models/app_location.dart';
+import 'package:azan_app/core/models/prohibited_time.dart';
 import 'package:azan_app/core/models/prayer_info.dart';
+import 'package:azan_app/core/services/prohibited_time_service.dart';
 
 class PrayerService {
+  final ProhibitedTimeService _prohibitedTimeService = ProhibitedTimeService();
+
   List<PrayerInfo> getDisplayTimesForDate({
     required AppLocation location,
     required DateTime date,
@@ -55,6 +59,26 @@ class PrayerService {
       date: date,
       calculationMethod: calculationMethod,
     ).where((prayer) => prayer.isObligatory).toList();
+  }
+
+  List<ProhibitedTime> getProhibitedTimesForDate({
+    required AppLocation location,
+    required DateTime date,
+    required CalculationMethodOption calculationMethod,
+  }) {
+    final prayerTimes = _buildPrayerTimes(
+      location: location,
+      date: date,
+      calculationMethod: calculationMethod,
+    );
+    return _prohibitedTimeService.getProhibitedTimes(prayerTimes);
+  }
+
+  bool isNowProhibited({
+    required DateTime now,
+    required List<ProhibitedTime> prohibitedTimes,
+  }) {
+    return _prohibitedTimeService.isNowProhibited(now, prohibitedTimes);
   }
 
   PrayerInfo getNextPrayer({

@@ -26,13 +26,10 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   static const int _maxCityResults = 15;
-  static const double _sectionGap = 20;
-  static const double _titleToCardGap = 10;
+  static const double _sectionGap = 28;
+  static const double _titleToCardGap = 12;
 
   final _citySearchController = TextEditingController();
-  final _latitudeController = TextEditingController();
-  final _longitudeController = TextEditingController();
-  final _cityController = TextEditingController();
   final List<OfflineCity> _citySuggestions = <OfflineCity>[];
   Timer? _citySearchDebounce;
   bool _isSearchingCities = false;
@@ -48,9 +45,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _citySearchDebounce?.cancel();
     _citySearchController.dispose();
-    _latitudeController.dispose();
-    _longitudeController.dispose();
-    _cityController.dispose();
     super.dispose();
   }
 
@@ -181,59 +175,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
-              const SizedBox(height: 14),
-              TextField(
-                controller: _latitudeController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  signed: true,
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: l10n.tr('latitude'),
-                  hintText: 'e.g. 3.1390',
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _longitudeController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  signed: true,
-                  decimal: true,
-                ),
-                decoration: InputDecoration(
-                  labelText: l10n.tr('longitude'),
-                  hintText: 'e.g. 101.6869',
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _cityController,
-                decoration: InputDecoration(
-                  labelText: l10n.tr('cityNameOptional'),
-                  hintText: l10n.tr('leaveBlankAutoDetect'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: controller.isBusy
-                      ? null
-                      : () async {
-                          final message = await context
-                              .read<AppController>()
-                              .saveManualLocation(
-                                latitudeText: _latitudeController.text,
-                                longitudeText: _longitudeController.text,
-                                cityText: _cityController.text,
-                              );
-                          if (!mounted) return;
-                          _showSnack(message ?? l10n.tr('manualLocationSaved'));
-                        },
-                  icon: const Icon(Icons.save_rounded),
-                  label: Text(l10n.tr('saveManualLocation')),
-                ),
-              ),
             ],
           ),
         ),
@@ -306,25 +247,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
-          child: DropdownButtonFormField<CalculationMethodOption>(
-            initialValue: controller.settings.calculationMethod,
-            decoration: InputDecoration(
-              labelText: l10n.tr('calculationMethod'),
-            ),
-            items: CalculationMethodOption.values
-                .map(
-                  (method) => DropdownMenuItem<CalculationMethodOption>(
-                    value: method,
-                    child: Text(l10n.calculationMethodLabel(method)),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) async {
-              if (value == null) return;
-              await context.read<AppController>().updateCalculationMethod(
-                value,
-              );
-            },
+          child: Column(
+            children: <Widget>[
+              DropdownButtonFormField<CalculationMethodOption>(
+                initialValue: controller.settings.calculationMethod,
+                decoration: InputDecoration(
+                  labelText: l10n.tr('calculationMethod'),
+                ),
+                items: CalculationMethodOption.values
+                    .map(
+                      (method) => DropdownMenuItem<CalculationMethodOption>(
+                        value: method,
+                        child: Text(l10n.calculationMethodLabel(method)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) async {
+                  if (value == null) return;
+                  await context.read<AppController>().updateCalculationMethod(
+                    value,
+                  );
+                },
+              ),
+            ],
           ),
         ),
         const SizedBox(height: _sectionGap),
@@ -513,9 +458,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _selectCity(OfflineCity city) async {
     _citySearchController.text = city.displayName;
-    _cityController.text = city.name;
-    _latitudeController.text = city.latitude.toStringAsFixed(6);
-    _longitudeController.text = city.longitude.toStringAsFixed(6);
     setState(() {
       _citySuggestions.clear();
       _isSearchingCities = false;

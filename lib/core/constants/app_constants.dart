@@ -41,7 +41,6 @@ class AppConstants {
 
   static const List<String> optionalPrayerNames = <String>[
     'Imsak',
-    'Sunrise',
     'Qiyam',
     'Midnight',
   ];
@@ -53,7 +52,6 @@ class AppConstants {
     'Maghrib',
     'Isha',
     'Imsak',
-    'Sunrise',
     'Qiyam',
     'Midnight',
   ];

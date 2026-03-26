@@ -9,6 +9,7 @@ import 'package:azan_app/core/localization/app_language.dart';
 import 'package:azan_app/core/models/app_location.dart';
 import 'package:azan_app/core/models/offline_city.dart';
 import 'package:azan_app/core/models/app_settings.dart';
+import 'package:azan_app/core/models/prohibited_time.dart';
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/services/hive_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
@@ -57,6 +58,7 @@ class AppController extends ChangeNotifier {
   AppSettings _settings = AppSettings.defaults();
   AppLocation? _location;
   List<PrayerInfo> _todayPrayers = <PrayerInfo>[];
+  List<ProhibitedTime> _todayProhibitedTimes = <ProhibitedTime>[];
   PrayerInfo? _nextPrayer;
   Duration _nextPrayerCountdown = Duration.zero;
 
@@ -80,6 +82,7 @@ class AppController extends ChangeNotifier {
   AppSettings get settings => _settings;
   AppLocation? get location => _location;
   List<PrayerInfo> get todayPrayers => _todayPrayers;
+  List<ProhibitedTime> get todayProhibitedTimes => _todayProhibitedTimes;
   PrayerInfo? get nextPrayer => _nextPrayer;
   Duration get nextPrayerCountdown => _nextPrayerCountdown;
   DateTime get now => _now;
@@ -93,6 +96,14 @@ class AppController extends ChangeNotifier {
   AppLanguage get appLanguage => _settings.appLanguage;
   Locale get locale => _settings.appLanguage.locale;
   List<String> get visiblePrayerNames => _settings.visiblePrayerNames;
+  bool get showProhibitedTimes => _settings.showProhibitedTimes;
+  bool isNowProhibited(DateTime now) {
+    return _prayerService.isNowProhibited(
+      now: now,
+      prohibitedTimes: _todayProhibitedTimes,
+    );
+  }
+
   List<QuranBookmark> get quranBookmarks =>
       List<QuranBookmark>.unmodifiable(_quranBookmarks);
   QuranReadPosition? get quranLastRead => _quranLastRead;
@@ -298,6 +309,12 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setShowProhibitedTimes(bool enabled) async {
+    _settings = _settings.copyWith(showProhibitedTimes: enabled);
+    await _hiveService.saveSettings(_settings);
+    notifyListeners();
+  }
+
   Future<String?> exportBackup({required String filePath}) {
     return _runBusyAction(() async {
       final backupData = _hiveService.dumpAllData();
@@ -434,12 +451,18 @@ class AppController extends ChangeNotifier {
 
     if (_location == null) {
       _todayPrayers = <PrayerInfo>[];
+      _todayProhibitedTimes = <ProhibitedTime>[];
       _nextPrayer = null;
       _nextPrayerCountdown = Duration.zero;
       return;
     }
 
     _todayPrayers = _prayerService.getDisplayTimesForDate(
+      location: _location!,
+      date: _now,
+      calculationMethod: _settings.calculationMethod,
+    );
+    _todayProhibitedTimes = _prayerService.getProhibitedTimesForDate(
       location: _location!,
       date: _now,
       calculationMethod: _settings.calculationMethod,

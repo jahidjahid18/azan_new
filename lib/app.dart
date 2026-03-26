@@ -101,13 +101,14 @@ class _MainScaffoldState extends State<_MainScaffold> {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 50,
         title: Text(titles[_currentTab]),
         bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(44),
+          preferredSize: const Size.fromHeight(28),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.topLeft,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(

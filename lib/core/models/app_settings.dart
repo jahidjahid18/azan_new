@@ -10,6 +10,7 @@ class AppSettings {
     required this.calculationMethod,
     required this.notificationsEnabled,
     required this.notificationSoundMode,
+    required this.showProhibitedTimes,
     required this.themeMode,
     required this.themeStyle,
     required this.appLanguage,
@@ -19,6 +20,7 @@ class AppSettings {
   final CalculationMethodOption calculationMethod;
   final bool notificationsEnabled;
   final NotificationSoundMode notificationSoundMode;
+  final bool showProhibitedTimes;
   final ThemeModeOption themeMode;
   final ThemeStyleOption themeStyle;
   final AppLanguage appLanguage;
@@ -29,6 +31,7 @@ class AppSettings {
       calculationMethod: CalculationMethodOption.muslimWorldLeague,
       notificationsEnabled: true,
       notificationSoundMode: NotificationSoundMode.notificationOnly,
+      showProhibitedTimes: true,
       themeMode: ThemeModeOption.light,
       themeStyle: ThemeStyleOption.emerald,
       appLanguage: AppLanguage.english,
@@ -40,6 +43,7 @@ class AppSettings {
     CalculationMethodOption? calculationMethod,
     bool? notificationsEnabled,
     NotificationSoundMode? notificationSoundMode,
+    bool? showProhibitedTimes,
     ThemeModeOption? themeMode,
     ThemeStyleOption? themeStyle,
     AppLanguage? appLanguage,
@@ -50,6 +54,7 @@ class AppSettings {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       notificationSoundMode:
           notificationSoundMode ?? this.notificationSoundMode,
+      showProhibitedTimes: showProhibitedTimes ?? this.showProhibitedTimes,
       themeMode: themeMode ?? this.themeMode,
       themeStyle: themeStyle ?? this.themeStyle,
       appLanguage: appLanguage ?? this.appLanguage,
@@ -62,6 +67,7 @@ class AppSettings {
       'calculationMethod': calculationMethod.key,
       'notificationsEnabled': notificationsEnabled,
       'notificationSoundMode': notificationSoundMode.key,
+      'showProhibitedTimes': showProhibitedTimes,
       'themeMode': themeMode.key,
       'themeStyle': themeStyle.key,
       'appLanguage': appLanguage.code,
@@ -78,6 +84,7 @@ class AppSettings {
       notificationSoundMode: NotificationSoundModeX.fromKey(
         map['notificationSoundMode'] as String?,
       ),
+      showProhibitedTimes: map['showProhibitedTimes'] as bool? ?? true,
       themeMode: ThemeModeOptionX.fromKey(map['themeMode'] as String?),
       themeStyle: ThemeStyleOptionX.fromKey(map['themeStyle'] as String?),
       appLanguage: AppLanguageX.fromCode(map['appLanguage'] as String?),
