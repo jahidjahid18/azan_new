@@ -40,17 +40,9 @@ class HomeScreen extends StatelessWidget {
           if (controller.location != null) ...<Widget>[
             _CityHeader(city: controller.location!.cityName),
             const SizedBox(height: 12),
-            _NextPrayerCard(
-              nextPrayer: controller.nextPrayer,
-              countdown: controller.nextPrayerCountdown,
-            ),
+            _NextPrayerCard(nextPrayer: controller.nextPrayer),
           ] else
             _EmptyLocationState(message: controller.startupError),
-          const SizedBox(height: 12),
-          IslamicEventsSection(now: controller.now),
-          const SizedBox(height: 12),
-          if (controller.dailyContent != null)
-            DailyContentCard(item: controller.dailyContent!),
           const SizedBox(height: 14),
           const _QuickActionsRow(),
           if (controller.location != null) ...<Widget>[
@@ -93,6 +85,11 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          IslamicEventsSection(now: controller.now),
+          const SizedBox(height: 12),
+          if (controller.dailyContent != null)
+            DailyContentCard(item: controller.dailyContent!),
         ],
       ),
     );
@@ -268,10 +265,6 @@ class _CityHeader extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              Text(
-                DateFormat('EEEE, d MMMM').format(DateTime.now()),
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
             ],
           ),
         ),
@@ -281,16 +274,19 @@ class _CityHeader extends StatelessWidget {
 }
 
 class _NextPrayerCard extends StatelessWidget {
-  const _NextPrayerCard({required this.nextPrayer, required this.countdown});
+  const _NextPrayerCard({required this.nextPrayer});
 
   final PrayerInfo? nextPrayer;
-  final Duration countdown;
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final now = context.select<AppController, DateTime>((c) => c.now);
     final prayerTimeFormat = DateFormat('hh:mm a');
     final scheme = Theme.of(context).colorScheme;
+    final countdown = nextPrayer == null
+        ? Duration.zero
+        : nextPrayer!.time.difference(now);
     final countdownLabel = l10n.tr('startsIn', <String, String>{
       'duration': _formatStableDuration(countdown),
     });

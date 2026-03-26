@@ -121,6 +121,18 @@ class HiveService {
     await _box.put(AppConstants.azkarTrackerStorageKey, data);
   }
 
+  bool loadBool({required String key, bool defaultValue = false}) {
+    final stored = _box.get(key);
+    if (stored is bool) {
+      return stored;
+    }
+    return defaultValue;
+  }
+
+  Future<void> saveBool({required String key, required bool value}) async {
+    await _box.put(key, value);
+  }
+
   Map<String, dynamic> dumpAllData() {
     return <String, dynamic>{
       'version': 1,

@@ -10,6 +10,10 @@ class AppConstants {
   static const String quranLastReadStorageKey = 'quran_last_read';
   static const String quranReaderPrefsStorageKey = 'quran_reader_prefs';
   static const String azkarTrackerStorageKey = 'azkar_tracker';
+  static const String visiblePrayersMigratedStorageKey =
+      'visible_prayers_migrated_v1';
+  static const String visiblePrayersMigratedV2StorageKey =
+      'visible_prayers_migrated_v2_all_prayers_default';
 
   static const int notificationHorizonDays = 30;
 
@@ -47,5 +51,9 @@ class AppConstants {
     'Asr',
     'Maghrib',
     'Isha',
+    'Imsak',
+    'Sunrise',
+    'Qiyam',
+    'Midnight',
   ];
 }

@@ -12,6 +12,7 @@ import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/services/hive_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
+import 'package:azan_app/core/services/prayer_notification_scheduler.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
@@ -28,17 +29,20 @@ class AppController extends ChangeNotifier {
     required LocationService locationService,
     required PrayerService prayerService,
     required NotificationService notificationService,
+    required PrayerNotificationScheduler prayerNotificationScheduler,
     required DailyContentService dailyContentService,
   }) : _hiveService = hiveService,
        _locationService = locationService,
        _prayerService = prayerService,
        _notificationService = notificationService,
+       _prayerNotificationScheduler = prayerNotificationScheduler,
        _dailyContentService = dailyContentService;
 
   final HiveService _hiveService;
   final LocationService _locationService;
   final PrayerService _prayerService;
   final NotificationService _notificationService;
+  final PrayerNotificationScheduler _prayerNotificationScheduler;
   final DailyContentService _dailyContentService;
 
   AppSettings _settings = AppSettings.defaults();
@@ -93,6 +97,7 @@ class AppController extends ChangeNotifier {
         _settings = _settings.copyWith(themeStyle: ThemeStyleOption.muslimPro);
         await _hiveService.saveSettings(_settings);
       }
+      await _migrateDefaultVisiblePrayersIfNeeded();
       _location = _hiveService.loadLocation();
       _tasbihCount = _hiveService.loadTasbihCount();
       _prayerTracker = _hiveService.loadPrayerTracker();
@@ -116,6 +121,43 @@ class AppController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> _migrateDefaultVisiblePrayersIfNeeded() async {
+    final migratedV2 = _hiveService.loadBool(
+      key: AppConstants.visiblePrayersMigratedV2StorageKey,
+      defaultValue: false,
+    );
+    if (migratedV2) {
+      return;
+    }
+
+    final migrated = _hiveService.loadBool(
+      key: AppConstants.visiblePrayersMigratedStorageKey,
+      defaultValue: false,
+    );
+    final currentSet = _settings.visiblePrayerNames.toSet();
+    final mandatorySet = AppConstants.mandatoryPrayerNames.toSet();
+    final isLegacyDefault =
+        currentSet.length == mandatorySet.length &&
+        currentSet.containsAll(mandatorySet);
+
+    if (isLegacyDefault) {
+      _settings = _settings.copyWith(
+        visiblePrayerNames: AppConstants.defaultVisiblePrayerNames,
+      );
+      await _hiveService.saveSettings(_settings);
+    }
+    if (!migrated) {
+      await _hiveService.saveBool(
+        key: AppConstants.visiblePrayersMigratedStorageKey,
+        value: true,
+      );
+    }
+    await _hiveService.saveBool(
+      key: AppConstants.visiblePrayersMigratedV2StorageKey,
+      value: true,
+    );
   }
 
   Future<String?> refreshLocationFromGps() async {
@@ -356,25 +398,11 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> _refreshNotificationSchedule() async {
-    if (_location == null) {
-      await _notificationService.schedulePrayerNotifications(
-        enabled: false,
-        soundMode: _settings.notificationSoundMode,
-        upcomingPrayers: const <PrayerInfo>[],
-      );
-      return;
-    }
-
-    final upcomingPrayers = _prayerService.getUpcomingPrayers(
-      location: _location!,
-      calculationMethod: _settings.calculationMethod,
-      numberOfDays: AppConstants.notificationHorizonDays,
-    );
-
-    await _notificationService.schedulePrayerNotifications(
+    await _prayerNotificationScheduler.schedule(
       enabled: _settings.notificationsEnabled,
       soundMode: _settings.notificationSoundMode,
-      upcomingPrayers: upcomingPrayers,
+      location: _location,
+      calculationMethod: _settings.calculationMethod,
     );
   }
 

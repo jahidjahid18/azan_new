@@ -3,12 +3,14 @@ import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:intl/intl.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final DateFormat _timeFormat = DateFormat('h:mm a');
 
   Future<void> initialize() async {
     tz_data.initializeTimeZones();
@@ -32,6 +34,7 @@ class NotificationService {
     required bool enabled,
     required NotificationSoundMode soundMode,
     required List<PrayerInfo> upcomingPrayers,
+    required String locationName,
   }) async {
     await _plugin.cancelAllPendingNotifications();
 
@@ -40,47 +43,93 @@ class NotificationService {
     }
 
     var notificationId = 1000;
-    for (final prayer in upcomingPrayers) {
+    for (var index = 0; index < upcomingPrayers.length; index++) {
+      final prayer = upcomingPrayers[index];
+      final nextPrayer = index + 1 < upcomingPrayers.length
+          ? upcomingPrayers[index + 1]
+          : null;
+      final currentPrayerLabel =
+          '${prayer.name} - ${_timeFormat.format(prayer.time)}';
+      final nextPrayerLabel = nextPrayer == null
+          ? '--'
+          : '${nextPrayer.name} - ${_timeFormat.format(nextPrayer.time)}';
+      final countdownLabel = nextPrayer == null
+          ? '--:--:--'
+          : _formatCountdown(nextPrayer.time.difference(prayer.time));
+
+      final styleInformation = InboxStyleInformation(
+        <String>[
+          'Location: $locationName',
+          '',
+          'Next Prayer:',
+          nextPrayerLabel,
+          'Starts in: $countdownLabel',
+        ],
+        contentTitle: currentPrayerLabel,
+        summaryText: 'Prayer Reminder',
+      );
+
       await _plugin.zonedSchedule(
         id: notificationId++,
-        title: '${prayer.name} Prayer',
-        body: 'It is time for ${prayer.name}.',
+        title: currentPrayerLabel,
+        body:
+            'Location: $locationName • Next: $nextPrayerLabel • Starts in: $countdownLabel',
         scheduledDate: tz.TZDateTime.from(prayer.time, tz.local),
-        notificationDetails: _detailsForSoundMode(soundMode),
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        notificationDetails: _detailsForSoundMode(
+          soundMode,
+          styleInformation: styleInformation,
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       );
     }
   }
 
-  NotificationDetails _detailsForSoundMode(NotificationSoundMode soundMode) {
+  NotificationDetails _detailsForSoundMode(
+    NotificationSoundMode soundMode, {
+    required StyleInformation styleInformation,
+  }) {
     switch (soundMode) {
       case NotificationSoundMode.notificationOnly:
-        return const NotificationDetails(
+        return NotificationDetails(
           android: AndroidNotificationDetails(
             AppConstants.notificationChannelIdSilent,
             AppConstants.notificationChannelName,
             channelDescription: 'Silent prayer notifications',
             importance: Importance.high,
             priority: Priority.high,
+            category: AndroidNotificationCategory.reminder,
+            styleInformation: styleInformation,
+            visibility: NotificationVisibility.public,
             playSound: false,
             enableVibration: false,
           ),
-          iOS: DarwinNotificationDetails(presentSound: false),
+          iOS: const DarwinNotificationDetails(presentSound: false),
         );
       case NotificationSoundMode.azanSound:
-        return const NotificationDetails(
+        return NotificationDetails(
           android: AndroidNotificationDetails(
             AppConstants.notificationChannelIdAzan,
             AppConstants.notificationChannelName,
             channelDescription: 'Prayer notifications with azan',
             importance: Importance.high,
             priority: Priority.high,
+            category: AndroidNotificationCategory.reminder,
+            styleInformation: styleInformation,
+            visibility: NotificationVisibility.public,
             playSound: true,
             sound: RawResourceAndroidNotificationSound('azan'),
           ),
-          iOS: DarwinNotificationDetails(presentSound: true),
+          iOS: const DarwinNotificationDetails(presentSound: true),
         );
     }
+  }
+
+  String _formatCountdown(Duration duration) {
+    final safe = duration.isNegative ? Duration.zero : duration;
+    final hours = safe.inHours;
+    final minutes = safe.inMinutes.remainder(60);
+    final seconds = safe.inSeconds.remainder(60);
+    return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 
   Future<void> _configureLocalTimeZone() async {

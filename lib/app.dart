@@ -60,6 +60,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
     final l10n = context.l10n;
     final showBanner = _currentTab == 0 || _currentTab == 4;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
+    final todayDate = DateFormat('EEEE, d MMMM').format(now);
     final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
     final currentTime = DateFormat('hh:mm:ss a').format(now);
     final titles = <String>[
@@ -72,21 +73,25 @@ class _MainScaffoldState extends State<_MainScaffold> {
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 72,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(titles[_currentTab]),
-            const SizedBox(height: 2),
-            Text(
-              '${l10n.tr('hijriDate')}: $hijriDate  |  $currentTime',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.secondary,
-                fontWeight: FontWeight.w600,
+        title: Text(titles[_currentTab]),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(28),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Text(
+                  '$todayDate | $hijriDate | $currentTime',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ),
-          ],
+          ),
         ),
       ),
       body: AppGradientBackground(
