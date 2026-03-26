@@ -24,6 +24,9 @@ class DailyQuranAyahsSection extends StatefulWidget {
 
 class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
   static const int _dailyAyahCount = 3;
+  static const double _minZoom = 0.85;
+  static const double _maxZoom = 1.4;
+  static const double _zoomStep = 0.1;
   final QuranRepository _repository = QuranRepository();
   final QuranAudioService _audioService = QuranAudioService();
   final QuranReciter _reciter = kQuranReciters.first;
@@ -36,6 +39,7 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
   String? _playingAyahKey;
   String? _loadingAyahKey;
   StreamSubscription<PlayerState>? _playerStateSub;
+  double _contentZoom = 1.0;
 
   @override
   void initState() {
@@ -94,174 +98,192 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
         }
 
         final scheme = Theme.of(context).colorScheme;
-        return AppSurfaceCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        return MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(_contentZoom)),
+          child: AppSurfaceCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            l10n.tr('dailyQuranAyahsTitle'),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Row(
                       children: <Widget>[
-                        Text(
-                          l10n.tr('dailyQuranAyahsTitle'),
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w800),
+                        _headerActionButton(
+                          context: context,
+                          icon: Icons.text_decrease_rounded,
+                          onPressed: _contentZoom <= _minZoom
+                              ? null
+                              : () => _changeZoom(-_zoomStep),
+                        ),
+                        const SizedBox(width: 6),
+                        _headerActionButton(
+                          context: context,
+                          icon: Icons.text_increase_rounded,
+                          onPressed: _contentZoom >= _maxZoom
+                              ? null
+                              : () => _changeZoom(_zoomStep),
+                        ),
+                        const SizedBox(width: 6),
+                        _headerActionButton(
+                          context: context,
+                          icon: Icons.refresh_rounded,
+                          tooltip: l10n.tr('refreshDailyAyahs'),
+                          onPressed: () => _refreshAyahs(surahs),
                         ),
                       ],
                     ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: scheme.secondary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: scheme.outlineVariant.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    child: IconButton(
-                      tooltip: l10n.tr('refreshDailyAyahs'),
-                      visualDensity: VisualDensity.compact,
-                      iconSize: 20,
-                      onPressed: () => _refreshAyahs(surahs),
-                      icon: const Icon(Icons.refresh_rounded),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              ...picks.asMap().entries.map((entry) {
-                final index = entry.key;
-                final item = entry.value;
-                final isLast = index == picks.length - 1;
-                final transliteration = (item.ayah.transliteration ?? '')
-                    .trim();
-                final translation = (item.ayah.translation ?? '').trim();
-                final ayahKey = _ayahKey(item);
-                final isPlayingThisAyah =
-                    _playingAyahKey == ayahKey && _audioService.player.playing;
-                final isLoadingThisAyah = _loadingAyahKey == ayahKey;
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...picks.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final item = entry.value;
+                  final isLast = index == picks.length - 1;
+                  final transliteration = (item.ayah.transliteration ?? '')
+                      .trim();
+                  final translation = (item.ayah.translation ?? '').trim();
+                  final ayahKey = _ayahKey(item);
+                  final isPlayingThisAyah =
+                      _playingAyahKey == ayahKey &&
+                      _audioService.player.playing;
+                  final isLoadingThisAyah = _loadingAyahKey == ayahKey;
 
-                return Padding(
-                  padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: scheme.secondary.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: scheme.outlineVariant.withValues(alpha: 0.38),
+                  return Padding(
+                    padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: scheme.secondary.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: scheme.outlineVariant.withValues(alpha: 0.38),
+                        ),
+                        boxShadow: <BoxShadow>[
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
-                      boxShadow: <BoxShadow>[
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    '${item.surah.nameArabic} - الآية ${item.ayah.number}',
-                                    textDirection: TextDirection.rtl,
-                                    textAlign: TextAlign.right,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w700,
-                                          fontFamily: 'NotoNaskhArabic',
-                                        ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    '${item.surah.nameEnglish} - ${l10n.tr('ayah')} ${item.ayah.number}',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelLarge
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            IconButton(
-                              tooltip: l10n.tr(
-                                isPlayingThisAyah ? 'pause' : 'play',
-                              ),
-                              visualDensity: VisualDensity.compact,
-                              onPressed: isLoadingThisAyah
-                                  ? null
-                                  : () => _toggleAyahAudio(item),
-                              icon: isLoadingThisAyah
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Icon(
-                                      isPlayingThisAyah
-                                          ? Icons.pause_circle_filled_rounded
-                                          : Icons.play_circle_fill_rounded,
-                                      size: 26,
-                                      color: scheme.primary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      '${item.surah.nameArabic} - \u0627\u0644\u0622\u064A\u0629 ${item.ayah.number}',
+                                      textDirection: TextDirection.rtl,
+                                      textAlign: TextAlign.right,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            fontFamily: 'NotoNaskhArabic',
+                                          ),
                                     ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          item.ayah.text,
-                          textDirection: TextDirection.rtl,
-                          textAlign: TextAlign.right,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(
-                                fontFamily: 'NotoNaskhArabic',
-                                height: 1.7,
-                                fontWeight: FontWeight.w700,
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${item.surah.nameEnglish} - ${l10n.tr('ayah')} ${item.ayah.number}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                        ),
-                        if (transliteration.isNotEmpty) ...<Widget>[
+                              const SizedBox(width: 8),
+                              IconButton(
+                                tooltip: l10n.tr(
+                                  isPlayingThisAyah ? 'pause' : 'play',
+                                ),
+                                visualDensity: VisualDensity.compact,
+                                onPressed: isLoadingThisAyah
+                                    ? null
+                                    : () => _toggleAyahAudio(item),
+                                icon: isLoadingThisAyah
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Icon(
+                                        isPlayingThisAyah
+                                            ? Icons.pause_circle_filled_rounded
+                                            : Icons.play_circle_fill_rounded,
+                                        size: 26,
+                                        color: scheme.primary,
+                                      ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 8),
                           Text(
-                            transliteration,
-                            style: Theme.of(context).textTheme.bodySmall
+                            item.ayah.text,
+                            textDirection: TextDirection.rtl,
+                            textAlign: TextAlign.right,
+                            style: Theme.of(context).textTheme.titleLarge
                                 ?.copyWith(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onSurfaceVariant,
-                                  fontStyle: FontStyle.italic,
-                                  height: 1.45,
+                                  fontFamily: 'NotoNaskhArabic',
+                                  height: 1.7,
+                                  fontWeight: FontWeight.w700,
                                 ),
                           ),
+                          if (transliteration.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 8),
+                            Text(
+                              transliteration,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                    fontStyle: FontStyle.italic,
+                                    height: 1.45,
+                                  ),
+                            ),
+                          ],
+                          if (translation.isNotEmpty) ...<Widget>[
+                            const SizedBox(height: 8),
+                            Text(
+                              translation,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.bodyMedium?.copyWith(height: 1.45),
+                            ),
+                          ],
                         ],
-                        if (translation.isNotEmpty) ...<Widget>[
-                          const SizedBox(height: 8),
-                          Text(
-                            translation,
-                            style: Theme.of(
-                              context,
-                            ).textTheme.bodyMedium?.copyWith(height: 1.45),
-                          ),
-                        ],
-                      ],
+                      ),
                     ),
-                  ),
-                );
-              }),
-            ],
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },
@@ -275,6 +297,37 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
     }
     _activeDayKey = todayKey;
     _loadStateForDay(todayKey);
+  }
+
+  Widget _headerActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required VoidCallback? onPressed,
+    String? tooltip,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: BoxDecoration(
+        color: scheme.secondary.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: scheme.outlineVariant.withValues(alpha: 0.4)),
+      ),
+      child: IconButton(
+        tooltip: tooltip,
+        visualDensity: VisualDensity.compact,
+        iconSize: 20,
+        onPressed: onPressed,
+        icon: Icon(icon),
+      ),
+    );
+  }
+
+  void _changeZoom(double delta) {
+    final next = (_contentZoom + delta).clamp(_minZoom, _maxZoom);
+    if (next == _contentZoom) {
+      return;
+    }
+    setState(() => _contentZoom = next);
   }
 
   List<_DailyAyahItem> _pickDailyAyahs({

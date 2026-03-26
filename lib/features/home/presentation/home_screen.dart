@@ -46,7 +46,11 @@ class HomeScreen extends StatelessWidget {
         padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomPadding),
         children: <Widget>[
           if (controller.location != null) ...<Widget>[
-            _CityHeader(city: controller.location!.cityName),
+            _CityHeader(
+              city: controller.location!.cityName,
+              isRefreshing: controller.isBusy,
+              onLocatePressed: () => _refreshLocationFromHeader(context),
+            ),
             const SizedBox(height: 12),
             _NextPrayerCard(nextPrayer: controller.nextPrayer),
           ] else
@@ -110,9 +114,9 @@ class HomeScreen extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 12),
-          IslamicEventsSection(now: controller.now),
-          const SizedBox(height: 12),
           DailyQuranAyahsSection(translationLanguage: controller.appLanguage),
+          const SizedBox(height: 12),
+          IslamicEventsSection(now: controller.now),
         ],
       ),
     );
@@ -322,21 +326,34 @@ class HomeScreen extends StatelessWidget {
     ];
     return lines.join('\n');
   }
+
+  Future<void> _refreshLocationFromHeader(BuildContext context) async {
+    final error = await context.read<AppController>().refreshLocationFromGps();
+    if (!context.mounted || error == null) {
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+  }
 }
 
 class _CityHeader extends StatelessWidget {
-  const _CityHeader({required this.city});
+  const _CityHeader({
+    required this.city,
+    required this.isRefreshing,
+    required this.onLocatePressed,
+  });
 
   final String city;
+  final bool isRefreshing;
+  final VoidCallback onLocatePressed;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       children: <Widget>[
-        Icon(
-          Icons.location_on_rounded,
-          color: Theme.of(context).colorScheme.secondary,
-        ),
+        Icon(Icons.location_on_rounded, color: scheme.secondary),
         const SizedBox(width: 6),
         Expanded(
           child: Column(
@@ -351,6 +368,25 @@ class _CityHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.secondary.withValues(alpha: 0.12),
+            border: Border.all(color: scheme.secondary.withValues(alpha: 0.35)),
+          ),
+          child: IconButton(
+            tooltip: l10n.tr('useCurrentLocation'),
+            onPressed: isRefreshing ? null : onLocatePressed,
+            icon: isRefreshing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.my_location_rounded),
           ),
         ),
       ],
