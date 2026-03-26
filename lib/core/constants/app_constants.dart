@@ -9,6 +9,7 @@ class AppConstants {
   static const String quranBookmarksStorageKey = 'quran_bookmarks';
   static const String quranLastReadStorageKey = 'quran_last_read';
   static const String quranReaderPrefsStorageKey = 'quran_reader_prefs';
+  static const String dailyQuranAyahStateStorageKey = 'daily_quran_ayah_state';
   static const String azkarTrackerStorageKey = 'azkar_tracker';
   static const String visiblePrayersMigratedStorageKey =
       'visible_prayers_migrated_v1';
@@ -40,7 +41,6 @@ class AppConstants {
 
   static const List<String> optionalPrayerNames = <String>[
     'Imsak',
-    'Sunrise',
     'Qiyam',
     'Midnight',
   ];
@@ -52,7 +52,6 @@ class AppConstants {
     'Maghrib',
     'Isha',
     'Imsak',
-    'Sunrise',
     'Qiyam',
     'Midnight',
   ];

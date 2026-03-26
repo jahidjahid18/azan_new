@@ -153,6 +153,9 @@ class HiveService {
       AppConstants.quranReaderPrefsStorageKey:
           _box.get(AppConstants.quranReaderPrefsStorageKey) ??
           <String, dynamic>{},
+      AppConstants.dailyQuranAyahStateStorageKey:
+          _box.get(AppConstants.dailyQuranAyahStateStorageKey) ??
+          <String, dynamic>{},
       AppConstants.azkarTrackerStorageKey:
           _box.get(AppConstants.azkarTrackerStorageKey) ?? <String, dynamic>{},
     };
@@ -190,6 +193,10 @@ class HiveService {
     await _box.put(
       AppConstants.quranReaderPrefsStorageKey,
       backup[AppConstants.quranReaderPrefsStorageKey] ?? <String, dynamic>{},
+    );
+    await _box.put(
+      AppConstants.dailyQuranAyahStateStorageKey,
+      backup[AppConstants.dailyQuranAyahStateStorageKey] ?? <String, dynamic>{},
     );
     await _box.put(
       AppConstants.azkarTrackerStorageKey,

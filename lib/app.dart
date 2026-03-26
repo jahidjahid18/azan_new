@@ -86,6 +86,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
       (c) => c.themeStyle,
     );
     final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final showBanner = _currentTab == 0 || _currentTab == 4;
     final todayDate = DateFormat('EEEE, d MMMM').format(now);
     final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
@@ -100,21 +101,55 @@ class _MainScaffoldState extends State<_MainScaffold> {
 
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: 50,
         title: Text(titles[_currentTab]),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(28),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
             child: Align(
-              alignment: Alignment.centerLeft,
+              alignment: Alignment.topLeft,
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
-                child: Text(
-                  '$todayDate | $hijriDate | $currentTime',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.secondary,
-                    fontWeight: FontWeight.w600,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 16,
+                      color: isDark ? Colors.white : scheme.primary,
+                      shadows: <Shadow>[
+                        Shadow(
+                          color: scheme.secondary.withValues(alpha: 0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$todayDate | $hijriDate | $currentTime',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : scheme.primary,
+                        shadows: <Shadow>[
+                          Shadow(
+                            color: isDark
+                                ? Colors.black.withValues(alpha: 0.4)
+                                : Colors.white.withValues(alpha: 0.55),
+                            blurRadius: 6,
+                            offset: const Offset(0, 1),
+                          ),
+                          Shadow(
+                            color: scheme.secondary.withValues(alpha: 0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
