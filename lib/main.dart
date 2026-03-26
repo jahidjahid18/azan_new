@@ -1,6 +1,7 @@
 import 'package:azan_app/app.dart';
 import 'package:azan_app/core/services/hive_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
+import 'package:azan_app/core/services/location_sqlite_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_notification_scheduler.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
@@ -22,6 +23,7 @@ Future<void> main() async {
         return AppController(
           hiveService: HiveService(),
           locationService: LocationService(),
+          locationSqliteService: LocationSqliteService(),
           prayerService: prayerService,
           notificationService: notificationService,
           prayerNotificationScheduler: PrayerNotificationScheduler(

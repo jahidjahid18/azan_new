@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/localization/app_language.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/models/offline_city.dart';
+import 'package:azan_app/core/services/offline_city_search_service.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
@@ -21,12 +25,27 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const int _maxCityResults = 15;
+
+  final _citySearchController = TextEditingController();
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _cityController = TextEditingController();
+  final List<OfflineCity> _citySuggestions = <OfflineCity>[];
+  Timer? _citySearchDebounce;
+  bool _isSearchingCities = false;
+  int _searchRequestId = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_warmUpCitySearch());
+  }
 
   @override
   void dispose() {
+    _citySearchDebounce?.cancel();
+    _citySearchController.dispose();
     _latitudeController.dispose();
     _longitudeController.dispose();
     _cityController.dispose();
@@ -79,6 +98,88 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              TextField(
+                controller: _citySearchController,
+                onChanged: _onCitySearchChanged,
+                textInputAction: TextInputAction.search,
+                decoration: InputDecoration(
+                  labelText: l10n.tr('citySearchLabel'),
+                  hintText: l10n.tr('citySearchHint'),
+                  prefixIcon: const Icon(Icons.travel_explore_rounded),
+                  suffixIcon: _citySearchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          onPressed: () {
+                            _citySearchController.clear();
+                            _onCitySearchChanged('');
+                          },
+                          icon: const Icon(Icons.clear_rounded),
+                        ),
+                ),
+              ),
+              if (_isSearchingCities) ...<Widget>[
+                const SizedBox(height: 8),
+                const LinearProgressIndicator(minHeight: 2),
+              ],
+              if (_citySuggestions.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 260),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outlineVariant.withValues(alpha: 0.65),
+                      ),
+                    ),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: _citySuggestions.length,
+                      separatorBuilder: (_, index) => Divider(
+                        height: 1,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outlineVariant.withValues(alpha: 0.4),
+                      ),
+                      itemBuilder: (context, index) {
+                        final city = _citySuggestions[index];
+                        return ListTile(
+                          dense: true,
+                          leading: const Icon(Icons.location_city_rounded),
+                          title: Text(
+                            city.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          subtitle: Text(
+                            city.region.isEmpty
+                                ? city.country
+                                : '${city.region}, ${city.country}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          onTap: controller.isBusy
+                              ? null
+                              : () => _selectCity(city),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ] else if (_citySearchController.text.trim().isNotEmpty &&
+                  !_isSearchingCities) ...<Widget>[
+                const SizedBox(height: 8),
+                Text(
+                  l10n.tr('citySearchEmpty'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 14),
               TextField(
                 controller: _latitudeController,
                 keyboardType: const TextInputType.numberWithOptions(
@@ -372,6 +473,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ],
     );
+  }
+
+  Future<void> _warmUpCitySearch() async {
+    await OfflineCitySearchService.instance.ensureLoaded();
+  }
+
+  void _onCitySearchChanged(String value) {
+    _citySearchDebounce?.cancel();
+    final query = value.trim();
+    if (query.isEmpty) {
+      setState(() {
+        _isSearchingCities = false;
+        _citySuggestions.clear();
+      });
+      return;
+    }
+
+    _citySearchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      final requestId = ++_searchRequestId;
+      setState(() => _isSearchingCities = true);
+      final results = await OfflineCitySearchService.instance.searchCities(
+        query,
+        limit: _maxCityResults,
+      );
+      if (!mounted || requestId != _searchRequestId) {
+        return;
+      }
+      setState(() {
+        _citySuggestions
+          ..clear()
+          ..addAll(results);
+        _isSearchingCities = false;
+      });
+    });
+  }
+
+  Future<void> _selectCity(OfflineCity city) async {
+    _citySearchController.text = city.displayName;
+    _cityController.text = city.name;
+    _latitudeController.text = city.latitude.toStringAsFixed(6);
+    _longitudeController.text = city.longitude.toStringAsFixed(6);
+    setState(() {
+      _citySuggestions.clear();
+      _isSearchingCities = false;
+    });
+
+    final message = await context.read<AppController>().saveOfflineCityLocation(
+      city,
+    );
+    if (!mounted) return;
+    _showSnack(message ?? context.l10n.tr('manualLocationSaved'));
   }
 
   Widget _buildSupportSection(BuildContext context, AppLocalizations l10n) {

@@ -7,10 +7,12 @@ import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/localization/app_language.dart';
 import 'package:azan_app/core/models/app_location.dart';
+import 'package:azan_app/core/models/offline_city.dart';
 import 'package:azan_app/core/models/app_settings.dart';
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/services/hive_service.dart';
 import 'package:azan_app/core/services/location_service.dart';
+import 'package:azan_app/core/services/location_sqlite_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_notification_scheduler.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
@@ -27,12 +29,14 @@ class AppController extends ChangeNotifier {
   AppController({
     required HiveService hiveService,
     required LocationService locationService,
+    required LocationSqliteService locationSqliteService,
     required PrayerService prayerService,
     required NotificationService notificationService,
     required PrayerNotificationScheduler prayerNotificationScheduler,
     required DailyContentService dailyContentService,
   }) : _hiveService = hiveService,
        _locationService = locationService,
+       _locationSqliteService = locationSqliteService,
        _prayerService = prayerService,
        _notificationService = notificationService,
        _prayerNotificationScheduler = prayerNotificationScheduler,
@@ -40,6 +44,7 @@ class AppController extends ChangeNotifier {
 
   final HiveService _hiveService;
   final LocationService _locationService;
+  final LocationSqliteService _locationSqliteService;
   final PrayerService _prayerService;
   final NotificationService _notificationService;
   final PrayerNotificationScheduler _prayerNotificationScheduler;
@@ -102,7 +107,11 @@ class AppController extends ChangeNotifier {
         await _hiveService.saveSettings(_settings);
       }
       await _migrateDefaultVisiblePrayersIfNeeded();
-      _location = _hiveService.loadLocation();
+      final hiveLocation = _hiveService.loadLocation();
+      _location = hiveLocation ?? await _locationSqliteService.loadLocation();
+      if (hiveLocation == null && _location != null) {
+        await _hiveService.saveLocation(_location!);
+      }
       _tasbihCount = _hiveService.loadTasbihCount();
       _prayerTracker = _hiveService.loadPrayerTracker();
       _quranBookmarks = _hiveService.loadQuranBookmarks();
@@ -203,8 +212,23 @@ class AppController extends ChangeNotifier {
         longitude: longitude,
         cityName: cityText,
       );
-      await _hiveService.saveLocation(_location!);
+      await _persistLocation(_location!);
 
+      _recalculatePrayers();
+      await _refreshNotificationSchedule();
+      _startTickerIfNeeded();
+    });
+  }
+
+  Future<String?> saveOfflineCityLocation(OfflineCity city) {
+    return _runBusyAction(() async {
+      final cityName = '${city.name}, ${city.country}';
+      _location = AppLocation(
+        latitude: city.latitude,
+        longitude: city.longitude,
+        cityName: cityName,
+      );
+      await _persistLocation(_location!);
       _recalculatePrayers();
       await _refreshNotificationSchedule();
       _startTickerIfNeeded();
@@ -362,7 +386,7 @@ class AppController extends ChangeNotifier {
   }) async {
     try {
       _location = await _locationService.getCurrentLocation();
-      await _hiveService.saveLocation(_location!);
+      await _persistLocation(_location!);
       _startupError = null;
     } catch (e) {
       if (showErrorsAsStartupError) {
@@ -591,6 +615,7 @@ class AppController extends ChangeNotifier {
   Future<void> _reloadStateFromStorage() async {
     _settings = _hiveService.loadSettings();
     _location = _hiveService.loadLocation();
+    _location ??= await _locationSqliteService.loadLocation();
     _tasbihCount = _hiveService.loadTasbihCount();
     _prayerTracker = _hiveService.loadPrayerTracker();
     _quranBookmarks = _hiveService.loadQuranBookmarks();
@@ -600,6 +625,15 @@ class AppController extends ChangeNotifier {
     _dailyContent = await _dailyContentService.getContentForDate(
       DateTime.now(),
     );
+  }
+
+  Future<void> _persistLocation(AppLocation location) async {
+    await _hiveService.saveLocation(location);
+    try {
+      await _locationSqliteService.saveLocation(location);
+    } catch (_) {
+      // Keep prayer workflows working even if SQLite write fails.
+    }
   }
 
   String _dateKey(DateTime date) {
