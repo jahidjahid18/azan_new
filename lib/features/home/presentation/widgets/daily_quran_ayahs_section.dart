@@ -1,12 +1,17 @@
+import 'dart:async';
+
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_language.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
+import 'package:azan_app/features/audio/models/quran_reciter.dart';
+import 'package:azan_app/features/audio/services/quran_audio_service.dart';
 import 'package:azan_app/features/quran/data/models/quran_ayah.dart';
 import 'package:azan_app/features/quran/data/models/quran_surah.dart';
 import 'package:azan_app/features/quran/data/quran_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:just_audio/just_audio.dart';
 
 class DailyQuranAyahsSection extends StatefulWidget {
   const DailyQuranAyahsSection({super.key, required this.translationLanguage});
@@ -20,20 +25,31 @@ class DailyQuranAyahsSection extends StatefulWidget {
 class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
   static const int _dailyAyahCount = 3;
   final QuranRepository _repository = QuranRepository();
+  final QuranAudioService _audioService = QuranAudioService();
+  final QuranReciter _reciter = kQuranReciters.first;
   late Future<List<QuranSurah>> _surahsFuture;
   AppLanguage? _loadedLanguage;
   late String _activeDayKey;
-  int? _startIndexOverride;
+  int? _surahStartIndexOverride;
+  int? _ayahSeedOverride;
+  int? _legacyFlatStartIndex;
+  String? _playingAyahKey;
+  String? _loadingAyahKey;
+  StreamSubscription<PlayerState>? _playerStateSub;
 
   @override
   void initState() {
     super.initState();
     _activeDayKey = _dateKey(DateTime.now());
-    _startIndexOverride = _loadStartIndexForDay(_activeDayKey);
+    _loadStateForDay(_activeDayKey);
     _loadedLanguage = widget.translationLanguage;
     _surahsFuture = _repository.loadSurahs(
       translationLanguage: widget.translationLanguage,
     );
+    _playerStateSub = _audioService.player.playerStateStream.listen((_) {
+      if (!mounted) return;
+      setState(() {});
+    });
   }
 
   @override
@@ -45,6 +61,13 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
         translationLanguage: widget.translationLanguage,
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _playerStateSub?.cancel();
+    _audioService.dispose();
+    super.dispose();
   }
 
   @override
@@ -64,11 +87,8 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
           return const SizedBox.shrink();
         }
 
-        final allAyahs = _flattenAyahs(snapshot.data!);
-        final picks = _pickDailyAyahs(
-          allAyahs: allAyahs,
-          count: _dailyAyahCount,
-        );
+        final surahs = snapshot.data!;
+        final picks = _pickDailyAyahs(surahs: surahs, count: _dailyAyahCount);
         if (picks.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -89,11 +109,6 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
                           style: Theme.of(context).textTheme.titleLarge
                               ?.copyWith(fontWeight: FontWeight.w800),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          l10n.tr('dailyQuranAyahsSubtitle'),
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
                       ],
                     ),
                   ),
@@ -109,7 +124,7 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
                       tooltip: l10n.tr('refreshDailyAyahs'),
                       visualDensity: VisualDensity.compact,
                       iconSize: 20,
-                      onPressed: () => _refreshAyahs(allAyahs),
+                      onPressed: () => _refreshAyahs(surahs),
                       icon: const Icon(Icons.refresh_rounded),
                     ),
                   ),
@@ -123,6 +138,10 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
                 final transliteration = (item.ayah.transliteration ?? '')
                     .trim();
                 final translation = (item.ayah.translation ?? '').trim();
+                final ayahKey = _ayahKey(item);
+                final isPlayingThisAyah =
+                    _playingAyahKey == ayahKey && _audioService.player.playing;
+                final isLoadingThisAyah = _loadingAyahKey == ayahKey;
 
                 return Padding(
                   padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
@@ -146,10 +165,61 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        Text(
-                          '${item.surah.nameEnglish} - ${l10n.tr('ayah')} ${item.ayah.number}',
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  Text(
+                                    '${item.surah.nameArabic} - الآية ${item.ayah.number}',
+                                    textDirection: TextDirection.rtl,
+                                    textAlign: TextAlign.right,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'NotoNaskhArabic',
+                                        ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${item.surah.nameEnglish} - ${l10n.tr('ayah')} ${item.ayah.number}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(fontWeight: FontWeight.w700),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              tooltip: l10n.tr(
+                                isPlayingThisAyah ? 'pause' : 'play',
+                              ),
+                              visualDensity: VisualDensity.compact,
+                              onPressed: isLoadingThisAyah
+                                  ? null
+                                  : () => _toggleAyahAudio(item),
+                              icon: isLoadingThisAyah
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Icon(
+                                      isPlayingThisAyah
+                                          ? Icons.pause_circle_filled_rounded
+                                          : Icons.play_circle_fill_rounded,
+                                      size: 26,
+                                      color: scheme.primary,
+                                    ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 8),
                         Text(
@@ -204,100 +274,161 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
       return;
     }
     _activeDayKey = todayKey;
-    _startIndexOverride = _loadStartIndexForDay(todayKey);
-  }
-
-  List<_DailyAyahItem> _flattenAyahs(List<QuranSurah> surahs) {
-    final allAyahs = <_DailyAyahItem>[];
-    for (final surah in surahs) {
-      for (final ayah in surah.ayahs) {
-        allAyahs.add(_DailyAyahItem(surah: surah, ayah: ayah));
-      }
-    }
-    return allAyahs;
+    _loadStateForDay(todayKey);
   }
 
   List<_DailyAyahItem> _pickDailyAyahs({
-    required List<_DailyAyahItem> allAyahs,
+    required List<QuranSurah> surahs,
     required int count,
   }) {
-    if (allAyahs.isEmpty) {
+    final eligibleSurahs = surahs
+        .where((surah) => surah.ayahs.isNotEmpty)
+        .toList(growable: false);
+    if (eligibleSurahs.isEmpty || count <= 0) {
       return <_DailyAyahItem>[];
     }
 
-    final startIndex = _resolvedStartIndex(allAyahs.length);
+    final targetCount = count <= eligibleSurahs.length
+        ? count
+        : eligibleSurahs.length;
+    final startSurahIndex = _resolvedSurahStartIndex(eligibleSurahs.length);
+    final ayahSeed = _resolvedAyahSeed();
 
-    return List<_DailyAyahItem>.generate(
-      count,
-      (index) => allAyahs[(startIndex + index) % allAyahs.length],
-    );
+    return List<_DailyAyahItem>.generate(targetCount, (index) {
+      final surah =
+          eligibleSurahs[(startSurahIndex + index) % eligibleSurahs.length];
+      final ayahIndex =
+          (ayahSeed + (index * 13) + surah.number) % surah.ayahs.length;
+      final ayah = surah.ayahs[ayahIndex];
+      return _DailyAyahItem(surah: surah, ayah: ayah);
+    });
   }
 
-  int _resolvedStartIndex(int totalAyahs) {
-    if (totalAyahs <= 0) {
+  int _resolvedSurahStartIndex(int totalSurahs) {
+    if (totalSurahs <= 0) {
       return 0;
     }
-    final persisted = _startIndexOverride;
-    if (persisted != null && persisted >= 0) {
-      return persisted % totalAyahs;
+    if (_surahStartIndexOverride != null && _surahStartIndexOverride! >= 0) {
+      return _surahStartIndexOverride! % totalSurahs;
     }
-    return _defaultStartIndex(totalAyahs);
+    if (_legacyFlatStartIndex != null && _legacyFlatStartIndex! >= 0) {
+      return _legacyFlatStartIndex! % totalSurahs;
+    }
+    return _defaultStartSurahIndex(totalSurahs);
   }
 
-  int _defaultStartIndex(int totalAyahs) {
-    if (totalAyahs <= 0) {
+  int _defaultStartSurahIndex(int totalSurahs) {
+    if (totalSurahs <= 0) {
       return 0;
     }
     final daySeed = DateTime.now().difference(DateTime(2020, 1, 1)).inDays;
-    return daySeed % totalAyahs;
+    return daySeed % totalSurahs;
   }
 
-  int? _loadStartIndexForDay(String dayKey) {
+  int _resolvedAyahSeed() {
+    if (_ayahSeedOverride != null && _ayahSeedOverride! >= 0) {
+      return _ayahSeedOverride!;
+    }
+    return DateTime.now().difference(DateTime(2020, 1, 1)).inDays * 17;
+  }
+
+  void _loadStateForDay(String dayKey) {
+    _surahStartIndexOverride = null;
+    _ayahSeedOverride = null;
+    _legacyFlatStartIndex = null;
     try {
       if (!Hive.isBoxOpen(AppConstants.hiveBoxName)) {
-        return null;
+        return;
       }
       final box = Hive.box<dynamic>(AppConstants.hiveBoxName);
       final stored = box.get(AppConstants.dailyQuranAyahStateStorageKey);
       if (stored is! Map) {
-        return null;
+        return;
       }
       final map = Map<String, dynamic>.from(stored);
       if (map['dayKey'] != dayKey) {
-        return null;
+        return;
       }
-      final startIndex = map['startIndex'];
-      if (startIndex is int && startIndex >= 0) {
-        return startIndex;
+      final surahStartIndex = map['surahStartIndex'];
+      if (surahStartIndex is int && surahStartIndex >= 0) {
+        _surahStartIndexOverride = surahStartIndex;
+      }
+      final ayahSeed = map['ayahSeed'];
+      if (ayahSeed is int && ayahSeed >= 0) {
+        _ayahSeedOverride = ayahSeed;
+      }
+      final legacyStartIndex = map['startIndex'];
+      if (legacyStartIndex is int && legacyStartIndex >= 0) {
+        _legacyFlatStartIndex = legacyStartIndex;
       }
     } catch (_) {
-      return null;
+      return;
     }
-    return null;
   }
 
-  Future<void> _refreshAyahs(List<_DailyAyahItem> allAyahs) async {
-    if (allAyahs.isEmpty) {
+  Future<void> _refreshAyahs(List<QuranSurah> surahs) async {
+    final eligibleSurahs = surahs
+        .where((surah) => surah.ayahs.isNotEmpty)
+        .toList(growable: false);
+    if (eligibleSurahs.isEmpty) {
       return;
     }
-    final totalAyahs = allAyahs.length;
-    final current = _resolvedStartIndex(totalAyahs);
-    final next = (current + _dailyAyahCount) % totalAyahs;
+    final totalSurahs = eligibleSurahs.length;
+    final currentSurahStart = _resolvedSurahStartIndex(totalSurahs);
+    final nextSurahStart = (currentSurahStart + _dailyAyahCount) % totalSurahs;
+    final nextAyahSeed = _resolvedAyahSeed() + 17;
 
     setState(() {
-      _startIndexOverride = next;
+      _surahStartIndexOverride = nextSurahStart;
+      _ayahSeedOverride = nextAyahSeed;
+      _legacyFlatStartIndex = null;
     });
 
-    await _persistStartIndexForToday(next);
-    if (!mounted) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.tr('dailyQuranAyahsRefreshed'))),
+    await _persistStateForToday(
+      surahStartIndex: nextSurahStart,
+      ayahSeed: nextAyahSeed,
     );
   }
 
-  Future<void> _persistStartIndexForToday(int startIndex) async {
+  Future<void> _toggleAyahAudio(_DailyAyahItem item) async {
+    final ayahKey = _ayahKey(item);
+    if (_loadingAyahKey != null) {
+      return;
+    }
+
+    try {
+      if (_playingAyahKey == ayahKey &&
+          _audioService.player.audioSource != null) {
+        await _audioService.togglePlayPause();
+        if (!mounted) return;
+        setState(() {});
+        return;
+      }
+
+      setState(() => _loadingAyahKey = ayahKey);
+      await _audioService.playAyah(
+        surahNumber: item.surah.number,
+        ayahNumber: item.ayah.number,
+        reciter: _reciter,
+      );
+      if (!mounted) return;
+      setState(() => _playingAyahKey = ayahKey);
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.tr('unablePlayAudio'))),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _loadingAyahKey = null);
+      }
+    }
+  }
+
+  Future<void> _persistStateForToday({
+    required int surahStartIndex,
+    required int ayahSeed,
+  }) async {
     try {
       if (!Hive.isBoxOpen(AppConstants.hiveBoxName)) {
         return;
@@ -306,7 +437,8 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
       await box
           .put(AppConstants.dailyQuranAyahStateStorageKey, <String, dynamic>{
             'dayKey': _activeDayKey,
-            'startIndex': startIndex,
+            'surahStartIndex': surahStartIndex,
+            'ayahSeed': ayahSeed,
             'updatedAt': DateTime.now().toIso8601String(),
           });
     } catch (_) {
@@ -319,6 +451,10 @@ class _DailyQuranAyahsSectionState extends State<DailyQuranAyahsSection> {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '$year-$month-$day';
+  }
+
+  String _ayahKey(_DailyAyahItem item) {
+    return '${item.surah.number}:${item.ayah.number}';
   }
 }
 
