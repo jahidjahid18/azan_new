@@ -16,6 +16,7 @@ import 'package:azan_app/core/services/location_sqlite_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_notification_scheduler.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
+import 'package:azan_app/core/services/quran_reading_sqlite_service.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
@@ -30,6 +31,7 @@ class AppController extends ChangeNotifier {
     required HiveService hiveService,
     required LocationService locationService,
     required LocationSqliteService locationSqliteService,
+    required QuranReadingSqliteService quranReadingSqliteService,
     required PrayerService prayerService,
     required NotificationService notificationService,
     required PrayerNotificationScheduler prayerNotificationScheduler,
@@ -37,6 +39,7 @@ class AppController extends ChangeNotifier {
   }) : _hiveService = hiveService,
        _locationService = locationService,
        _locationSqliteService = locationSqliteService,
+       _quranReadingSqliteService = quranReadingSqliteService,
        _prayerService = prayerService,
        _notificationService = notificationService,
        _prayerNotificationScheduler = prayerNotificationScheduler,
@@ -45,6 +48,7 @@ class AppController extends ChangeNotifier {
   final HiveService _hiveService;
   final LocationService _locationService;
   final LocationSqliteService _locationSqliteService;
+  final QuranReadingSqliteService _quranReadingSqliteService;
   final PrayerService _prayerService;
   final NotificationService _notificationService;
   final PrayerNotificationScheduler _prayerNotificationScheduler;
@@ -63,6 +67,8 @@ class AppController extends ChangeNotifier {
   Map<String, dynamic> _prayerTracker = <String, dynamic>{};
   List<QuranBookmark> _quranBookmarks = <QuranBookmark>[];
   QuranReadPosition? _quranLastRead;
+  int _quranReadingTodaySeconds = 0;
+  String _quranReadingDateKey = '';
   QuranReaderPreferences _quranReaderPreferences =
       QuranReaderPreferences.defaults();
   Map<String, dynamic> _azkarTracker = <String, dynamic>{};
@@ -90,6 +96,8 @@ class AppController extends ChangeNotifier {
   List<QuranBookmark> get quranBookmarks =>
       List<QuranBookmark>.unmodifiable(_quranBookmarks);
   QuranReadPosition? get quranLastRead => _quranLastRead;
+  int get quranReadingTodaySeconds => _quranReadingTodaySeconds;
+  int get quranReadingTodayMinutes => _quranReadingTodaySeconds ~/ 60;
   QuranReaderPreferences get quranReaderPreferences => _quranReaderPreferences;
 
   Future<void> initialize() async {
@@ -116,6 +124,8 @@ class AppController extends ChangeNotifier {
       _prayerTracker = _hiveService.loadPrayerTracker();
       _quranBookmarks = _hiveService.loadQuranBookmarks();
       _quranLastRead = _hiveService.loadQuranLastRead();
+      await _syncQuranLastReadFromSqlite();
+      await _loadQuranReadingTodayFromSqlite();
       _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
       _azkarTracker = _hiveService.loadAzkarTracker();
 
@@ -370,7 +380,33 @@ class AppController extends ChangeNotifier {
       ayahNumber: ayahNumber,
     );
     await _hiveService.saveQuranLastRead(_quranLastRead!);
+    try {
+      await _quranReadingSqliteService.saveLastReadPosition(_quranLastRead!);
+    } catch (_) {
+      // Preserve reader flow even if optional SQLite write fails.
+    }
     notifyListeners();
+  }
+
+  Future<void> addQuranReadingActiveSeconds(int seconds) async {
+    if (seconds <= 0) return;
+
+    final todayKey = _dateKey(DateTime.now());
+    if (_quranReadingDateKey != todayKey) {
+      await _loadQuranReadingTodayFromSqlite();
+    }
+
+    _quranReadingTodaySeconds += seconds;
+    notifyListeners();
+
+    try {
+      await _quranReadingSqliteService.incrementActiveSecondsForDate(
+        dateKey: _quranReadingDateKey,
+        seconds: seconds,
+      );
+    } catch (_) {
+      // SQLite write failure should not block app usage.
+    }
   }
 
   Future<void> setQuranReaderPreferences(
@@ -457,6 +493,7 @@ class AppController extends ChangeNotifier {
         if (currentDate.isAfter(previousDate)) {
           unawaited(_refreshDailyContent());
           unawaited(_refreshNotificationSchedule());
+          unawaited(_loadQuranReadingTodayFromSqlite(notify: false));
         }
       }
 
@@ -620,6 +657,8 @@ class AppController extends ChangeNotifier {
     _prayerTracker = _hiveService.loadPrayerTracker();
     _quranBookmarks = _hiveService.loadQuranBookmarks();
     _quranLastRead = _hiveService.loadQuranLastRead();
+    await _syncQuranLastReadFromSqlite();
+    await _loadQuranReadingTodayFromSqlite(notify: false);
     _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
     _azkarTracker = _hiveService.loadAzkarTracker();
     _dailyContent = await _dailyContentService.getContentForDate(
@@ -639,6 +678,38 @@ class AppController extends ChangeNotifier {
   String _dateKey(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
     return normalized.toIso8601String().split('T').first;
+  }
+
+  Future<void> _syncQuranLastReadFromSqlite() async {
+    try {
+      final sqliteLastRead = await _quranReadingSqliteService
+          .loadLastReadPosition();
+      if (sqliteLastRead != null) {
+        _quranLastRead = sqliteLastRead;
+        await _hiveService.saveQuranLastRead(sqliteLastRead);
+        return;
+      }
+      if (_quranLastRead != null) {
+        await _quranReadingSqliteService.saveLastReadPosition(_quranLastRead!);
+      }
+    } catch (_) {
+      // Last-read sync is best-effort.
+    }
+  }
+
+  Future<void> _loadQuranReadingTodayFromSqlite({bool notify = false}) async {
+    final dateKey = _dateKey(DateTime.now());
+    _quranReadingDateKey = dateKey;
+    try {
+      _quranReadingTodaySeconds = await _quranReadingSqliteService
+          .getActiveSecondsForDate(dateKey);
+    } catch (_) {
+      _quranReadingTodaySeconds = 0;
+    }
+
+    if (notify) {
+      notifyListeners();
+    }
   }
 
   @override

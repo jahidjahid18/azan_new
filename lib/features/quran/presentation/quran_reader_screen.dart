@@ -37,10 +37,16 @@ class QuranReaderScreen extends StatefulWidget {
   State<QuranReaderScreen> createState() => _QuranReaderScreenState();
 }
 
-class _QuranReaderScreenState extends State<QuranReaderScreen> {
+class _QuranReaderScreenState extends State<QuranReaderScreen>
+    with WidgetsBindingObserver {
+  static const Duration _idleTimeout = Duration(seconds: 12);
+  static const Duration _readingTick = Duration(seconds: 1);
+  static const Duration _flushThreshold = Duration(seconds: 20);
+
   late int _currentIndex;
   final ScrollController _scrollController = ScrollController();
   final QuranAudioService _audioService = QuranAudioService();
+  late final AppController _appController;
   QuranReciter _selectedReciter = kQuranReciters.first;
   int _selectedAyahNumber = 1;
   int _lastSavedAyah = 1;
@@ -57,6 +63,11 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   StreamSubscription<PlayerState>? _playerStateSub;
   Timer? _preferencesDebounce;
+  Timer? _readingTickTimer;
+  DateTime? _lastInteractionAt;
+  DateTime? _lastReadingTickAt;
+  Duration _pendingActiveDuration = Duration.zero;
+  bool _isInForeground = true;
   Map<int, GlobalKey> _ayahKeys = <int, GlobalKey>{};
 
   bool get _supportsTranslationToggle => widget.initialShowTranslation;
@@ -65,11 +76,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _appController = context.read<AppController>();
     _currentIndex = widget.initialIndex;
     _selectedAyahNumber = widget.initialAyahNumber;
     _lastSavedAyah = widget.initialAyahNumber;
 
-    final prefs = context.read<AppController>().quranReaderPreferences;
+    final prefs = _appController.quranReaderPreferences;
     _showTransliteration =
         widget.initialShowTransliteration && prefs.showTransliteration;
     _showTranslation = widget.initialShowTranslation && prefs.showTranslation;
@@ -78,6 +91,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     _lineHeight = prefs.lineHeight;
 
     _initAyahKeys();
+    _startReadingTracker();
 
     _playerStateSub = _audioService.player.playerStateStream.listen((state) {
       if (!mounted) return;
@@ -99,11 +113,25 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _readingTickTimer?.cancel();
+    unawaited(_flushReadingDuration(force: true));
     _preferencesDebounce?.cancel();
     _playerStateSub?.cancel();
     _scrollController.dispose();
     _audioService.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final wasForeground = _isInForeground;
+    _isInForeground = state == AppLifecycleState.resumed;
+    if (_isInForeground) {
+      _registerInteraction();
+    } else if (wasForeground) {
+      unawaited(_flushReadingDuration(force: true));
+    }
   }
 
   @override
@@ -142,248 +170,270 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: <Widget>[
-          _ReaderTopPanel(
-            surah: surah,
-            lineHeight: _lineHeight,
-            onJumpToCurrentAyah: () => _scrollToAyah(_selectedAyahNumber),
-          ),
-          if (_audioError != null)
-            Container(
-              width: double.infinity,
-              margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.errorContainer,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(_audioError!),
+      body: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (_) => _registerInteraction(),
+        onPointerMove: (_) => _registerInteraction(),
+        onPointerSignal: (_) => _registerInteraction(),
+        child: Column(
+          children: <Widget>[
+            _ReaderTopPanel(
+              surah: surah,
+              lineHeight: _lineHeight,
+              onJumpToCurrentAyah: () => _scrollToAyah(_selectedAyahNumber),
             ),
-          Expanded(
-            child: NotificationListener<ScrollEndNotification>(
-              onNotification: (_) {
-                _updateLastReadFromViewport();
-                return false;
-              },
-              child: ListView.separated(
-                controller: _scrollController,
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                itemBuilder: (context, index) {
-                  final ayah = surah.ayahs[index];
-                  final isSelectedAyah = ayah.number == _selectedAyahNumber;
-                  final isBookmarked = controller.isQuranBookmarked(
-                    surahNumber: surah.number,
-                    ayahNumber: ayah.number,
-                  );
+            if (_audioError != null)
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(_audioError!),
+              ),
+            Expanded(
+              child: NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  if (notification is ScrollUpdateNotification ||
+                      notification is UserScrollNotification) {
+                    _registerInteraction();
+                  }
+                  if (notification is ScrollEndNotification) {
+                    _updateLastReadFromViewport();
+                  }
+                  return false;
+                },
+                child: ListView.separated(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+                  itemBuilder: (context, index) {
+                    final ayah = surah.ayahs[index];
+                    final isSelectedAyah = ayah.number == _selectedAyahNumber;
+                    final isBookmarked = controller.isQuranBookmarked(
+                      surahNumber: surah.number,
+                      ayahNumber: ayah.number,
+                    );
 
-                  return KeyedSubtree(
-                    key: _keyForAyah(ayah.number),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(18),
-                        onTap: () async {
-                          await _setLastRead(ayah.number);
-                          await _playAyah(ayah.number);
-                        },
-                        onLongPress: () => _copyAyah(
-                          surahName: surah.nameEnglish,
-                          ayahNumber: ayah.number,
-                          arabicText: ayah.text,
-                          transliterationText: ayah.transliteration,
-                          translationText: ayah.translation,
-                        ),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 240),
-                          curve: Curves.easeOutCubic,
-                          child: AppSurfaceCard(
-                            backgroundColor: isSelectedAyah
-                                ? const Color(0xFFEAF9F0)
-                                : null,
-                            radius: 20,
-                            padding: const EdgeInsets.all(14),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                Row(
-                                  children: <Widget>[
+                    return KeyedSubtree(
+                      key: _keyForAyah(ayah.number),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(18),
+                          onTap: () async {
+                            _registerInteraction();
+                            await _setLastRead(ayah.number);
+                            await _playAyah(ayah.number);
+                          },
+                          onLongPress: () => _copyAyah(
+                            surahName: surah.nameEnglish,
+                            ayahNumber: ayah.number,
+                            arabicText: ayah.text,
+                            transliterationText: ayah.transliteration,
+                            translationText: ayah.translation,
+                          ),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 240),
+                            curve: Curves.easeOutCubic,
+                            child: AppSurfaceCard(
+                              backgroundColor: isSelectedAyah
+                                  ? const Color(0xFFEAF9F0)
+                                  : null,
+                              radius: 20,
+                              padding: const EdgeInsets.all(14),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: <Widget>[
+                                  Row(
+                                    children: <Widget>[
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 5,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondary
+                                              .withValues(alpha: 0.14),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '${l10n.tr('ayah')} ${ayah.number}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .labelLarge
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      IconButton(
+                                        tooltip: l10n.tr('bookmarkAyah'),
+                                        onPressed: () async {
+                                          _registerInteraction();
+                                          await context
+                                              .read<AppController>()
+                                              .toggleQuranBookmark(
+                                                surahNumber: surah.number,
+                                                ayahNumber: ayah.number,
+                                                surahName: surah.nameEnglish,
+                                              );
+                                        },
+                                        icon: Icon(
+                                          isBookmarked
+                                              ? Icons.bookmark_rounded
+                                              : Icons.bookmark_border_rounded,
+                                        ),
+                                      ),
+                                      IconButton(
+                                        tooltip: l10n.tr('copyAyah'),
+                                        onPressed: () {
+                                          _registerInteraction();
+                                          _copyAyah(
+                                            surahName: surah.nameEnglish,
+                                            ayahNumber: ayah.number,
+                                            arabicText: ayah.text,
+                                            transliterationText:
+                                                ayah.transliteration,
+                                            translationText: ayah.translation,
+                                          );
+                                        },
+                                        icon: Icon(
+                                          Icons.copy_rounded,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                      ),
+                                      Icon(
+                                        Icons.play_circle_outline_rounded,
+                                        size: 18,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.tertiary,
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    ayah.text,
+                                    textDirection: TextDirection.rtl,
+                                    textAlign: TextAlign.right,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge
+                                        ?.copyWith(
+                                          height: _lineHeight,
+                                          fontFamily: 'NotoNaskhArabic',
+                                          fontSize: _arabicFontSize,
+                                        ),
+                                  ),
+                                  if (_showTransliteration &&
+                                      (ayah.transliteration ?? '')
+                                          .trim()
+                                          .isNotEmpty)
                                     Container(
+                                      width: double.infinity,
+                                      margin: const EdgeInsets.only(top: 10),
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 5,
+                                        horizontal: 12,
+                                        vertical: 10,
                                       ),
                                       decoration: BoxDecoration(
                                         color: Theme.of(context)
                                             .colorScheme
                                             .secondary
-                                            .withValues(alpha: 0.14),
-                                        borderRadius: BorderRadius.circular(
-                                          999,
-                                        ),
+                                            .withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Text(
-                                        '${l10n.tr('ayah')} ${ayah.number}',
+                                        ayah.transliteration!,
                                         style: Theme.of(context)
                                             .textTheme
-                                            .labelLarge
+                                            .bodyMedium
                                             ?.copyWith(
-                                              fontWeight: FontWeight.w700,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                              fontSize:
+                                                  _translationFontSize - 1,
+                                              height: 1.5,
                                             ),
                                       ),
                                     ),
-                                    const Spacer(),
-                                    IconButton(
-                                      tooltip: l10n.tr('bookmarkAyah'),
-                                      onPressed: () async {
-                                        await context
-                                            .read<AppController>()
-                                            .toggleQuranBookmark(
-                                              surahNumber: surah.number,
-                                              ayahNumber: ayah.number,
-                                              surahName: surah.nameEnglish,
-                                            );
-                                      },
-                                      icon: Icon(
-                                        isBookmarked
-                                            ? Icons.bookmark_rounded
-                                            : Icons.bookmark_border_rounded,
+                                  if (_showTranslation &&
+                                      (ayah.translation ?? '')
+                                          .trim()
+                                          .isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: Text(
+                                        ayah.translation!,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyLarge
+                                            ?.copyWith(
+                                              height: 1.45,
+                                              fontSize: _translationFontSize,
+                                            ),
                                       ),
                                     ),
-                                    IconButton(
-                                      tooltip: l10n.tr('copyAyah'),
-                                      onPressed: () => _copyAyah(
-                                        surahName: surah.nameEnglish,
-                                        ayahNumber: ayah.number,
-                                        arabicText: ayah.text,
-                                        transliterationText:
-                                            ayah.transliteration,
-                                        translationText: ayah.translation,
-                                      ),
-                                      icon: Icon(
-                                        Icons.copy_rounded,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                      ),
-                                    ),
-                                    Icon(
-                                      Icons.play_circle_outline_rounded,
-                                      size: 18,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.tertiary,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  ayah.text,
-                                  textDirection: TextDirection.rtl,
-                                  textAlign: TextAlign.right,
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(
-                                        height: _lineHeight,
-                                        fontFamily: 'NotoNaskhArabic',
-                                        fontSize: _arabicFontSize,
-                                      ),
-                                ),
-                                if (_showTransliteration &&
-                                    (ayah.transliteration ?? '')
-                                        .trim()
-                                        .isNotEmpty)
-                                  Container(
-                                    width: double.infinity,
-                                    margin: const EdgeInsets.only(top: 10),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .secondary
-                                          .withValues(alpha: 0.08),
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      ayah.transliteration!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyMedium
-                                          ?.copyWith(
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onSurfaceVariant,
-                                            fontSize: _translationFontSize - 1,
-                                            height: 1.5,
-                                          ),
-                                    ),
-                                  ),
-                                if (_showTranslation &&
-                                    (ayah.translation ?? '').trim().isNotEmpty)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10),
-                                    child: Text(
-                                      ayah.translation!,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.copyWith(
-                                            height: 1.45,
-                                            fontSize: _translationFontSize,
-                                          ),
-                                    ),
-                                  ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                },
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
-                itemCount: surah.ayahs.length,
+                    );
+                  },
+                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  itemCount: surah.ayahs.length,
+                ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
-            child: Row(
-              children: <Widget>[
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: isFirst ? null : () => _changeSurah(-1),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    label: Text(l10n.tr('previous')),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+              child: Row(
+                children: <Widget>[
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: isFirst ? null : () => _changeSurah(-1),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      label: Text(l10n.tr('previous')),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: isLast ? null : () => _changeSurah(1),
-                    icon: const Icon(Icons.arrow_forward_rounded),
-                    label: Text(l10n.tr('next')),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: isLast ? null : () => _changeSurah(1),
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      label: Text(l10n.tr('next')),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          QuranPlayerBar(
-            surahName: surah.nameEnglish,
-            ayahNumber: _selectedAyahNumber,
-            maxAyahNumber: surah.ayahCount,
-            currentReciter: _selectedReciter,
-            isPlaying: _isPlaying,
-            isLoading: _isAudioLoading,
-            onTogglePlayPause: _togglePlayPause,
-            onPreviousAyah: _playPreviousAyah,
-            onNextAyah: _playNextAyah,
-            onReciterChanged: _changeReciter,
-            onOpenFullPlayer: _openFullPlayer,
-          ),
-        ],
+            QuranPlayerBar(
+              surahName: surah.nameEnglish,
+              ayahNumber: _selectedAyahNumber,
+              maxAyahNumber: surah.ayahCount,
+              currentReciter: _selectedReciter,
+              isPlaying: _isPlaying,
+              isLoading: _isAudioLoading,
+              onTogglePlayPause: _togglePlayPause,
+              onPreviousAyah: _playPreviousAyah,
+              onNextAyah: _playNextAyah,
+              onReciterChanged: _changeReciter,
+              onOpenFullPlayer: _openFullPlayer,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -498,6 +548,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   Future<void> _changeSurah(int delta) async {
+    _registerInteraction();
     setState(() {
       _currentIndex += delta;
       _selectedAyahNumber = 1;
@@ -519,6 +570,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   Future<void> _playAyah(int ayahNumber) async {
+    _registerInteraction();
     final surah = widget.surahs[_currentIndex];
     await _setLastRead(ayahNumber);
     await _scrollToAyah(ayahNumber);
@@ -563,6 +615,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   Future<void> _togglePlayPause() async {
+    _registerInteraction();
     if (_audioService.player.audioSource == null) {
       await _playAyah(_selectedAyahNumber);
       return;
@@ -575,11 +628,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   Future<void> _playPreviousAyah() async {
+    _registerInteraction();
     if (_selectedAyahNumber <= 1) return;
     await _playAyah(_selectedAyahNumber - 1);
   }
 
   Future<void> _playNextAyah() async {
+    _registerInteraction();
     final maxAyah = widget.surahs[_currentIndex].ayahCount;
     if (_selectedAyahNumber >= maxAyah) {
       await _audioService.player.stop();
@@ -589,6 +644,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   Future<void> _changeReciter(QuranReciter reciter) async {
+    _registerInteraction();
     setState(() {
       _selectedReciter = reciter;
     });
@@ -670,6 +726,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   void _scheduleSavePreferences() {
+    _registerInteraction();
     _preferencesDebounce?.cancel();
     _preferencesDebounce = Timer(const Duration(milliseconds: 220), () {
       if (!mounted) return;
@@ -686,6 +743,62 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       );
       unawaited(context.read<AppController>().setQuranReaderPreferences(next));
     });
+  }
+
+  void _startReadingTracker() {
+    final now = DateTime.now();
+    _lastInteractionAt = now;
+    _lastReadingTickAt = now;
+    _readingTickTimer?.cancel();
+    _readingTickTimer = Timer.periodic(_readingTick, (_) {
+      _trackReadingTick();
+    });
+  }
+
+  void _registerInteraction() {
+    final now = DateTime.now();
+    _lastInteractionAt = now;
+    _lastReadingTickAt ??= now;
+  }
+
+  void _trackReadingTick() {
+    final now = DateTime.now();
+    final baseline = _lastReadingTickAt ?? now;
+    final elapsed = now.difference(baseline);
+    _lastReadingTickAt = now;
+
+    if (!_isInForeground || elapsed <= Duration.zero) {
+      return;
+    }
+
+    final lastInteraction = _lastInteractionAt;
+    if (lastInteraction == null) {
+      return;
+    }
+    if (now.difference(lastInteraction) > _idleTimeout) {
+      if (_pendingActiveDuration > Duration.zero) {
+        unawaited(_flushReadingDuration(force: true));
+      }
+      return;
+    }
+
+    _pendingActiveDuration += elapsed;
+    if (_pendingActiveDuration >= _flushThreshold) {
+      unawaited(_flushReadingDuration());
+    }
+  }
+
+  Future<void> _flushReadingDuration({bool force = false}) async {
+    final seconds = _pendingActiveDuration.inSeconds;
+    if (seconds <= 0) {
+      return;
+    }
+    if (!force && _pendingActiveDuration < _flushThreshold) {
+      return;
+    }
+
+    _pendingActiveDuration -= Duration(seconds: seconds);
+    await _appController.addQuranReadingActiveSeconds(seconds);
   }
 
   Future<void> _copyAyah({

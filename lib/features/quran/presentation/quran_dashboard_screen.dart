@@ -509,15 +509,22 @@ class _ContinueReadingCardState extends State<_ContinueReadingCard> {
   Widget build(BuildContext context) {
     final controller = context.watch<AppController>();
     final lastRead = controller.quranLastRead;
-    if (lastRead == null) {
-      return const SizedBox.shrink();
-    }
-
-    final surahIndex = (lastRead.surahNumber - 1).clamp(
-      0,
-      widget.surahs.length - 1,
-    );
+    final hasLastRead = lastRead != null;
+    final surahIndex = hasLastRead
+        ? (lastRead.surahNumber - 1).clamp(0, widget.surahs.length - 1)
+        : 0;
     final surah = widget.surahs[surahIndex];
+    final ayahNumber = hasLastRead ? lastRead.ayahNumber : 1;
+    final readingSeconds = controller.quranReadingTodaySeconds;
+    final readingMinutes = controller.quranReadingTodayMinutes;
+    final readingLabel = readingSeconds < 60
+        ? context.l10n.tr('lessThanMinute')
+        : context.l10n.tr('minutesShort', <String, String>{
+            'count': '$readingMinutes',
+          });
+    final lastReadLabel = hasLastRead
+        ? '${surah.nameEnglish} - ${context.l10n.tr('ayah')} $ayahNumber'
+        : context.l10n.tr('startReading');
 
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
@@ -527,40 +534,64 @@ class _ContinueReadingCardState extends State<_ContinueReadingCard> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () => widget.onResume(surahIndex, lastRead.ayahNumber),
+          onTap: () => widget.onResume(surahIndex, ayahNumber),
           onHighlightChanged: (value) => setState(() => _pressed = value),
           child: Ink(
             decoration: BoxDecoration(
               gradient: QuranUiTheme.panelGradient,
               borderRadius: BorderRadius.circular(18),
             ),
-            padding: const EdgeInsets.all(14),
-            child: Row(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Icon(Icons.play_circle_fill_rounded, color: Colors.white),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
+                Row(
+                  children: <Widget>[
+                    const Icon(
+                      Icons.play_circle_fill_rounded,
+                      color: Colors.white,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
                         context.l10n.tr('resumeReading'),
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${surah.nameEnglish} - ${context.l10n.tr('ayah')} ${lastRead.ayahNumber}',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodySmall?.copyWith(color: Colors.white70),
-                      ),
-                    ],
+                    ),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '${context.l10n.tr('lastReadPosition')}: $lastReadLabel',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: Colors.white70),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${context.l10n.tr('quranReadingToday')}: $readingLabel',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const Icon(Icons.chevron_right_rounded, color: Colors.white),
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  onPressed: () => widget.onResume(surahIndex, ayahNumber),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.2),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.menu_book_rounded),
+                  label: Text(context.l10n.tr('resumeReading')),
+                ),
               ],
             ),
           ),

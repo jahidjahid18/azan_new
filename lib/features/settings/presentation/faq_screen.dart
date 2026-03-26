@@ -19,6 +19,30 @@ class FaqScreen extends StatelessWidget {
         answer: l10n.tr('faqLocationAnswer'),
       ),
       (
+        question: l10n.tr('faqLanguageQuestion'),
+        answer: l10n.tr('faqLanguageAnswer'),
+      ),
+      (
+        question: l10n.tr('faqReadingTrackerQuestion'),
+        answer: l10n.tr('faqReadingTrackerAnswer'),
+      ),
+      (
+        question: l10n.tr('faqQuranReaderQuestion'),
+        answer: l10n.tr('faqQuranReaderAnswer'),
+      ),
+      (
+        question: l10n.tr('faqCitySearchQuestion'),
+        answer: l10n.tr('faqCitySearchAnswer'),
+      ),
+      (
+        question: l10n.tr('faqPrayerNotificationQuestion'),
+        answer: l10n.tr('faqPrayerNotificationAnswer'),
+      ),
+      (
+        question: l10n.tr('faqThemeQuestion'),
+        answer: l10n.tr('faqThemeAnswer'),
+      ),
+      (
         question: l10n.tr('faqBackupQuestion'),
         answer: l10n.tr('faqBackupAnswer'),
       ),

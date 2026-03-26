@@ -5,6 +5,7 @@ import 'package:azan_app/core/services/location_sqlite_service.dart';
 import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_notification_scheduler.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
+import 'package:azan_app/core/services/quran_reading_sqlite_service.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:flutter/material.dart';
@@ -24,6 +25,7 @@ Future<void> main() async {
           hiveService: HiveService(),
           locationService: LocationService(),
           locationSqliteService: LocationSqliteService(),
+          quranReadingSqliteService: QuranReadingSqliteService(),
           prayerService: prayerService,
           notificationService: notificationService,
           prayerNotificationScheduler: PrayerNotificationScheduler(

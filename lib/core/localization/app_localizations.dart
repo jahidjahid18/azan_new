@@ -367,6 +367,27 @@ _localizedValues = <String, Map<String, String>>{
     'faqLocationQuestion': 'Why are prayer times incorrect?',
     'faqLocationAnswer':
         'Update GPS location in Settings and verify your calculation method is correct for your region.',
+    'faqLanguageQuestion': 'Why did only Quran language change, not app UI?',
+    'faqLanguageAnswer':
+        'Quran translation language and app UI language are separate. Change app UI language in Settings > Language > App language.',
+    'faqReadingTrackerQuestion':
+        'How is Quran reading time calculated accurately?',
+    'faqReadingTrackerAnswer':
+        'Reading time counts only while you interact with the Quran screen (scroll/touch). Idle time is paused automatically after a short delay.',
+    'faqQuranReaderQuestion':
+        'How can I show or hide transliteration and translation?',
+    'faqQuranReaderAnswer':
+        'Open any surah, tap Reader Settings, then enable or disable transliteration and translation as needed.',
+    'faqCitySearchQuestion': 'Can I search cities without internet?',
+    'faqCitySearchAnswer':
+        'Yes. City search is fully offline. Type a city name in Settings > Location and select from suggestions.',
+    'faqPrayerNotificationQuestion':
+        'Prayer notification did not ring with Azan sound. Why?',
+    'faqPrayerNotificationAnswer':
+        'Enable notifications in Settings and choose Azan sound mode. On Android, make sure notification permission is allowed.',
+    'faqThemeQuestion': 'I changed theme style but see little difference.',
+    'faqThemeAnswer':
+        'Some pages use subtle style changes. Try switching both Theme mode and Theme style, then reopen the page to see full effect.',
     'faqBackupQuestion': 'How can I move my data to another phone?',
     'faqBackupAnswer':
         'Use Export to create a backup file, then use Restore on the new phone.',
@@ -403,6 +424,11 @@ _localizedValues = <String, Map<String, String>>{
     'searchSurahAyah': 'Search surah or ayah (Arabic/translation)',
     'failedLoadQuran': 'Failed to load Quran data. Please restart the app.',
     'resumeReading': 'Resume Reading',
+    'startReading': 'Start Reading',
+    'lastReadPosition': 'Last read',
+    'quranReadingToday': 'Reading today',
+    'minutesShort': '{count} min',
+    'lessThanMinute': '<1 min',
     'bookmarks': 'Bookmarks',
     'savedCount': '{count} saved',
     'ayahMatches': 'Ayah Matches ({count})',
