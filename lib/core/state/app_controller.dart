@@ -90,7 +90,11 @@ class AppController extends ChangeNotifier {
   Future<void> initialize() async {
     try {
       await _hiveService.init();
-      await _notificationService.initialize();
+      try {
+        await _notificationService.initialize();
+      } catch (_) {
+        // Notifications are optional for UI timing; keep app startup resilient.
+      }
 
       _settings = _hiveService.loadSettings();
       if (_settings.themeStyle == ThemeStyleOption.glassBlue) {
@@ -118,6 +122,8 @@ class AppController extends ChangeNotifier {
       _startupError =
           'Could not complete app setup. Please check permissions and try again.';
     } finally {
+      // Ensure the app clock keeps ticking even if optional startup tasks fail.
+      _startTickerIfNeeded();
       _isLoading = false;
       notifyListeners();
     }
@@ -398,12 +404,16 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> _refreshNotificationSchedule() async {
-    await _prayerNotificationScheduler.schedule(
-      enabled: _settings.notificationsEnabled,
-      soundMode: _settings.notificationSoundMode,
-      location: _location,
-      calculationMethod: _settings.calculationMethod,
-    );
+    try {
+      await _prayerNotificationScheduler.schedule(
+        enabled: _settings.notificationsEnabled,
+        soundMode: _settings.notificationSoundMode,
+        location: _location,
+        calculationMethod: _settings.calculationMethod,
+      );
+    } catch (_) {
+      // Keep core app flows active even if OS scheduling fails temporarily.
+    }
   }
 
   void _startTicker() {

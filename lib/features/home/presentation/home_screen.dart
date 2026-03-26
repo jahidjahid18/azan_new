@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:azan_app/core/models/prayer_info.dart';
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
@@ -273,20 +275,43 @@ class _CityHeader extends StatelessWidget {
   }
 }
 
-class _NextPrayerCard extends StatelessWidget {
+class _NextPrayerCard extends StatefulWidget {
   const _NextPrayerCard({required this.nextPrayer});
 
   final PrayerInfo? nextPrayer;
 
   @override
+  State<_NextPrayerCard> createState() => _NextPrayerCardState();
+}
+
+class _NextPrayerCardState extends State<_NextPrayerCard> {
+  late DateTime _now;
+  Timer? _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now();
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final now = context.select<AppController, DateTime>((c) => c.now);
     final prayerTimeFormat = DateFormat('hh:mm a');
     final scheme = Theme.of(context).colorScheme;
-    final countdown = nextPrayer == null
+    final countdown = widget.nextPrayer == null
         ? Duration.zero
-        : nextPrayer!.time.difference(now);
+        : widget.nextPrayer!.time.difference(_now);
     final countdownLabel = l10n.tr('startsIn', <String, String>{
       'duration': _formatStableDuration(countdown),
     });
@@ -328,9 +353,9 @@ class _NextPrayerCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              nextPrayer == null
+              widget.nextPrayer == null
                   ? l10n.tr('unavailable')
-                  : l10n.prayerName(nextPrayer!.name),
+                  : l10n.prayerName(widget.nextPrayer!.name),
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
@@ -341,9 +366,9 @@ class _NextPrayerCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    nextPrayer == null
+                    widget.nextPrayer == null
                         ? '--:--'
-                        : prayerTimeFormat.format(nextPrayer!.time),
+                        : prayerTimeFormat.format(widget.nextPrayer!.time),
                     style: Theme.of(
                       context,
                     ).textTheme.titleLarge?.copyWith(color: Colors.white),

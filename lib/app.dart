@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:azan_app/ads/banner_ad_widget.dart';
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
@@ -45,6 +47,8 @@ class _MainScaffold extends StatefulWidget {
 
 class _MainScaffoldState extends State<_MainScaffold> {
   int _currentTab = 0;
+  late DateTime _headerNow;
+  Timer? _headerTicker;
 
   static const List<Widget> _screens = <Widget>[
     HomeScreen(),
@@ -55,8 +59,24 @@ class _MainScaffoldState extends State<_MainScaffold> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _headerNow = DateTime.now();
+    _headerTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      setState(() => _headerNow = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _headerTicker?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final now = context.watch<AppController>().now;
+    final now = _headerNow;
     final l10n = context.l10n;
     final showBanner = _currentTab == 0 || _currentTab == 4;
     final bottomInset = MediaQuery.of(context).viewPadding.bottom;
