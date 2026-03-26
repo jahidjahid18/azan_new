@@ -10,6 +10,7 @@ import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/calendar/presentation/islamic_events_section.dart';
 import 'package:azan_app/features/daily/presentation/daily_content_card.dart';
 import 'package:azan_app/features/mosque/presentation/mosque_finder_screen.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:azan_app/features/tracker/presentation/prayer_tracker_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -307,6 +308,9 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
     final prayerTimeFormat = DateFormat('hh:mm a');
     final scheme = Theme.of(context).colorScheme;
     final countdown = widget.nextPrayer == null
@@ -320,7 +324,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        gradient: AppGradients.primary,
+        gradient: AppGradients.primaryFor(style),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppThemeColors.gold.withValues(alpha: 0.45)),
         boxShadow: <BoxShadow>[

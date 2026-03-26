@@ -3,6 +3,7 @@ import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -12,6 +13,9 @@ class TasbihScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<AppController>();
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
     final l10n = context.l10n;
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
 
@@ -31,7 +35,7 @@ class TasbihScreen extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         AppSurfaceCard(
-          gradient: AppGradients.alternative,
+          gradient: AppGradients.alternativeFor(style),
           child: Column(
             children: <Widget>[
               Text(

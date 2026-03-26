@@ -56,6 +56,299 @@ class AppGradients {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
   );
+
+  static LinearGradient primaryFor(ThemeStyleOption style) {
+    return switch (style) {
+      ThemeStyleOption.muslimPro => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF0A5C45),
+          Color(0xFF118C68),
+          Color(0xFF2DB58A),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.glassBlue => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF123F70),
+          Color(0xFF1E5E9B),
+          Color(0xFF2F86C9),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.emerald => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF0A6E53),
+          Color(0xFF0F9A72),
+          Color(0xFF25C590),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.sunset => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF6E3E1E),
+          Color(0xFFA35A27),
+          Color(0xFFE08A3A),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.monochrome => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF2B3136),
+          Color(0xFF3D444A),
+          Color(0xFF565F66),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    };
+  }
+
+  static LinearGradient alternativeFor(ThemeStyleOption style) {
+    return switch (style) {
+      ThemeStyleOption.muslimPro => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF06261D),
+          Color(0xFF0B3C2F),
+          Color(0xFF0A5C45),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.glassBlue => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF091F3A),
+          Color(0xFF12375F),
+          Color(0xFF1B4E84),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.emerald => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF07271E),
+          Color(0xFF0B4A38),
+          Color(0xFF0E6A50),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.sunset => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF2B160C),
+          Color(0xFF4A2614),
+          Color(0xFF6E3E1E),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      ThemeStyleOption.monochrome => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF1E2226),
+          Color(0xFF2A3035),
+          Color(0xFF383F46),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+    };
+  }
+
+  static LinearGradient backgroundFor({
+    required ThemeStyleOption style,
+    required Brightness brightness,
+    required bool alternative,
+  }) {
+    return switch ((style, brightness, alternative)) {
+      (ThemeStyleOption.muslimPro, Brightness.light, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFF1FBF6),
+            Color(0xFFFAF7ED),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.muslimPro, Brightness.light, true) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFEEF9F4),
+            Color(0xFFFFF9EE),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.muslimPro, Brightness.dark, false) =>
+        darkBackgroundPrimary,
+      (ThemeStyleOption.muslimPro, Brightness.dark, true) =>
+        darkBackgroundAlternative,
+
+      (ThemeStyleOption.glassBlue, Brightness.light, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFEDF5FF),
+            Color(0xFFF4FAFF),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.glassBlue, Brightness.light, true) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFEAF2FF),
+            Color(0xFFF0F7FF),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.glassBlue, Brightness.dark, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFF061220),
+            Color(0xFF0B223A),
+            Color(0xFF12304F),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.glassBlue, Brightness.dark, true) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFF081526),
+            Color(0xFF102A47),
+            Color(0xFF173A61),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+
+      (ThemeStyleOption.emerald, Brightness.light, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFEFFCF6),
+            Color(0xFFF4FFF9),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.emerald, Brightness.light, true) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFEAFBF3),
+            Color(0xFFF2FFF8),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.emerald, Brightness.dark, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFF051912),
+            Color(0xFF0A2E23),
+            Color(0xFF0E4233),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.emerald, Brightness.dark, true) => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF062017),
+          Color(0xFF0C3528),
+          Color(0xFF12503D),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+
+      (ThemeStyleOption.sunset, Brightness.light, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFFFF5EB),
+            Color(0xFFFFFAF3),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.sunset, Brightness.light, true) => const LinearGradient(
+        colors: <Color>[
+          Color(0xFFFFF1E4),
+          Color(0xFFFFF7EE),
+          Color(0xFFFFFFFF),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      (ThemeStyleOption.sunset, Brightness.dark, false) => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF201108),
+          Color(0xFF382012),
+          Color(0xFF4D2C1A),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      (ThemeStyleOption.sunset, Brightness.dark, true) => const LinearGradient(
+        colors: <Color>[
+          Color(0xFF26150B),
+          Color(0xFF452614),
+          Color(0xFF63351C),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+
+      (ThemeStyleOption.monochrome, Brightness.light, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFF4F5F7),
+            Color(0xFFF9FAFB),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.monochrome, Brightness.light, true) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFFF1F3F5),
+            Color(0xFFF7F8FA),
+            Color(0xFFFFFFFF),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.monochrome, Brightness.dark, false) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFF171B1F),
+            Color(0xFF23282D),
+            Color(0xFF2E353B),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      (ThemeStyleOption.monochrome, Brightness.dark, true) =>
+        const LinearGradient(
+          colors: <Color>[
+            Color(0xFF1A1F23),
+            Color(0xFF282E34),
+            Color(0xFF353D44),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+    };
+  }
 }
 
 class AppTheme {
@@ -272,20 +565,20 @@ class AppTheme {
         accent: AppThemeColors.gold,
       ),
       ThemeStyleOption.glassBlue => const _ThemePalette(
-        primary: Color(0xFF0B5A45),
-        accent: Color(0xFFCC9C1F),
+        primary: Color(0xFF1C5687),
+        accent: Color(0xFF3CA3F5),
       ),
       ThemeStyleOption.emerald => const _ThemePalette(
-        primary: Color(0xFF0A664D),
-        accent: Color(0xFFD4A62A),
+        primary: Color(0xFF0A7A5B),
+        accent: Color(0xFF19B485),
       ),
       ThemeStyleOption.sunset => const _ThemePalette(
-        primary: Color(0xFF0C5A43),
-        accent: Color(0xFFDAA63D),
+        primary: Color(0xFF8B4B23),
+        accent: Color(0xFFF0A74A),
       ),
       ThemeStyleOption.monochrome => const _ThemePalette(
-        primary: Color(0xFF214238),
-        accent: Color(0xFFB69034),
+        primary: Color(0xFF2D3338),
+        accent: Color(0xFF8E969E),
       ),
     };
   }

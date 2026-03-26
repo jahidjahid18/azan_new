@@ -97,8 +97,8 @@ class AppController extends ChangeNotifier {
       }
 
       _settings = _hiveService.loadSettings();
-      if (_settings.themeStyle == ThemeStyleOption.glassBlue) {
-        _settings = _settings.copyWith(themeStyle: ThemeStyleOption.muslimPro);
+      if (_settings.themeStyle == ThemeStyleOption.muslimPro) {
+        _settings = _settings.copyWith(themeStyle: ThemeStyleOption.sunset);
         await _hiveService.saveSettings(_settings);
       }
       await _migrateDefaultVisiblePrayersIfNeeded();

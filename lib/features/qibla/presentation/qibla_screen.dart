@@ -1,10 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:azan_app/core/localization/app_localizations.dart';
+import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/theme/app_theme.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 
 class QiblaScreen extends StatefulWidget {
   const QiblaScreen({super.key});
@@ -30,19 +33,11 @@ class _QiblaScreenState extends State<QiblaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
     return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: <Color>[
-            isDark ? const Color(0xFF041610) : const Color(0xFF0A3C2F),
-            isDark ? const Color(0xFF0A2E24) : const Color(0xFF0F5A45),
-            isDark ? const Color(0xFF114233) : const Color(0xFF148261),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
+      decoration: BoxDecoration(gradient: AppGradients.alternativeFor(style)),
       child: FutureBuilder<LocationStatus>(
         future: _locationStatus,
         builder: (context, snapshot) {
@@ -173,6 +168,7 @@ class _CompassBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
     final l10n = context.l10n;
+    final scheme = Theme.of(context).colorScheme;
     return ListView(
       padding: EdgeInsets.fromLTRB(20, 20, 20, 24 + bottomPadding),
       children: <Widget>[
@@ -223,7 +219,7 @@ class _CompassBody extends StatelessWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppThemeColors.gold.withValues(alpha: 0.8),
+                        color: scheme.secondary.withValues(alpha: 0.8),
                         width: 2.2,
                       ),
                     ),
@@ -254,7 +250,7 @@ class _CompassBody extends StatelessWidget {
                     child: const Icon(
                       Icons.navigation_rounded,
                       size: 128,
-                      color: AppThemeColors.softTeal,
+                      color: Colors.white,
                     ),
                   ),
                 ),
@@ -263,10 +259,10 @@ class _CompassBody extends StatelessWidget {
                   height: 14,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: AppThemeColors.gold,
+                    color: scheme.secondary,
                     boxShadow: <BoxShadow>[
                       BoxShadow(
-                        color: AppThemeColors.gold.withValues(alpha: 0.6),
+                        color: scheme.secondary.withValues(alpha: 0.6),
                         blurRadius: 12,
                       ),
                     ],
@@ -282,9 +278,7 @@ class _CompassBody extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppThemeColors.gold.withValues(alpha: 0.45),
-            ),
+            border: Border.all(color: scheme.secondary.withValues(alpha: 0.45)),
           ),
           child: Column(
             children: <Widget>[

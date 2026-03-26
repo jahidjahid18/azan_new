@@ -1,5 +1,8 @@
 import 'package:azan_app/core/theme/app_theme.dart';
+import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class AppGradientButton extends StatefulWidget {
   const AppGradientButton({
@@ -25,6 +28,10 @@ class _AppGradientButtonState extends State<AppGradientButton> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null;
+    final style = context.select<AppController, ThemeStyleOption>(
+      (c) => c.themeStyle,
+    );
+    final secondary = Theme.of(context).colorScheme.secondary;
     return AnimatedScale(
       duration: const Duration(milliseconds: 120),
       curve: Curves.easeOut,
@@ -40,7 +47,7 @@ class _AppGradientButtonState extends State<AppGradientButton> {
           child: Ink(
             decoration: BoxDecoration(
               gradient: enabled
-                  ? AppGradients.primary
+                  ? AppGradients.primaryFor(style)
                   : LinearGradient(
                       colors: <Color>[
                         Colors.grey.withValues(alpha: 0.45),
@@ -50,7 +57,7 @@ class _AppGradientButtonState extends State<AppGradientButton> {
               borderRadius: BorderRadius.circular(999),
               boxShadow: <BoxShadow>[
                 BoxShadow(
-                  color: AppThemeColors.deepGreen.withValues(alpha: 0.26),
+                  color: secondary.withValues(alpha: 0.26),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),

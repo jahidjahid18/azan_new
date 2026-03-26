@@ -1,4 +1,3 @@
-import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/enums/calculation_method_option.dart';
 import 'package:azan_app/core/enums/notification_sound_mode.dart';
 import 'package:azan_app/core/localization/app_language.dart';
@@ -6,12 +5,13 @@ import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/widgets/app_gradient_button.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
+import 'package:azan_app/features/settings/presentation/contact_developer_screen.dart';
+import 'package:azan_app/features/settings/presentation/faq_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -24,14 +24,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final _latitudeController = TextEditingController();
   final _longitudeController = TextEditingController();
   final _cityController = TextEditingController();
-  final _suggestionController = TextEditingController();
 
   @override
   void dispose() {
     _latitudeController.dispose();
     _longitudeController.dispose();
     _cityController.dispose();
-    _suggestionController.dispose();
     super.dispose();
   }
 
@@ -137,7 +135,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildQaAndFeedbackSection(context, l10n),
+        _buildSupportSection(context, l10n),
         const SizedBox(height: 16),
         _SectionTitle(
           title: l10n.tr('notifications'),
@@ -290,7 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               DropdownButtonFormField<ThemeStyleOption>(
                 initialValue: controller.themeStyle,
                 decoration: InputDecoration(labelText: l10n.tr('themeStyle')),
-                items: ThemeStyleOption.values
+                items: kSelectableThemeStyles
                     .map(
                       (option) => DropdownMenuItem<ThemeStyleOption>(
                         value: option,
@@ -376,155 +374,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildQaAndFeedbackSection(
-    BuildContext context,
-    AppLocalizations l10n,
-  ) {
+  Widget _buildSupportSection(BuildContext context, AppLocalizations l10n) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         _SectionTitle(
-          title: l10n.tr('helpQa'),
-          subtitle: l10n.tr('helpQaSub'),
-          icon: Icons.help_center_rounded,
+          title: l10n.tr('support'),
+          subtitle: l10n.tr('supportSub'),
+          icon: Icons.support_agent_rounded,
         ),
         const SizedBox(height: 8),
         AppSurfaceCard(
           child: Column(
             children: <Widget>[
-              _FaqTile(
-                question: l10n.tr('faqQiblaQuestion'),
-                answer: l10n.tr('faqQiblaAnswer'),
-              ),
-              _FaqTile(
-                question: l10n.tr('faqLocationQuestion'),
-                answer: l10n.tr('faqLocationAnswer'),
-              ),
-              _FaqTile(
-                question: l10n.tr('faqBackupQuestion'),
-                answer: l10n.tr('faqBackupAnswer'),
-              ),
-              _FaqTile(
-                question: l10n.tr('faqAudioQuestion'),
-                answer: l10n.tr('faqAudioAnswer'),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _SectionTitle(
-          title: l10n.tr('developerFeedback'),
-          subtitle: l10n.tr('developerFeedbackSub'),
-          icon: Icons.chat_rounded,
-        ),
-        const SizedBox(height: 8),
-        AppSurfaceCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                l10n.tr('developerFeedbackHint'),
-                style: Theme.of(context).textTheme.bodyMedium,
+              _NavigationActionButton(
+                icon: Icons.help_center_rounded,
+                title: l10n.tr('helpFaqButton'),
+                subtitle: l10n.tr('helpFaqButtonSub'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(builder: (_) => const FaqScreen()),
+                  );
+                },
               ),
               const SizedBox(height: 10),
-              Text(
-                AppConstants.developerSupportEmail,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: AppGradientButton(
-                  onPressed: _openSuggestionSheet,
-                  icon: Icons.send_rounded,
-                  label: l10n.tr('sendMessage'),
-                ),
+              _NavigationActionButton(
+                icon: Icons.chat_bubble_outline_rounded,
+                title: l10n.tr('contactDeveloperButton'),
+                subtitle: l10n.tr('contactDeveloperButtonSub'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ContactDeveloperScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
       ],
     );
-  }
-
-  void _openSuggestionSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      isScrollControlled: true,
-      builder: (context) {
-        final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-        final l10n = context.l10n;
-        return Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, 16 + bottomInset),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                l10n.tr('sendSuggestionTitle'),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _suggestionController,
-                maxLines: 5,
-                maxLength: 1000,
-                decoration: InputDecoration(
-                  hintText: l10n.tr('sendSuggestionHint'),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: AppGradientButton(
-                  onPressed: () async {
-                    final navigator = Navigator.of(context);
-                    final sent = await _sendSuggestion(
-                      _suggestionController.text,
-                    );
-                    if (!mounted) return;
-                    if (sent) {
-                      _suggestionController.clear();
-                      navigator.pop();
-                    }
-                  },
-                  icon: Icons.mark_email_read_rounded,
-                  label: l10n.tr('sendMessage'),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<bool> _sendSuggestion(String message) async {
-    final l10n = context.l10n;
-    final trimmed = message.trim();
-    if (trimmed.isEmpty) {
-      _showSnack(l10n.tr('suggestionEmpty'));
-      return false;
-    }
-
-    final uri = Uri(
-      scheme: 'mailto',
-      path: AppConstants.developerSupportEmail,
-      queryParameters: <String, String>{
-        'subject': l10n.tr('suggestionEmailSubject'),
-        'body': trimmed,
-      },
-    );
-
-    final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!launched) {
-      _showSnack(l10n.tr('openEmailFailed'));
-      return false;
-    }
-    _showSnack(l10n.tr('suggestionSentPrompt'));
-    return true;
   }
 
   void _showSnack(String message) {
@@ -534,31 +424,67 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 }
 
-class _FaqTile extends StatelessWidget {
-  const _FaqTile({required this.question, required this.answer});
+class _NavigationActionButton extends StatelessWidget {
+  const _NavigationActionButton({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
-  final String question;
-  final String answer;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: EdgeInsets.zero,
-        childrenPadding: const EdgeInsets.only(bottom: 10),
-        title: Text(
-          question,
-          style: Theme.of(
-            context,
-          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        children: <Widget>[
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(answer, style: Theme.of(context).textTheme.bodyMedium),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            children: <Widget>[
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.secondary.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: Theme.of(context).colorScheme.primary),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
