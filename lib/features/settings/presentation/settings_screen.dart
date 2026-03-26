@@ -26,6 +26,8 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   static const int _maxCityResults = 15;
+  static const double _sectionGap = 20;
+  static const double _titleToCardGap = 10;
 
   final _citySearchController = TextEditingController();
   final _latitudeController = TextEditingController();
@@ -67,7 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: l10n.tr('locationSub'),
           icon: Icons.location_on_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -235,15 +237,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
-        _buildSupportSection(context, l10n),
-        const SizedBox(height: 16),
+        const SizedBox(height: _sectionGap),
         _SectionTitle(
           title: l10n.tr('notifications'),
           subtitle: l10n.tr('notificationsSub'),
           icon: Icons.notifications_active_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: Column(
             children: <Widget>[
@@ -298,13 +298,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: _sectionGap),
         _SectionTitle(
           title: l10n.tr('prayerCalculation'),
           subtitle: l10n.tr('prayerCalculationSub'),
           icon: Icons.calculate_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: DropdownButtonFormField<CalculationMethodOption>(
             initialValue: controller.settings.calculationMethod,
@@ -327,13 +327,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: _sectionGap),
         _SectionTitle(
           title: l10n.tr('language'),
           subtitle: l10n.tr('languageSub'),
           icon: Icons.language_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: DropdownButtonFormField<AppLanguage>(
             initialValue: controller.appLanguage,
@@ -359,13 +359,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: _sectionGap),
         _SectionTitle(
           title: l10n.tr('appearance'),
           subtitle: l10n.tr('appearanceSub'),
           icon: Icons.palette_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: Column(
             children: <Widget>[
@@ -405,13 +405,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: _sectionGap),
         _SectionTitle(
           title: l10n.tr('dataBackup'),
           subtitle: l10n.tr('dataBackupSub'),
           icon: Icons.data_saver_on_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: Row(
             children: <Widget>[
@@ -471,6 +471,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
         ),
+        const SizedBox(height: _sectionGap),
+        _buildSupportSection(context, l10n),
       ],
     );
   }
@@ -535,7 +537,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           subtitle: l10n.tr('supportSub'),
           icon: Icons.support_agent_rounded,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: _titleToCardGap),
         AppSurfaceCard(
           child: Column(
             children: <Widget>[

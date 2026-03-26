@@ -8,7 +8,7 @@ import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/calendar/presentation/islamic_events_section.dart';
-import 'package:azan_app/features/daily/presentation/daily_content_card.dart';
+import 'package:azan_app/features/home/presentation/widgets/daily_quran_ayahs_section.dart';
 import 'package:azan_app/features/mosque/presentation/mosque_finder_screen.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:azan_app/features/tracker/presentation/prayer_tracker_screen.dart';
@@ -91,8 +91,7 @@ class HomeScreen extends StatelessWidget {
           const SizedBox(height: 12),
           IslamicEventsSection(now: controller.now),
           const SizedBox(height: 12),
-          if (controller.dailyContent != null)
-            DailyContentCard(item: controller.dailyContent!),
+          DailyQuranAyahsSection(translationLanguage: controller.appLanguage),
         ],
       ),
     );
@@ -563,12 +562,25 @@ class _PrayerTimeCard extends StatelessWidget {
       'isha' => Icons.dark_mode_rounded,
       _ => Icons.access_time_rounded,
     };
+    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+      fontWeight: FontWeight.w700,
+      shadows: isNext
+          ? <Shadow>[
+              Shadow(
+                color: scheme.secondary.withValues(alpha: 0.42),
+                blurRadius: 14,
+              ),
+            ]
+          : null,
+    );
     return AnimatedContainer(
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
       child: AppSurfaceCard(
         gradient: isNext ? nextPrayerGradient : null,
         backgroundColor: isNext ? null : Theme.of(context).cardTheme.color,
+        enableEntranceAnimation: false,
+        entranceDirection: AppCardEntranceDirection.none,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Row(
           children: <Widget>[
@@ -589,17 +601,46 @@ class _PrayerTimeCard extends StatelessWidget {
                 children: <Widget>[
                   Row(
                     children: <Widget>[
+                      if (isNext)
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: scheme.secondary.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(
+                              color: scheme.secondary.withValues(alpha: 0.38),
+                            ),
+                            boxShadow: <BoxShadow>[
+                              BoxShadow(
+                                color: scheme.secondary.withValues(alpha: 0.26),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            l10n.tr('nextPrayer'),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.onSurface,
+                                ),
+                          ),
+                        ),
                       Icon(
                         icon,
                         size: 16,
                         color: isNext ? scheme.tertiary : scheme.primary,
                       ),
                       const SizedBox(width: 6),
-                      Text(
-                        l10n.prayerName(prayer.name),
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(fontWeight: FontWeight.w700),
-                      ),
+                      Text(l10n.prayerName(prayer.name), style: titleStyle),
                     ],
                   ),
                   const SizedBox(height: 2),
@@ -612,13 +653,39 @@ class _PrayerTimeCard extends StatelessWidget {
                 ],
               ),
             ),
-            Text(
-              DateFormat('hh:mm a').format(prayer.time),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: isNext && isDark
-                    ? Colors.white
-                    : Theme.of(context).colorScheme.primary,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 240),
+              curve: Curves.easeOutCubic,
+              padding: EdgeInsets.symmetric(
+                horizontal: isNext ? 10 : 0,
+                vertical: isNext ? 6 : 0,
+              ),
+              decoration: isNext
+                  ? BoxDecoration(
+                      color: scheme.secondary.withValues(
+                        alpha: isDark ? 0.2 : 0.15,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: scheme.secondary.withValues(alpha: 0.35),
+                      ),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: scheme.secondary.withValues(alpha: 0.24),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    )
+                  : null,
+              child: Text(
+                DateFormat('hh:mm a').format(prayer.time),
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: isNext && isDark
+                      ? Colors.white
+                      : Theme.of(context).colorScheme.primary,
+                ),
               ),
             ),
           ],

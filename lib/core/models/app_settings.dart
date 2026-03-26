@@ -30,7 +30,7 @@ class AppSettings {
       notificationsEnabled: true,
       notificationSoundMode: NotificationSoundMode.notificationOnly,
       themeMode: ThemeModeOption.light,
-      themeStyle: ThemeStyleOption.sunset,
+      themeStyle: ThemeStyleOption.emerald,
       appLanguage: AppLanguage.english,
       visiblePrayerNames: AppConstants.defaultVisiblePrayerNames,
     );

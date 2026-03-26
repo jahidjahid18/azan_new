@@ -5,7 +5,9 @@ import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class AppSurfaceCard extends StatelessWidget {
+enum AppCardEntranceDirection { auto, left, right, none }
+
+class AppSurfaceCard extends StatefulWidget {
   const AppSurfaceCard({
     super.key,
     required this.child,
@@ -14,6 +16,8 @@ class AppSurfaceCard extends StatelessWidget {
     this.margin,
     this.backgroundColor,
     this.gradient,
+    this.entranceDirection = AppCardEntranceDirection.auto,
+    this.enableEntranceAnimation = true,
   });
 
   final Widget child;
@@ -22,6 +26,24 @@ class AppSurfaceCard extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
   final Color? backgroundColor;
   final Gradient? gradient;
+  final AppCardEntranceDirection entranceDirection;
+  final bool enableEntranceAnimation;
+
+  @override
+  State<AppSurfaceCard> createState() => _AppSurfaceCardState();
+}
+
+class _AppSurfaceCardState extends State<AppSurfaceCard> {
+  bool _entered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _entered = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -31,8 +53,8 @@ class AppSurfaceCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
     final effectiveGradient =
-        gradient ??
-        (backgroundColor == null
+        widget.gradient ??
+        (widget.backgroundColor == null
             ? LinearGradient(
                 colors: isDark
                     ? <Color>[
@@ -53,10 +75,10 @@ class AppSurfaceCard extends StatelessWidget {
 
     final baseDecoration = BoxDecoration(
       color: effectiveGradient == null
-          ? (backgroundColor ?? Theme.of(context).cardTheme.color)
+          ? (widget.backgroundColor ?? Theme.of(context).cardTheme.color)
           : null,
       gradient: effectiveGradient,
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: BorderRadius.circular(widget.radius),
       border: Border.all(
         color: isDark
             ? Colors.white.withValues(alpha: 0.1)
@@ -73,12 +95,17 @@ class AppSurfaceCard extends StatelessWidget {
       ],
     );
 
+    final content = Theme(
+      data: Theme.of(context).copyWith(textTheme: _cardTextTheme(context)),
+      child: Padding(padding: widget.padding, child: widget.child),
+    );
+
     if (style == ThemeStyleOption.glass) {
       final decoration = BoxDecoration(
         color: isDark
             ? const Color(0x6622384D)
             : Colors.white.withValues(alpha: 0.58),
-        borderRadius: BorderRadius.circular(radius),
+        borderRadius: BorderRadius.circular(widget.radius),
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.2)
@@ -92,17 +119,16 @@ class AppSurfaceCard extends StatelessWidget {
           ),
         ],
       );
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 260),
-        curve: Curves.easeOutCubic,
-        margin: margin,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(radius),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-            child: Container(
-              decoration: decoration,
-              child: Padding(padding: padding, child: child),
+      return _buildEntranceWrapper(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 260),
+          curve: Curves.easeOutCubic,
+          margin: widget.margin,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(widget.radius),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+              child: Container(decoration: decoration, child: content),
             ),
           ),
         ),
@@ -111,8 +137,8 @@ class AppSurfaceCard extends StatelessWidget {
 
     if (style == ThemeStyleOption.softUi) {
       final neumorphDecoration = BoxDecoration(
-        color: backgroundColor ?? Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(radius),
+        color: widget.backgroundColor ?? Theme.of(context).cardTheme.color,
+        borderRadius: BorderRadius.circular(widget.radius),
         boxShadow: isDark
             ? <BoxShadow>[
                 BoxShadow(
@@ -139,21 +165,85 @@ class AppSurfaceCard extends StatelessWidget {
                 ),
               ],
       );
-      return AnimatedContainer(
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
-        margin: margin,
-        decoration: neumorphDecoration,
-        child: Padding(padding: padding, child: child),
+      return _buildEntranceWrapper(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeOutCubic,
+          margin: widget.margin,
+          decoration: neumorphDecoration,
+          child: content,
+        ),
       );
     }
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 220),
+    return _buildEntranceWrapper(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        margin: widget.margin,
+        decoration: baseDecoration,
+        child: content,
+      ),
+    );
+  }
+
+  Widget _buildEntranceWrapper({required Widget child}) {
+    if (!widget.enableEntranceAnimation ||
+        widget.entranceDirection == AppCardEntranceDirection.none) {
+      return child;
+    }
+
+    return AnimatedSlide(
+      offset: _entered ? Offset.zero : _startOffset(),
+      duration: const Duration(milliseconds: 380),
       curve: Curves.easeOutCubic,
-      margin: margin,
-      decoration: baseDecoration,
-      child: Padding(padding: padding, child: child),
+      child: AnimatedOpacity(
+        opacity: _entered ? 1 : 0,
+        duration: const Duration(milliseconds: 340),
+        curve: Curves.easeOutCubic,
+        child: child,
+      ),
+    );
+  }
+
+  Offset _startOffset() {
+    return switch (widget.entranceDirection) {
+      AppCardEntranceDirection.left => const Offset(-0.06, 0),
+      AppCardEntranceDirection.right => const Offset(0.06, 0),
+      AppCardEntranceDirection.auto => _autoStartOffset(),
+      AppCardEntranceDirection.none => Offset.zero,
+    };
+  }
+
+  Offset _autoStartOffset() {
+    final signature = widget.key?.hashCode ?? widget.hashCode;
+    return signature.isEven ? const Offset(-0.05, 0) : const Offset(0.05, 0);
+  }
+
+  TextTheme _cardTextTheme(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+    final headerStyle = (textTheme.titleMedium ?? const TextStyle()).copyWith(
+      fontSize: 18,
+      fontWeight: FontWeight.w700,
+      height: 1.25,
+    );
+    final bodyStyle = (textTheme.bodyMedium ?? const TextStyle()).copyWith(
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+      height: 1.45,
+    );
+
+    return textTheme.copyWith(
+      titleLarge: headerStyle,
+      titleMedium: headerStyle,
+      titleSmall: headerStyle,
+      bodyLarge: bodyStyle,
+      bodyMedium: bodyStyle,
+      bodySmall: bodyStyle.copyWith(fontSize: 13.5),
+      labelLarge: bodyStyle.copyWith(
+        fontSize: 13.5,
+        fontWeight: FontWeight.w700,
+      ),
     );
   }
 }

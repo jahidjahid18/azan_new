@@ -259,6 +259,9 @@ _localizedValues = <String, Map<String, String>>{
     'quickAzkar': 'Azkar',
     'dailyHadith': 'Daily Hadith',
     'dailyAyah': 'Daily Ayah',
+    'dailyQuranAyahsTitle': 'Daily Quran Ayahs',
+    'dailyQuranAyahsSubtitle':
+        '3 ayahs for today with transliteration and translation',
     'hijriDate': 'Hijri Date',
     'ramadanStarted': 'Ramadan has started',
     'daysUntilRamadan': '{days} day(s) until Ramadan',
