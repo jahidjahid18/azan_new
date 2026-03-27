@@ -64,6 +64,7 @@ dependencies:
   path: ^1.9.1
   share_plus: ^10.0.2
   shared_preferences: ^2.5.3
+  image: ^4.5.4
 
 dev_dependencies:
   flutter_test:
@@ -95,6 +96,7 @@ flutter:
     - assets/data/quran_translations/
     - assets/data/daily_content.json
     - assets/data/azkar.json
+    - assets/data/quiz_questions.json
     - assets/data/cities_global.json
     - assets/images/puzzle/
 

@@ -1,0 +1,602 @@
+[
+  {
+    "category": "Solat",
+    "question": "How many obligatory prayers are performed daily?",
+    "options": ["3", "4", "5", "6"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "How many fard rakats are in Fajr prayer?",
+    "options": ["2", "3", "4", "5"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Solat",
+    "question": "How many fard rakats are in Dhuhr prayer?",
+    "options": ["2", "3", "4", "5"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "How many fard rakats are in Asr prayer?",
+    "options": ["2", "3", "4", "5"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "How many fard rakats are in Maghrib prayer?",
+    "options": ["2", "3", "4", "5"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Solat",
+    "question": "How many fard rakats are in Isha prayer?",
+    "options": ["2", "3", "4", "5"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "Muslims face which direction during prayer?",
+    "options": ["Jerusalem", "Kaaba", "Madinah", "Damascus"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Solat",
+    "question": "What is the call to prayer called?",
+    "options": ["Adhan", "Khutbah", "Iqamah", "Tasbih"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Solat",
+    "question": "What is the call right before prayer begins called?",
+    "options": ["Adhan", "Khutbah", "Iqamah", "Takbir"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "What purification is commonly done before prayer?",
+    "options": ["Wudu", "Sawm", "Tawaf", "Zakat"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Solat",
+    "question": "What is the Friday congregational prayer called?",
+    "options": ["Taraweeh", "Jumu'ah", "Witr", "Duha"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Solat",
+    "question": "What is the bowing position in prayer called?",
+    "options": ["Sujood", "Qiyam", "Ruku", "Qunut"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "What is the prostration position in prayer called?",
+    "options": ["Tashahhud", "Sujood", "Qunut", "Takbir"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Solat",
+    "question": "What is the standing position in prayer called?",
+    "options": ["Qiyam", "Julus", "Ruku", "Salam"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Solat",
+    "question": "Which surah is recited in every rakah?",
+    "options": ["An-Nas", "Al-Ikhlas", "Al-Kahf", "Al-Fatihah"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Solat",
+    "question": "What is one unit of prayer called?",
+    "options": ["Ayah", "Sajdah", "Rakah", "Juz"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "What is the final sitting testimony in prayer called?",
+    "options": ["Qunut", "Tashahhud", "Adhan", "Takbir"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Solat",
+    "question": "Which prayer is commonly prayed after Isha as an odd-number prayer?",
+    "options": ["Duha", "Tahajjud", "Witr", "Janazah"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "What is the shortened prayer for travelers called?",
+    "options": ["Jam'", "Safar", "Qada", "Qasr"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Solat",
+    "question": "How many sunnah rakats are before Fajr?",
+    "options": ["2", "4", "6", "8"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Solat",
+    "question": "Which prayer is often performed in Ramadan nights?",
+    "options": ["Istikhara", "Taraweeh", "Duha", "Janazah"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Solat",
+    "question": "What prostration is done when a mistake is made in prayer?",
+    "options": ["Sujood al-Shukr", "Sujood at-Tilawah", "Sujood as-Sahw", "Sujood al-Wudu"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Solat",
+    "question": "What is said at the end of prayer to conclude it?",
+    "options": ["Salam", "Iqamah", "Adhan", "Tasbih"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Solat",
+    "question": "Which prayer includes a khutbah on Friday?",
+    "options": ["Eid", "Fajr", "Asr", "Jumu'ah"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Solat",
+    "question": "Which is generally a condition for valid obligatory prayer when able?",
+    "options": ["Facing the Qibla", "Wearing shoes", "Closing eyes", "Raising voice"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Quran",
+    "question": "How many surahs are in the Quran?",
+    "options": ["100", "110", "114", "120"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "What is the first surah of the Quran?",
+    "options": ["Al-Baqarah", "Al-Fatihah", "Yasin", "Al-Ikhlas"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "Which is the longest surah in the Quran?",
+    "options": ["Al-Baqarah", "Al-Imran", "An-Nisa", "Al-Maidah"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Quran",
+    "question": "Which is the shortest surah in the Quran?",
+    "options": ["An-Nasr", "Al-Asr", "Al-Falaq", "Al-Kawthar"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Quran",
+    "question": "Into how many juz is the Quran divided?",
+    "options": ["20", "30", "40", "60"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "In which language was the Quran revealed?",
+    "options": ["Hebrew", "Urdu", "Arabic", "Persian"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "The first revelation began with verses from which surah?",
+    "options": ["Al-Fatihah", "Al-Alaq", "Al-Muddaththir", "Al-Qalam"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "Ayat al-Kursi is in which surah?",
+    "options": ["Al-Baqarah", "Yasin", "Al-Kahf", "Al-Mulk"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Quran",
+    "question": "Which surah is often called the heart of the Quran?",
+    "options": ["Maryam", "Al-Kahf", "Yasin", "Al-Ikhlas"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "Which surah is especially recommended to read on Friday?",
+    "options": ["Ar-Rahman", "Al-Kahf", "Al-Waqiah", "Al-Mulk"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "What is the last surah of the Quran?",
+    "options": ["Al-Falaq", "Al-Ikhlas", "An-Nasr", "An-Nas"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Quran",
+    "question": "Bismillah is absent at the start of which surah?",
+    "options": ["Al-Fatihah", "Al-Ikhlas", "At-Tawbah", "An-Nasr"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "Which surah is named after Mary?",
+    "options": ["Maryam", "Al-Baqarah", "An-Nisa", "Yusuf"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Quran",
+    "question": "Which surah is about sincerity in worshiping Allah alone?",
+    "options": ["Al-Falaq", "Al-Ikhlas", "Al-Kafirun", "Al-Masad"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "Over approximately how many years was the Quran revealed?",
+    "options": ["10 years", "15 years", "23 years", "40 years"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "How many ayahs are in Surah Al-Fatihah?",
+    "options": ["7", "6", "5", "8"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Quran",
+    "question": "Which surah comes right after Al-Fatihah?",
+    "options": ["Al-Imran", "Yasin", "An-Nisa", "Al-Baqarah"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Quran",
+    "question": "The word Quran most closely means what?",
+    "options": ["Guidance", "Law", "Recitation", "Light"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "What is a person who memorized the whole Quran commonly called?",
+    "options": ["Qari", "Hafiz", "Mufti", "Khatib"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "Under which caliph were standardized copies of the Quran widely distributed?",
+    "options": ["Abu Bakr", "Umar", "Uthman", "Ali"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "What was the first revealed command-word?",
+    "options": ["Iqra", "Qul", "Subhan", "Amin"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Quran",
+    "question": "How many verses are in Surah Al-Ikhlas?",
+    "options": ["3", "5", "6", "4"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Quran",
+    "question": "Which pair are the final two surahs in the Quran?",
+    "options": ["Yasin and Ar-Rahman", "Al-Falaq and An-Nas", "Al-Mulk and Al-Qalam", "Al-Waqiah and Al-Hadid"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Quran",
+    "question": "What is sajdah tilawah?",
+    "options": ["A charity payment", "A type of fast", "A prostration when reciting certain verses", "A prayer after Fajr"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Quran",
+    "question": "According to Islam, who promises to preserve the Quran?",
+    "options": ["Allah", "Angels", "Scholars", "Caliphs"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "What are hadith in Islam?",
+    "options": ["Only historical stories", "Only legal rulings", "Sayings, actions, and approvals of Prophet Muhammad", "Poetry from companions"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "Who compiled Sahih al-Bukhari?",
+    "options": ["Imam Muslim", "Imam al-Bukhari", "Imam Abu Hanifa", "Imam Malik"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Hadith",
+    "question": "Who compiled Sahih Muslim?",
+    "options": ["Imam Muslim", "Imam al-Bukhari", "Imam Tirmidhi", "Imam Nawawi"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "What is the chain of narration in hadith called?",
+    "options": ["Fiqh", "Matn", "Ijma", "Isnad"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Hadith",
+    "question": "What is the main text content of a hadith called?",
+    "options": ["Isnad", "Qiyas", "Matn", "Tafsir"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "The hadith 'Actions are by intentions' was narrated by which companion?",
+    "options": ["Abu Hurairah", "Umar ibn al-Khattab", "Ali ibn Abi Talib", "Ibn Abbas"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Hadith",
+    "question": "Imam Nawawi is widely known for which hadith collection?",
+    "options": ["Sahih Bukhari", "Muwatta", "Forty Hadith", "Sunan an-Nasa'i"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "Which statement is from a famous hadith?",
+    "options": ["Cleanliness is half of faith", "Trade is half of faith", "Travel is half of faith", "Silence is half of faith"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "What is considered an act of charity according to hadith?",
+    "options": ["A smile to your brother", "Owning many things", "Speaking loudly", "Wearing expensive clothes"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "Removing harm from the road is considered what?",
+    "options": ["Only social duty", "A political duty", "A legal punishment", "An act of charity"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Hadith",
+    "question": "Who came in the famous Hadith Jibril to teach religion?",
+    "options": ["Angel Mikail", "Angel Israfil", "Angel Jibril", "Angel Malik"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "A believer does not truly believe until what?",
+    "options": ["He loves for his brother what he loves for himself", "He is wealthy", "He travels often", "He speaks less"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "Whoever believes in Allah and the Last Day should do what?",
+    "options": ["Speak loudly", "Speak good or remain silent", "Debate often", "Avoid greeting people"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Hadith",
+    "question": "The hadith says religion is what?",
+    "options": ["Travel", "Worship only", "Debate", "Sincere advice"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Hadith",
+    "question": "How did the Prophet teach people to deal with religious matters?",
+    "options": ["Make it strict", "Make it hidden", "Make it easy and do not make it difficult", "Avoid teaching others"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "Who is strong according to hadith?",
+    "options": ["The one who lifts heavy weights", "The one who controls anger", "The one who speaks harshly", "The one who never smiles"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Hadith",
+    "question": "A Muslim is one from whose what are Muslims safe?",
+    "options": ["Money and house", "Friends and family", "Tongue and hand", "Travel and trade"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "Who receives mercy from the Most Merciful?",
+    "options": ["Those who show mercy", "Only the wealthy", "Only scholars", "Only travelers"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "The hadith teaches: Whoever does not thank people does not thank whom?",
+    "options": ["Leaders", "Allah", "Family", "Friends"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Hadith",
+    "question": "Who are the best among people according to a famous hadith?",
+    "options": ["The richest", "The tallest", "The strongest", "Those who learn Quran and teach it"],
+    "correctIndex": 3
+  },
+  {
+    "category": "Hadith",
+    "question": "Modesty is part of what?",
+    "options": ["Culture", "Language", "Faith", "Tradition"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "Seeking knowledge is described as what?",
+    "options": ["Obligatory upon every Muslim", "Optional only for teachers", "Only for children", "Only for men"],
+    "correctIndex": 0
+  },
+  {
+    "category": "Hadith",
+    "question": "Which deed is encouraged in hadith?",
+    "options": ["Competing in wealth", "Feeding the hungry and visiting the sick", "Ignoring neighbors", "Sleeping after sunrise"],
+    "correctIndex": 1
+  },
+  {
+    "category": "Hadith",
+    "question": "In hadith, the upper hand is better than the lower hand means what?",
+    "options": ["Being taller is better", "Being older is better", "Giving is better than asking", "Writing is better than reading"],
+    "correctIndex": 2
+  },
+  {
+    "category": "Hadith",
+    "question": "After the Quran, what is the key source for understanding the Prophet's guidance?",
+    "options": ["History books", "Sunnah and Hadith", "Poetry", "Cultural customs"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "How many pillars of Islam are there?",
+    "options": ["5", "6", "7", "8"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "How many pillars of Iman (faith) are there?",
+    "options": ["5", "6", "7", "8"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "In which month do Muslims fast?",
+    "options": ["Shawwal", "Muharram", "Ramadan", "Rajab"],
+    "correctIndex": 2
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the obligatory charity called?",
+    "options": ["Sadaqah", "Zakat", "Waqf", "Fidyah"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "Hajj pilgrimage is performed in which city?",
+    "options": ["Madinah", "Jerusalem", "Taif", "Makkah"],
+    "correctIndex": 3
+  },
+  {
+    "category": "General Islam",
+    "question": "Which day is the main weekly congregational day for Muslims?",
+    "options": ["Friday", "Saturday", "Sunday", "Monday"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "Which Eid comes after Ramadan?",
+    "options": ["Eid al-Adha", "Eid al-Fitr", "Eid al-Milad", "Eid al-Jumu'ah"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "Which Eid is associated with the Hajj season?",
+    "options": ["Eid al-Fitr", "Eid al-Nabi", "Eid al-Adha", "Eid al-Isra"],
+    "correctIndex": 2
+  },
+  {
+    "category": "General Islam",
+    "question": "Who is the first prophet in Islam?",
+    "options": ["Adam", "Nuh", "Ibrahim", "Musa"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "Who is the final prophet in Islam?",
+    "options": ["Isa", "Musa", "Ibrahim", "Muhammad"],
+    "correctIndex": 3
+  },
+  {
+    "category": "General Islam",
+    "question": "Who is the mother of Prophet Isa (Jesus)?",
+    "options": ["Asiya", "Hajar", "Maryam", "Khadijah"],
+    "correctIndex": 2
+  },
+  {
+    "category": "General Islam",
+    "question": "Which angel brought revelation to the prophets?",
+    "options": ["Mikail", "Jibril", "Israfil", "Malik"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "The migration from Makkah to Madinah is called what?",
+    "options": ["Hijrah", "Umrah", "Qiblah", "Isra"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the global Muslim community called?",
+    "options": ["Qawm", "Jamaah", "Ummah", "Khilafah"],
+    "correctIndex": 2
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the declaration of faith called?",
+    "options": ["Takbir", "Shahadah", "Taslim", "Tawbah"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the pre-dawn meal in Ramadan called?",
+    "options": ["Suhoor", "Iftar", "Nafl", "Tahajjud"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the meal to break the fast at sunset called?",
+    "options": ["Suhur", "Sadaqah", "Qiyam", "Iftar"],
+    "correctIndex": 3
+  },
+  {
+    "category": "General Islam",
+    "question": "Which month starts the Islamic calendar year?",
+    "options": ["Safar", "Rabi al-Awwal", "Muharram", "Shaban"],
+    "correctIndex": 2
+  },
+  {
+    "category": "General Islam",
+    "question": "Al-Aqsa Mosque is located in which city?",
+    "options": ["Makkah", "Jerusalem", "Cairo", "Madinah"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "The Kaaba is inside which mosque?",
+    "options": ["Al-Masjid al-Haram", "Al-Masjid an-Nabawi", "Masjid Quba", "Al-Aqsa Mosque"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the common zakat rate on eligible savings?",
+    "options": ["1%", "5%", "10%", "2.5%"],
+    "correctIndex": 3
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the Arabic term for prayer direction?",
+    "options": ["Qunut", "Qasr", "Qibla", "Qada"],
+    "correctIndex": 2
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the special blessed night in Ramadan called?",
+    "options": ["Laylat al-Baraah", "Laylat al-Qadr", "Laylat al-Miraj", "Laylat al-Arafah"],
+    "correctIndex": 1
+  },
+  {
+    "category": "General Islam",
+    "question": "Which scripture was given to Prophet Dawud (David)?",
+    "options": ["Zabur", "Tawrah", "Injil", "Suhuf"],
+    "correctIndex": 0
+  },
+  {
+    "category": "General Islam",
+    "question": "What is the standard Islamic greeting?",
+    "options": ["Good morning", "Peace be with you all", "Assalamu alaikum", "Welcome everyone"],
+    "correctIndex": 2
+  }
+]

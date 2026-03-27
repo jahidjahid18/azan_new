@@ -185,10 +185,7 @@ class _MainScaffoldState extends State<_MainScaffold>
             bottom: false,
             child: FadeTransition(
               opacity: _tabFade,
-              child: IndexedStack(
-                index: _currentTab,
-                children: _screens,
-              ),
+              child: IndexedStack(index: _currentTab, children: _screens),
             ),
           ),
         ),
@@ -196,7 +193,11 @@ class _MainScaffoldState extends State<_MainScaffold>
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          if (showBanner) const BannerAdWidget(),
+          if (showBanner)
+            const Padding(
+              padding: EdgeInsets.only(top: 8),
+              child: Center(child: BannerAdWidget()),
+            ),
           Container(
             decoration: BoxDecoration(
               color: AppTheme.shellNavBackground(

@@ -1,9 +1,13 @@
-import 'package:azan_app/ads/banner_ad_widget.dart';
+import 'dart:async';
+import 'dart:io';
+
+import 'package:azan_app/ads/sticky_bottom_banner_ad.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
 import 'package:azan_app/core/theme/app_theme.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -16,6 +20,9 @@ class TasbihScreen extends StatefulWidget {
 }
 
 class _TasbihScreenState extends State<TasbihScreen> {
+  static const MethodChannel _tasbihFeedbackChannel = MethodChannel(
+    'azan_app/tasbih_feedback',
+  );
   bool _showCustomCounter = false;
   int _customCount = 0;
   bool _enableVibration = true;
@@ -28,8 +35,6 @@ class _TasbihScreenState extends State<TasbihScreen> {
       (c) => c.themeStyle,
     );
     final l10n = context.l10n;
-    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
-
     final isCompleted = controller.isTasbihCompleted;
     final stepLabel = 'Step ${controller.currentStep} of 3';
     final currentName = controller.currentTasbihName;
@@ -46,9 +51,10 @@ class _TasbihScreenState extends State<TasbihScreen> {
         : (presetCount / autoPresetTarget).clamp(0.0, 1.0);
 
     return Scaffold(
+      bottomNavigationBar: const StickyBottomBannerAd(topSpacing: 8),
       body: SafeArea(
         child: ListView(
-          padding: EdgeInsets.fromLTRB(16, 12, 16, 20 + bottomPadding),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
           children: <Widget>[
             Row(
               children: <Widget>[
@@ -79,9 +85,27 @@ class _TasbihScreenState extends State<TasbihScreen> {
                   _FeedbackToggleRow(
                     enableSound: _enableSound,
                     enableVibration: _enableVibration,
-                    onToggleSound: (value) => setState(() => _enableSound = value),
-                    onToggleVibration: (value) =>
-                        setState(() => _enableVibration = value),
+                    onToggleSound: (value) {
+                      setState(() => _enableSound = value);
+                      if (value) {
+                        _playSoundFeedback();
+                      }
+                    },
+                    onToggleVibration: (value) {
+                      setState(() => _enableVibration = value);
+                      if (value) {
+                        unawaited(_playVibrationFeedback());
+                      }
+                    },
+                    darkSurface: true,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tip: Enable touch sound and haptic feedback in phone settings.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.82),
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -129,7 +153,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
                           count: presetCount,
                           target: autoPresetTarget,
                           onTap: () async {
-                            await _triggerTapFeedback();
+                            _triggerTapFeedback();
                             await controller.incrementTasbih();
                           },
                         ),
@@ -149,9 +173,18 @@ class _TasbihScreenState extends State<TasbihScreen> {
                     alignment: WrapAlignment.center,
                     spacing: 8,
                     children: <Widget>[
-                      _PresetStagePill(label: '33', active: autoPresetTarget == 33),
-                      _PresetStagePill(label: '66', active: autoPresetTarget == 66),
-                      _PresetStagePill(label: '99', active: autoPresetTarget == 99),
+                      _PresetStagePill(
+                        label: '33',
+                        active: autoPresetTarget == 33,
+                      ),
+                      _PresetStagePill(
+                        label: '66',
+                        active: autoPresetTarget == 66,
+                      ),
+                      _PresetStagePill(
+                        label: '99',
+                        active: autoPresetTarget == 99,
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -211,17 +244,26 @@ class _TasbihScreenState extends State<TasbihScreen> {
                     _FeedbackToggleRow(
                       enableSound: _enableSound,
                       enableVibration: _enableVibration,
-                      onToggleSound: (value) =>
-                          setState(() => _enableSound = value),
-                      onToggleVibration: (value) =>
-                          setState(() => _enableVibration = value),
+                      onToggleSound: (value) {
+                        setState(() => _enableSound = value);
+                        if (value) {
+                          _playSoundFeedback();
+                        }
+                      },
+                      onToggleVibration: (value) {
+                        setState(() => _enableVibration = value);
+                        if (value) {
+                          unawaited(_playVibrationFeedback());
+                        }
+                      },
+                      darkSurface: false,
                       compact: true,
                     ),
                     const SizedBox(height: 8),
                     _CustomCounterButton(
                       count: _customCount,
-                      onTap: () async {
-                        await _triggerTapFeedback();
+                      onTap: () {
+                        _triggerTapFeedback();
                         setState(() => _customCount += 1);
                       },
                     ),
@@ -229,8 +271,6 @@ class _TasbihScreenState extends State<TasbihScreen> {
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            const Center(child: BannerAdWidget()),
           ],
         ),
       ),
@@ -243,16 +283,46 @@ class _TasbihScreenState extends State<TasbihScreen> {
     return 33;
   }
 
-  Future<void> _triggerTapFeedback() async {
+  void _triggerTapFeedback() {
     if (_enableSound) {
-      await SystemSound.play(SystemSoundType.click);
+      _playSoundFeedback();
     }
 
     if (_enableVibration) {
+      unawaited(_playVibrationFeedback());
+    }
+  }
+
+  void _playSoundFeedback() {
+    if (!kIsWeb && Platform.isAndroid) {
+      unawaited(_playNativeTickAndroid());
+      return;
+    }
+
+    Feedback.forTap(context);
+    unawaited(SystemSound.play(SystemSoundType.click));
+  }
+
+  Future<void> _playNativeTickAndroid() async {
+    try {
+      await _tasbihFeedbackChannel.invokeMethod<void>('playTick');
+    } catch (_) {
+      if (!mounted) return;
+      Feedback.forTap(context);
+      await SystemSound.play(SystemSoundType.click);
+    }
+  }
+
+  Future<void> _playVibrationFeedback() async {
+    try {
+      await HapticFeedback.heavyImpact();
+      await Future<void>.delayed(const Duration(milliseconds: 12));
+      await HapticFeedback.selectionClick();
+    } catch (_) {
       try {
-        await HapticFeedback.selectionClick();
+        await HapticFeedback.vibrate();
       } catch (_) {
-        await HapticFeedback.lightImpact();
+        await HapticFeedback.mediumImpact();
       }
     }
   }
@@ -410,7 +480,7 @@ class _CustomCounterButton extends StatefulWidget {
   const _CustomCounterButton({required this.count, required this.onTap});
 
   final int count;
-  final Future<void> Function() onTap;
+  final VoidCallback onTap;
 
   @override
   State<_CustomCounterButton> createState() => _CustomCounterButtonState();
@@ -421,7 +491,7 @@ class _CustomCounterButtonState extends State<_CustomCounterButton> {
 
   Future<void> _handleTap() async {
     setState(() => _pressed = true);
-    await widget.onTap();
+    widget.onTap();
     if (!mounted) return;
     await Future<void>.delayed(const Duration(milliseconds: 100));
     if (!mounted) return;
@@ -522,6 +592,7 @@ class _FeedbackToggleRow extends StatelessWidget {
     required this.enableVibration,
     required this.onToggleSound,
     required this.onToggleVibration,
+    required this.darkSurface,
     this.compact = false,
   });
 
@@ -529,15 +600,32 @@ class _FeedbackToggleRow extends StatelessWidget {
   final bool enableVibration;
   final ValueChanged<bool> onToggleSound;
   final ValueChanged<bool> onToggleVibration;
+  final bool darkSurface;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final iconSize = compact ? 16.0 : 18.0;
+    final scheme = Theme.of(context).colorScheme;
+    final selectedShadowColor = Colors.black.withValues(alpha: 0.22);
+    final selectedForeground =
+        ThemeData.estimateBrightnessForColor(scheme.secondary) ==
+            Brightness.dark
+        ? Colors.white
+        : Colors.black;
+    final baseForeground = darkSurface
+        ? Colors.white.withValues(alpha: 0.92)
+        : scheme.onSurface.withValues(alpha: 0.86);
+    final baseBg = darkSurface
+        ? Colors.white.withValues(alpha: 0.09)
+        : scheme.surfaceContainerHighest.withValues(alpha: 0.85);
+    final baseBorder = darkSurface
+        ? Colors.white.withValues(alpha: 0.28)
+        : scheme.outline.withValues(alpha: 0.45);
     final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-      color: Colors.white.withValues(alpha: 0.92),
+      color: baseForeground,
       fontWeight: FontWeight.w700,
     );
-    final iconSize = compact ? 16.0 : 18.0;
 
     return Wrap(
       alignment: WrapAlignment.center,
@@ -547,55 +635,57 @@ class _FeedbackToggleRow extends StatelessWidget {
         FilterChip(
           selected: enableVibration,
           onSelected: onToggleVibration,
-          showCheckmark: false,
+          showCheckmark: true,
+          checkmarkColor: selectedForeground,
+          elevation: enableVibration ? 3 : 0,
+          pressElevation: 0,
+          shadowColor: selectedShadowColor,
           avatar: Icon(
-            enableVibration ? Icons.vibration_rounded : Icons.vibration_outlined,
-            color: enableVibration
-                ? Theme.of(context).colorScheme.onSecondary
-                : Colors.white.withValues(alpha: 0.88),
+            enableVibration
+                ? Icons.vibration_rounded
+                : Icons.vibration_outlined,
+            color: enableVibration ? selectedForeground : baseForeground,
             size: iconSize,
           ),
           label: Text(
             'Vibration',
             style: textStyle?.copyWith(
-              color: enableVibration
-                  ? Theme.of(context).colorScheme.onSecondary
-                  : Colors.white.withValues(alpha: 0.92),
+              color: enableVibration ? selectedForeground : baseForeground,
+              fontWeight: enableVibration ? FontWeight.w800 : FontWeight.w700,
             ),
           ),
-          selectedColor: Theme.of(context).colorScheme.secondary,
-          backgroundColor: Colors.white.withValues(alpha: 0.12),
+          selectedColor: scheme.secondary,
+          backgroundColor: baseBg,
           side: BorderSide(
-            color: enableVibration
-                ? Theme.of(context).colorScheme.secondary
-                : Colors.white.withValues(alpha: 0.28),
+            color: enableVibration ? scheme.secondary : baseBorder,
+            width: enableVibration ? 1.8 : 1.0,
           ),
         ),
         FilterChip(
           selected: enableSound,
           onSelected: onToggleSound,
-          showCheckmark: false,
+          showCheckmark: true,
+          checkmarkColor: selectedForeground,
+          elevation: enableSound ? 3 : 0,
+          pressElevation: 0,
+          shadowColor: selectedShadowColor,
           avatar: Icon(
             enableSound ? Icons.graphic_eq_rounded : Icons.graphic_eq_outlined,
-            color: enableSound
-                ? Theme.of(context).colorScheme.onSecondary
-                : Colors.white.withValues(alpha: 0.88),
+            color: enableSound ? selectedForeground : baseForeground,
             size: iconSize,
           ),
           label: Text(
             'Sound',
             style: textStyle?.copyWith(
-              color: enableSound
-                  ? Theme.of(context).colorScheme.onSecondary
-                  : Colors.white.withValues(alpha: 0.92),
+              color: enableSound ? selectedForeground : baseForeground,
+              fontWeight: enableSound ? FontWeight.w800 : FontWeight.w700,
             ),
           ),
-          selectedColor: Theme.of(context).colorScheme.secondary,
-          backgroundColor: Colors.white.withValues(alpha: 0.12),
+          selectedColor: scheme.secondary,
+          backgroundColor: baseBg,
           side: BorderSide(
-            color: enableSound
-                ? Theme.of(context).colorScheme.secondary
-                : Colors.white.withValues(alpha: 0.28),
+            color: enableSound ? scheme.secondary : baseBorder,
+            width: enableSound ? 1.8 : 1.0,
           ),
         ),
       ],

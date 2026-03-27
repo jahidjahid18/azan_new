@@ -2,6 +2,7 @@ import 'package:azan_app/core/widgets/section_header.dart';
 import 'package:azan_app/core/widgets/tool_item.dart';
 import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/tools/presentation/puzzle_screen.dart';
+import 'package:azan_app/features/tools/presentation/puzzle2_screen.dart';
 import 'package:azan_app/features/tools/presentation/quiz_screen.dart';
 import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
 import 'package:flutter/material.dart';
@@ -16,7 +17,10 @@ class ToolsScreen extends StatelessWidget {
     return ListView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 24 + bottomPadding),
       children: <Widget>[
-        const SectionHeader(title: 'Tools', padding: EdgeInsets.only(bottom: 14)),
+        const SectionHeader(
+          title: 'Tools',
+          padding: EdgeInsets.only(bottom: 14),
+        ),
         GridView.count(
           physics: const NeverScrollableScrollPhysics(),
           shrinkWrap: true,
@@ -44,6 +48,11 @@ class ToolsScreen extends StatelessWidget {
               icon: Icons.extension_outlined,
               label: 'Puzzle',
               onTap: () => _open(context, const PuzzleScreen()),
+            ),
+            ToolItem(
+              icon: Icons.grid_view_rounded,
+              label: 'Islamic Puzzle 2',
+              onTap: () => _open(context, const Puzzle2Screen()),
             ),
           ],
         ),

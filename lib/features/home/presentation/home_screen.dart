@@ -83,10 +83,9 @@ class HomeScreen extends StatelessWidget {
           ] else
             _EmptyLocationState(message: controller.startupError),
           const SizedBox(height: 16),
-          const _DashboardVisibilityToggle(),
           if (controller.showPersonalDashboard) ...<Widget>[
-            const SizedBox(height: 10),
             const _DashboardPreviewCard(),
+            const SizedBox(height: 6),
           ],
           const SizedBox(height: 16),
           const _QuickActionsRow(),
@@ -107,21 +106,23 @@ class HomeScreen extends StatelessWidget {
                         icon: const Icon(Icons.tune_rounded),
                       ),
                       IconButton(
-                        tooltip: l10n.tr('showProhibitedTimes'),
+                        tooltip: controller.showPersonalDashboard
+                            ? 'Hide Personal Dashboard'
+                            : 'Show Personal Dashboard',
                         visualDensity: VisualDensity.compact,
                         onPressed: () async {
                           await context
                               .read<AppController>()
-                              .setShowProhibitedTimes(
-                                !controller.showProhibitedTimes,
+                              .setShowPersonalDashboard(
+                                !controller.showPersonalDashboard,
                               );
                         },
                         icon: Icon(
-                          controller.showProhibitedTimes
-                              ? Icons.warning_amber_rounded
-                              : Icons.warning_amber_outlined,
-                          color: controller.showProhibitedTimes
-                              ? Theme.of(context).colorScheme.error
+                          controller.showPersonalDashboard
+                              ? Icons.space_dashboard_rounded
+                              : Icons.space_dashboard_outlined,
+                          color: controller.showPersonalDashboard
+                              ? Theme.of(context).colorScheme.secondary
                               : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -241,7 +242,8 @@ class HomeScreen extends StatelessWidget {
 
     DateTime? maghribTime;
     for (final item in prayerTimes) {
-      if (item.name.toLowerCase() == 'maghrib' && !item.time.isBefore(prayer.time)) {
+      if (item.name.toLowerCase() == 'maghrib' &&
+          !item.time.isBefore(prayer.time)) {
         maghribTime = item.time;
         break;
       }
@@ -269,7 +271,8 @@ class HomeScreen extends StatelessWidget {
 
     for (var index = 0; index < prayers.length - 1; index++) {
       final current = prayers[index];
-      final effectiveEndTime = getEndTime(current, prayers) ?? prayers[index + 1].time;
+      final effectiveEndTime =
+          getEndTime(current, prayers) ?? prayers[index + 1].time;
       final isStarted = !now.isBefore(current.time);
       final notEnded = now.isBefore(effectiveEndTime);
       if (isStarted && notEnded) {
@@ -350,6 +353,7 @@ class HomeScreen extends StatelessWidget {
   void _openPrayerFilter(BuildContext context, AppController controller) {
     final l10n = context.l10n;
     final selected = controller.visiblePrayerNames.toSet();
+    var showProhibitedTimes = controller.showProhibitedTimes;
     final allOptions = <String>[
       ...AppConstants.mandatoryPrayerNames,
       ...AppConstants.optionalPrayerNames,
@@ -385,6 +389,16 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     l10n.tr('prayerDisplayFilterSub'),
                     style: Theme.of(sheetContext).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    dense: true,
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.tr('showProhibitedTimes')),
+                    value: showProhibitedTimes,
+                    onChanged: (value) {
+                      setBottomState(() => showProhibitedTimes = value);
+                    },
                   ),
                   const SizedBox(height: 12),
                   ...allOptions.map((name) {
@@ -434,6 +448,9 @@ class HomeScreen extends StatelessWidget {
                       onPressed: () async {
                         await controller.setVisiblePrayerNames(
                           selected.toList(),
+                        );
+                        await controller.setShowProhibitedTimes(
+                          showProhibitedTimes,
                         );
                         if (!context.mounted) return;
                         Navigator.of(sheetContext).pop();
@@ -613,9 +630,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       nextPrayer: widget.nextPrayer,
       allPrayers: widget.allPrayers,
     );
-    final countdownLabel = l10n.tr('startsIn', <String, String>{
-      'duration': _formatStableDuration(countdown),
-    });
+    final countdownValue = _formatStableDuration(countdown);
 
     return AppSurfaceCard(
       radius: 22,
@@ -669,17 +684,35 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
               ),
               const SizedBox(width: 10),
               ConstrainedBox(
-                constraints: const BoxConstraints(minWidth: 170),
-                child: Text(
-                  countdownLabel,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontWeight: FontWeight.w800,
-                    fontFeatures: const <FontFeature>[
-                      FontFeature.tabularFigures(),
-                    ],
-                  ),
-                  textAlign: TextAlign.right,
+                constraints: const BoxConstraints(minWidth: 190),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    Text(
+                      'Starts in',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 30,
+                        height: 1.0,
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontWeight: FontWeight.w800,
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      countdownValue,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontSize: 30,
+                        height: 1.0,
+                        color: Colors.white.withValues(alpha: 0.95),
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const <FontFeature>[
+                          FontFeature.tabularFigures(),
+                        ],
+                      ),
+                      textAlign: TextAlign.right,
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -771,9 +804,9 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.checklist_rounded,
             label: l10n.tr('quickTracker'),
             onTap: () {
-              Navigator.of(context).push(
-                _buildSmoothRoute(const PrayerTrackerScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(_buildSmoothRoute(const PrayerTrackerScreen()));
             },
           ),
         ),
@@ -783,9 +816,9 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.map_outlined,
             label: l10n.tr('quickMosques'),
             onTap: () {
-              Navigator.of(context).push(
-                _buildSmoothRoute(const MosqueFinderScreen()),
-              );
+              Navigator.of(
+                context,
+              ).push(_buildSmoothRoute(const MosqueFinderScreen()));
             },
           ),
         ),
@@ -795,34 +828,13 @@ class _QuickActionsRow extends StatelessWidget {
             icon: Icons.auto_stories_rounded,
             label: l10n.tr('quickAzkar'),
             onTap: () {
-              Navigator.of(context).push(_buildSmoothRoute(const AzkarScreen()));
+              Navigator.of(
+                context,
+              ).push(_buildSmoothRoute(const AzkarScreen()));
             },
           ),
         ),
       ],
-    );
-  }
-}
-
-class _DashboardVisibilityToggle extends StatelessWidget {
-  const _DashboardVisibilityToggle();
-
-  @override
-  Widget build(BuildContext context) {
-    final controller = context.watch<AppController>();
-    return AppSurfaceCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        value: controller.showPersonalDashboard,
-        onChanged: (value) async {
-          await context.read<AppController>().setShowPersonalDashboard(value);
-        },
-        title: const Text('Personal Dashboard'),
-        subtitle: Text(
-          controller.showPersonalDashboard ? 'Visible on Home' : 'Hidden from Home',
-        ),
-      ),
     );
   }
 }
@@ -850,9 +862,7 @@ class _DashboardPreviewCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   'Personal Dashboard',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                   ),
@@ -886,7 +896,9 @@ class _DashboardPreviewCard extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.of(context).push(_buildSmoothRoute(const DashboardScreen()));
+                Navigator.of(
+                  context,
+                ).push(_buildSmoothRoute(const DashboardScreen()));
               },
               icon: const Icon(Icons.arrow_forward_rounded),
               label: const Text('Open Dashboard'),
@@ -922,16 +934,14 @@ class _DashboardStatChip extends StatelessWidget {
         children: <Widget>[
           Text(
             label,
-            style: Theme.of(
-              context,
-            ).textTheme.labelSmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              color: Colors.white.withValues(alpha: 0.9),
+            ),
           ),
           const SizedBox(height: 2),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w800,
               color: Colors.white,
             ),
@@ -1151,7 +1161,7 @@ class _PrayerTimeCard extends StatelessWidget {
                                 l10n.tr('nextPrayer'),
                                 style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w900,
                                       color: Theme.of(
                                         context,
                                       ).colorScheme.onSurfaceVariant,
@@ -1229,7 +1239,7 @@ class _PrayerTimeCard extends StatelessWidget {
                       child: Text(
                         DateFormat('hh:mm a').format(prayer.time),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: isCurrent
                               ? FontWeight.w900
                               : FontWeight.w800,
@@ -1460,25 +1470,26 @@ class _ProhibitedTimeCard extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         'Prohibited Time',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: isDark
-                              ? Colors.white
-                              : const Color(0xFF7A2A25),
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              color: isDark
+                                  ? Colors.white
+                                  : const Color(0xFF7A2A25),
+                            ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 2),
-                Text(
-                  window.label,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.88)
-                        : const Color(0xFF8C201B),
+                  Text(
+                    window.label,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.88)
+                          : const Color(0xFF8C201B),
+                    ),
                   ),
-                ),
                 ],
               ),
             ),
@@ -1505,9 +1516,11 @@ class _ProhibitedTimeCard extends StatelessWidget {
                 Text(
                   DateFormat('hh:mm a').format(window.start),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 22,
+                    fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: isDark ? Colors.white : Theme.of(context).colorScheme.primary,
+                    color: isDark
+                        ? Colors.white
+                        : Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 Text(
