@@ -183,15 +183,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     return pieces;
   }
 
-  Future<void> _nextImage() async {
-    if (_imageAssets.isEmpty) return;
-    final current = _selectedImage ?? _imageAssets.first;
-    final index = _imageAssets.indexOf(current);
-    final nextIndex = index < 0 ? 0 : (index + 1) % _imageAssets.length;
-    _selectedImage = _imageAssets[nextIndex];
-    await _startPuzzle();
-  }
-
   Future<void> _showHint() async {
     if (_selectedImage == null || _isShowingHint) return;
     setState(() => _isShowingHint = true);
@@ -255,7 +246,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
     final hasImages = _imageAssets.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Islamic Puzzle')),
+      appBar: AppBar(title: const Text('Islamic Puzzle 1')),
       bottomNavigationBar: const StickyBottomBannerAd(topSpacing: 8),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -416,7 +407,7 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                                 Expanded(
                                   child: _PuzzleActionButton(
                                     icon: Icons.image_search_rounded,
-                                    label: 'Change Image',
+                                    label: 'Change',
                                     onTap: () async {
                                       await _startPuzzle(useRandomImage: true);
                                     },
@@ -433,16 +424,6 @@ class _PuzzleScreenState extends State<PuzzleScreen> {
                                     label: 'Reset Image',
                                     onTap: () async {
                                       await _startPuzzle();
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: _PuzzleActionButton(
-                                    icon: Icons.skip_next_rounded,
-                                    label: 'Next Image',
-                                    onTap: () async {
-                                      await _nextImage();
                                     },
                                   ),
                                 ),

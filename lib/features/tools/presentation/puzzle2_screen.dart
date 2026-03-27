@@ -592,7 +592,7 @@ class _Puzzle2ScreenState extends State<Puzzle2Screen> {
                                 Expanded(
                                   child: _BottomAction(
                                     icon: Icons.image_search_rounded,
-                                    label: 'Change Image',
+                                    label: 'Change',
                                     onTap: () =>
                                         _startPuzzle(randomizeImage: true),
                                   ),
