@@ -18,6 +18,8 @@ import 'package:azan_app/core/services/notification_service.dart';
 import 'package:azan_app/core/services/prayer_notification_scheduler.dart';
 import 'package:azan_app/core/services/prayer_service.dart';
 import 'package:azan_app/core/services/quran_reading_sqlite_service.dart';
+import 'package:azan_app/core/services/streak_service.dart';
+import 'package:azan_app/core/services/tracking_service.dart';
 import 'package:azan_app/features/daily/data/daily_content_service.dart';
 import 'package:azan_app/features/daily/data/models/daily_content_item.dart';
 import 'package:azan_app/features/quran/data/models/quran_bookmark.dart';
@@ -26,6 +28,7 @@ import 'package:azan_app/features/quran/data/models/quran_read_position.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppController extends ChangeNotifier {
   AppController({
@@ -37,6 +40,8 @@ class AppController extends ChangeNotifier {
     required NotificationService notificationService,
     required PrayerNotificationScheduler prayerNotificationScheduler,
     required DailyContentService dailyContentService,
+    required StreakService streakService,
+    required TrackingService trackingService,
   }) : _hiveService = hiveService,
        _locationService = locationService,
        _locationSqliteService = locationSqliteService,
@@ -44,7 +49,9 @@ class AppController extends ChangeNotifier {
        _prayerService = prayerService,
        _notificationService = notificationService,
        _prayerNotificationScheduler = prayerNotificationScheduler,
-       _dailyContentService = dailyContentService;
+       _dailyContentService = dailyContentService,
+       _streakService = streakService,
+       _trackingService = trackingService;
 
   final HiveService _hiveService;
   final LocationService _locationService;
@@ -54,6 +61,8 @@ class AppController extends ChangeNotifier {
   final NotificationService _notificationService;
   final PrayerNotificationScheduler _prayerNotificationScheduler;
   final DailyContentService _dailyContentService;
+  final StreakService _streakService;
+  final TrackingService _trackingService;
 
   AppSettings _settings = AppSettings.defaults();
   AppLocation? _location;
@@ -65,6 +74,10 @@ class AppController extends ChangeNotifier {
   DateTime _now = DateTime.now();
   Timer? _ticker;
   int _tasbihCount = 0;
+  int _subhanallahCount = 0;
+  int _alhamdulillahCount = 0;
+  int _allahuakbarCount = 0;
+  int _currentStep = 1;
   DailyContentItem? _dailyContent;
   Map<String, dynamic> _prayerTracker = <String, dynamic>{};
   List<QuranBookmark> _quranBookmarks = <QuranBookmark>[];
@@ -74,10 +87,19 @@ class AppController extends ChangeNotifier {
   QuranReaderPreferences _quranReaderPreferences =
       QuranReaderPreferences.defaults();
   Map<String, dynamic> _azkarTracker = <String, dynamic>{};
+  int _currentStreak = 0;
+  int _dailyTasbihCount = 0;
+  bool _retentionNotificationsEnabled = true;
+  TimeOfDay _dailyAyahNotificationTime = const TimeOfDay(hour: 8, minute: 0);
+  TimeOfDay _engagementReminderTime = const TimeOfDay(hour: 20, minute: 0);
 
   bool _isLoading = true;
   bool _isBusy = false;
   String? _startupError;
+  static const String _spSubhanallahCount = 'sp_subhanallah_count';
+  static const String _spAlhamdulillahCount = 'sp_alhamdulillah_count';
+  static const String _spAllahuakbarCount = 'sp_allahuakbar_count';
+  static const String _spCurrentStep = 'sp_tasbih_current_step';
 
   AppSettings get settings => _settings;
   AppLocation? get location => _location;
@@ -90,6 +112,33 @@ class AppController extends ChangeNotifier {
   bool get isBusy => _isBusy;
   String? get startupError => _startupError;
   int get tasbihCount => _tasbihCount;
+  int get subhanallahCount => _subhanallahCount;
+  int get alhamdulillahCount => _alhamdulillahCount;
+  int get allahuakbarCount => _allahuakbarCount;
+  int get currentStep => _currentStep;
+  bool get isTasbihCompleted =>
+      _subhanallahCount >= 33 &&
+      _alhamdulillahCount >= 33 &&
+      _allahuakbarCount >= 34;
+  String get currentTasbihName {
+    if (_currentStep == 1) return 'SubhanAllah';
+    if (_currentStep == 2) return 'Alhamdulillah';
+    return 'AllahuAkbar';
+  }
+
+  int get currentTasbihTarget {
+    if (_currentStep == 1) return 33;
+    if (_currentStep == 2) return 33;
+    return 34;
+  }
+
+  int get currentTasbihStepCount {
+    if (_currentStep == 1) return _subhanallahCount;
+    if (_currentStep == 2) return _alhamdulillahCount;
+    return _allahuakbarCount;
+  }
+
+  double get tasbihSequenceProgress => (_tasbihCount / 100).clamp(0.0, 1.0);
   DailyContentItem? get dailyContent => _dailyContent;
   ThemeModeOption get themeMode => _settings.themeMode;
   ThemeStyleOption get themeStyle => _settings.themeStyle;
@@ -97,6 +146,7 @@ class AppController extends ChangeNotifier {
   Locale get locale => _settings.appLanguage.locale;
   List<String> get visiblePrayerNames => _settings.visiblePrayerNames;
   bool get showProhibitedTimes => _settings.showProhibitedTimes;
+  bool get showPersonalDashboard => _settings.showPersonalDashboard;
   bool isNowProhibited(DateTime now) {
     return _prayerService.isNowProhibited(
       now: now,
@@ -110,6 +160,13 @@ class AppController extends ChangeNotifier {
   int get quranReadingTodaySeconds => _quranReadingTodaySeconds;
   int get quranReadingTodayMinutes => _quranReadingTodaySeconds ~/ 60;
   QuranReaderPreferences get quranReaderPreferences => _quranReaderPreferences;
+  int get currentStreak => _currentStreak;
+  int get dailyTasbihCount => _dailyTasbihCount;
+  bool get retentionNotificationsEnabled => _retentionNotificationsEnabled;
+  TimeOfDay get dailyAyahNotificationTime => _dailyAyahNotificationTime;
+  TimeOfDay get engagementReminderTime => _engagementReminderTime;
+  int get todayCompletedPrayersCount =>
+      prayerTrackerForDate(DateTime.now()).values.where((value) => value).length;
 
   Future<void> initialize() async {
     try {
@@ -128,6 +185,14 @@ class AppController extends ChangeNotifier {
         await _hiveService.saveLocation(_location!);
       }
       _tasbihCount = _hiveService.loadTasbihCount();
+      _loadTasbihGuidedProgressFromStorage();
+      final loadedFromSp = await _loadTasbihGuidedProgressFromSharedPreferences();
+      if (loadedFromSp) {
+        await _hiveService.saveTasbihCount(_tasbihCount);
+        await _hiveService.saveTasbihGuidedProgress(_tasbihProgressMap());
+      } else {
+        await _saveTasbihGuidedProgressToSharedPreferences();
+      }
       _prayerTracker = _hiveService.loadPrayerTracker();
       _quranBookmarks = _hiveService.loadQuranBookmarks();
       _quranLastRead = _hiveService.loadQuranLastRead();
@@ -135,6 +200,26 @@ class AppController extends ChangeNotifier {
       await _loadQuranReadingTodayFromSqlite();
       _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
       _azkarTracker = _hiveService.loadAzkarTracker();
+      _retentionNotificationsEnabled = _hiveService.loadBool(
+        key: AppConstants.retentionNotificationsEnabledStorageKey,
+        defaultValue: true,
+      );
+      _dailyAyahNotificationTime = _parseTimeOfDay(
+        _hiveService.loadString(
+          key: AppConstants.dailyAyahNotificationTimeStorageKey,
+          defaultValue: '08:00',
+        ),
+        fallback: const TimeOfDay(hour: 8, minute: 0),
+      );
+      _engagementReminderTime = _parseTimeOfDay(
+        _hiveService.loadString(
+          key: AppConstants.engagementReminderTimeStorageKey,
+          defaultValue: '20:00',
+        ),
+        fallback: const TimeOfDay(hour: 20, minute: 0),
+      );
+      _currentStreak = await _streakService.recordDailyOpen(_now);
+      _dailyTasbihCount = _trackingService.dailyTasbihCount(_now);
 
       if (_location == null) {
         await _setLocationFromGps(showErrorsAsStartupError: true);
@@ -143,6 +228,7 @@ class AppController extends ChangeNotifier {
       _recalculatePrayers();
       _dailyContent = await _dailyContentService.getContentForDate(_now);
       await _refreshNotificationSchedule();
+      await _refreshRetentionNotificationSchedule();
       _startTickerIfNeeded();
     } catch (_) {
       _startupError =
@@ -274,6 +360,36 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setRetentionNotificationsEnabled(bool enabled) async {
+    _retentionNotificationsEnabled = enabled;
+    await _hiveService.saveBool(
+      key: AppConstants.retentionNotificationsEnabledStorageKey,
+      value: enabled,
+    );
+    await _refreshRetentionNotificationSchedule();
+    notifyListeners();
+  }
+
+  Future<void> setDailyAyahNotificationTime(TimeOfDay time) async {
+    _dailyAyahNotificationTime = time;
+    await _hiveService.saveString(
+      key: AppConstants.dailyAyahNotificationTimeStorageKey,
+      value: _formatTimeOfDay(time),
+    );
+    await _refreshRetentionNotificationSchedule();
+    notifyListeners();
+  }
+
+  Future<void> setEngagementReminderTime(TimeOfDay time) async {
+    _engagementReminderTime = time;
+    await _hiveService.saveString(
+      key: AppConstants.engagementReminderTimeStorageKey,
+      value: _formatTimeOfDay(time),
+    );
+    await _refreshRetentionNotificationSchedule();
+    notifyListeners();
+  }
+
   Future<void> setThemeMode(ThemeModeOption mode) async {
     _settings = _settings.copyWith(themeMode: mode);
     await _hiveService.saveSettings(_settings);
@@ -315,6 +431,12 @@ class AppController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setShowPersonalDashboard(bool enabled) async {
+    _settings = _settings.copyWith(showPersonalDashboard: enabled);
+    await _hiveService.saveSettings(_settings);
+    notifyListeners();
+  }
+
   Future<String?> exportBackup({required String filePath}) {
     return _runBusyAction(() async {
       final backupData = _hiveService.dumpAllData();
@@ -340,6 +462,7 @@ class AppController extends ChangeNotifier {
       await _reloadStateFromStorage();
       _recalculatePrayers();
       await _refreshNotificationSchedule();
+      await _refreshRetentionNotificationSchedule();
       _startTickerIfNeeded();
     });
   }
@@ -495,9 +618,33 @@ class AppController extends ChangeNotifier {
     }
   }
 
+  Future<void> _refreshRetentionNotificationSchedule() async {
+    try {
+      final dailyTitle = _dailyContent?.type.toLowerCase() == 'hadith'
+          ? 'Daily Hadith'
+          : 'Daily Ayah';
+      final dailyBody = (_dailyContent?.text ?? '').trim().isEmpty
+          ? 'Open Azan for your daily reminder.'
+          : _dailyContent!.text;
+
+      await _notificationService.scheduleDailyAyahNotification(
+        enabled: _retentionNotificationsEnabled,
+        time: _dailyAyahNotificationTime,
+        title: dailyTitle,
+        body: dailyBody,
+      );
+      await _notificationService.scheduleEngagementReminderForNextDay(
+        enabled: _retentionNotificationsEnabled,
+        time: _engagementReminderTime,
+      );
+    } catch (_) {
+      // Keep core app flows active even if OS scheduling fails temporarily.
+    }
+  }
+
   void _startTicker() {
     _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) async {
       final previousDate = DateTime(_now.year, _now.month, _now.day);
 
       _now = DateTime.now();
@@ -510,8 +657,11 @@ class AppController extends ChangeNotifier {
           _nextPrayerCountdown.isNegative) {
         _recalculatePrayers();
         if (currentDate.isAfter(previousDate)) {
+          _currentStreak = await _streakService.recordDailyOpen(_now);
+          _dailyTasbihCount = _trackingService.dailyTasbihCount(_now);
           unawaited(_refreshDailyContent());
           unawaited(_refreshNotificationSchedule());
+          unawaited(_refreshRetentionNotificationSchedule());
           unawaited(_loadQuranReadingTodayFromSqlite(notify: false));
         }
       }
@@ -548,14 +698,50 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> incrementTasbih() async {
-    _tasbihCount += 1;
+    if (isTasbihCompleted) {
+      return;
+    }
+
+    var incremented = false;
+    if (_currentStep == 1 && _subhanallahCount < 33) {
+      _subhanallahCount += 1;
+      incremented = true;
+      if (_subhanallahCount >= 33) {
+        _currentStep = 2;
+      }
+    } else if (_currentStep == 2 && _alhamdulillahCount < 33) {
+      _alhamdulillahCount += 1;
+      incremented = true;
+      if (_alhamdulillahCount >= 33) {
+        _currentStep = 3;
+      }
+    } else if (_currentStep == 3 && _allahuakbarCount < 34) {
+      _allahuakbarCount += 1;
+      incremented = true;
+      _currentStep = 3;
+    }
+
+    if (!incremented) {
+      return;
+    }
+
+    _tasbihCount = _subhanallahCount + _alhamdulillahCount + _allahuakbarCount;
     await _hiveService.saveTasbihCount(_tasbihCount);
+    await _hiveService.saveTasbihGuidedProgress(_tasbihProgressMap());
+    await _saveTasbihGuidedProgressToSharedPreferences();
+    _dailyTasbihCount = await _trackingService.incrementDailyTasbih(DateTime.now());
     notifyListeners();
   }
 
   Future<void> resetTasbih() async {
     _tasbihCount = 0;
+    _subhanallahCount = 0;
+    _alhamdulillahCount = 0;
+    _allahuakbarCount = 0;
+    _currentStep = 1;
     await _hiveService.saveTasbihCount(_tasbihCount);
+    await _hiveService.saveTasbihGuidedProgress(_tasbihProgressMap());
+    await _saveTasbihGuidedProgressToSharedPreferences();
     notifyListeners();
   }
 
@@ -665,6 +851,7 @@ class AppController extends ChangeNotifier {
 
   Future<void> _refreshDailyContent() async {
     _dailyContent = await _dailyContentService.getContentForDate(_now);
+    await _refreshRetentionNotificationSchedule();
     notifyListeners();
   }
 
@@ -673,6 +860,8 @@ class AppController extends ChangeNotifier {
     _location = _hiveService.loadLocation();
     _location ??= await _locationSqliteService.loadLocation();
     _tasbihCount = _hiveService.loadTasbihCount();
+    _loadTasbihGuidedProgressFromStorage();
+    await _saveTasbihGuidedProgressToSharedPreferences();
     _prayerTracker = _hiveService.loadPrayerTracker();
     _quranBookmarks = _hiveService.loadQuranBookmarks();
     _quranLastRead = _hiveService.loadQuranLastRead();
@@ -680,6 +869,26 @@ class AppController extends ChangeNotifier {
     await _loadQuranReadingTodayFromSqlite(notify: false);
     _quranReaderPreferences = _hiveService.loadQuranReaderPreferences();
     _azkarTracker = _hiveService.loadAzkarTracker();
+    _retentionNotificationsEnabled = _hiveService.loadBool(
+      key: AppConstants.retentionNotificationsEnabledStorageKey,
+      defaultValue: true,
+    );
+    _dailyAyahNotificationTime = _parseTimeOfDay(
+      _hiveService.loadString(
+        key: AppConstants.dailyAyahNotificationTimeStorageKey,
+        defaultValue: '08:00',
+      ),
+      fallback: const TimeOfDay(hour: 8, minute: 0),
+    );
+    _engagementReminderTime = _parseTimeOfDay(
+      _hiveService.loadString(
+        key: AppConstants.engagementReminderTimeStorageKey,
+        defaultValue: '20:00',
+      ),
+      fallback: const TimeOfDay(hour: 20, minute: 0),
+    );
+    _currentStreak = _streakService.currentStreak();
+    _dailyTasbihCount = _trackingService.dailyTasbihCount(DateTime.now());
     _dailyContent = await _dailyContentService.getContentForDate(
       DateTime.now(),
     );
@@ -697,6 +906,115 @@ class AppController extends ChangeNotifier {
   String _dateKey(DateTime date) {
     final normalized = DateTime(date.year, date.month, date.day);
     return normalized.toIso8601String().split('T').first;
+  }
+
+  void _loadTasbihGuidedProgressFromStorage() {
+    final saved = _hiveService.loadTasbihGuidedProgress();
+    if (saved.isEmpty) {
+      _migrateTasbihCountToGuided();
+      return;
+    }
+
+    _subhanallahCount = _clampInt(saved['subhanallahCount'], max: 33);
+    _alhamdulillahCount = _clampInt(saved['alhamdulillahCount'], max: 33);
+    _allahuakbarCount = _clampInt(saved['allahuakbarCount'], max: 34);
+    _currentStep = _clampStep(saved['currentStep']);
+    _tasbihCount = _subhanallahCount + _alhamdulillahCount + _allahuakbarCount;
+    _currentStep = _deriveCurrentStep();
+  }
+
+  void _migrateTasbihCountToGuided() {
+    var remaining = _tasbihCount;
+    _subhanallahCount = remaining >= 33 ? 33 : remaining;
+    remaining -= _subhanallahCount;
+    if (remaining < 0) remaining = 0;
+
+    _alhamdulillahCount = remaining >= 33 ? 33 : remaining;
+    remaining -= _alhamdulillahCount;
+    if (remaining < 0) remaining = 0;
+
+    _allahuakbarCount = remaining >= 34 ? 34 : remaining;
+    _tasbihCount = _subhanallahCount + _alhamdulillahCount + _allahuakbarCount;
+    _currentStep = _deriveCurrentStep();
+  }
+
+  int _deriveCurrentStep() {
+    if (_subhanallahCount < 33) return 1;
+    if (_alhamdulillahCount < 33) return 2;
+    return 3;
+  }
+
+  int _clampInt(dynamic value, {required int max}) {
+    final parsed = value is int ? value : int.tryParse('${value ?? 0}') ?? 0;
+    if (parsed < 0) return 0;
+    if (parsed > max) return max;
+    return parsed;
+  }
+
+  int _clampStep(dynamic value) {
+    final parsed = value is int ? value : int.tryParse('${value ?? 1}') ?? 1;
+    if (parsed < 1) return 1;
+    if (parsed > 3) return 3;
+    return parsed;
+  }
+
+  Map<String, dynamic> _tasbihProgressMap() {
+    return <String, dynamic>{
+      'subhanallahCount': _subhanallahCount,
+      'alhamdulillahCount': _alhamdulillahCount,
+      'allahuakbarCount': _allahuakbarCount,
+      'currentStep': _currentStep,
+    };
+  }
+
+  Future<bool> _loadTasbihGuidedProgressFromSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasAny =
+        prefs.containsKey(_spSubhanallahCount) ||
+        prefs.containsKey(_spAlhamdulillahCount) ||
+        prefs.containsKey(_spAllahuakbarCount) ||
+        prefs.containsKey(_spCurrentStep);
+    if (!hasAny) {
+      return false;
+    }
+
+    _subhanallahCount = _clampInt(prefs.getInt(_spSubhanallahCount), max: 33);
+    _alhamdulillahCount = _clampInt(prefs.getInt(_spAlhamdulillahCount), max: 33);
+    _allahuakbarCount = _clampInt(prefs.getInt(_spAllahuakbarCount), max: 34);
+    _currentStep = _clampStep(prefs.getInt(_spCurrentStep));
+    _tasbihCount = _subhanallahCount + _alhamdulillahCount + _allahuakbarCount;
+    _currentStep = _deriveCurrentStep();
+    return true;
+  }
+
+  Future<void> _saveTasbihGuidedProgressToSharedPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_spSubhanallahCount, _subhanallahCount);
+    await prefs.setInt(_spAlhamdulillahCount, _alhamdulillahCount);
+    await prefs.setInt(_spAllahuakbarCount, _allahuakbarCount);
+    await prefs.setInt(_spCurrentStep, _currentStep);
+  }
+
+  TimeOfDay _parseTimeOfDay(String raw, {required TimeOfDay fallback}) {
+    final chunks = raw.split(':');
+    if (chunks.length != 2) {
+      return fallback;
+    }
+    final hour = int.tryParse(chunks[0]);
+    final minute = int.tryParse(chunks[1]);
+    if (hour == null || minute == null) {
+      return fallback;
+    }
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
+      return fallback;
+    }
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  String _formatTimeOfDay(TimeOfDay time) {
+    final hour = time.hour.toString().padLeft(2, '0');
+    final minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   Future<void> _syncQuranLastReadFromSqlite() async {

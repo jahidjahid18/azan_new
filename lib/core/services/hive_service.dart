@@ -50,6 +50,18 @@ class HiveService {
     await _box.put(AppConstants.tasbihStorageKey, count);
   }
 
+  Map<String, dynamic> loadTasbihGuidedProgress() {
+    final stored = _box.get(AppConstants.tasbihGuidedProgressStorageKey);
+    if (stored is Map) {
+      return Map<String, dynamic>.from(stored);
+    }
+    return <String, dynamic>{};
+  }
+
+  Future<void> saveTasbihGuidedProgress(Map<String, dynamic> data) async {
+    await _box.put(AppConstants.tasbihGuidedProgressStorageKey, data);
+  }
+
   Map<String, dynamic> loadPrayerTracker() {
     final stored = _box.get(AppConstants.prayerTrackerStorageKey);
     if (stored is Map) {
@@ -133,6 +145,45 @@ class HiveService {
     await _box.put(key, value);
   }
 
+  int loadInt({required String key, int defaultValue = 0}) {
+    final stored = _box.get(key);
+    if (stored is int) {
+      return stored;
+    }
+    return defaultValue;
+  }
+
+  Future<void> saveInt({required String key, required int value}) async {
+    await _box.put(key, value);
+  }
+
+  String loadString({required String key, String defaultValue = ''}) {
+    final stored = _box.get(key);
+    if (stored is String) {
+      return stored;
+    }
+    return defaultValue;
+  }
+
+  Future<void> saveString({required String key, required String value}) async {
+    await _box.put(key, value);
+  }
+
+  Map<String, dynamic> loadMap({required String key}) {
+    final stored = _box.get(key);
+    if (stored is Map) {
+      return Map<String, dynamic>.from(stored);
+    }
+    return <String, dynamic>{};
+  }
+
+  Future<void> saveMap({
+    required String key,
+    required Map<String, dynamic> value,
+  }) async {
+    await _box.put(key, value);
+  }
+
   Map<String, dynamic> dumpAllData() {
     return <String, dynamic>{
       'version': 1,
@@ -143,6 +194,9 @@ class HiveService {
       ),
       AppConstants.tasbihStorageKey:
           _box.get(AppConstants.tasbihStorageKey) ?? 0,
+      AppConstants.tasbihGuidedProgressStorageKey:
+          _box.get(AppConstants.tasbihGuidedProgressStorageKey) ??
+          <String, dynamic>{},
       AppConstants.prayerTrackerStorageKey:
           _box.get(AppConstants.prayerTrackerStorageKey) ?? <String, dynamic>{},
       AppConstants.quranBookmarksStorageKey:
@@ -158,6 +212,19 @@ class HiveService {
           <String, dynamic>{},
       AppConstants.azkarTrackerStorageKey:
           _box.get(AppConstants.azkarTrackerStorageKey) ?? <String, dynamic>{},
+      AppConstants.retentionLastOpenDateStorageKey:
+          _box.get(AppConstants.retentionLastOpenDateStorageKey) ?? '',
+      AppConstants.retentionCurrentStreakStorageKey:
+          _box.get(AppConstants.retentionCurrentStreakStorageKey) ?? 0,
+      AppConstants.dailyTasbihTrackerStorageKey:
+          _box.get(AppConstants.dailyTasbihTrackerStorageKey) ??
+          <String, dynamic>{},
+      AppConstants.retentionNotificationsEnabledStorageKey:
+          _box.get(AppConstants.retentionNotificationsEnabledStorageKey) ?? true,
+      AppConstants.dailyAyahNotificationTimeStorageKey:
+          _box.get(AppConstants.dailyAyahNotificationTimeStorageKey) ?? '08:00',
+      AppConstants.engagementReminderTimeStorageKey:
+          _box.get(AppConstants.engagementReminderTimeStorageKey) ?? '20:00',
     };
   }
 
@@ -177,6 +244,10 @@ class HiveService {
     await _box.put(
       AppConstants.tasbihStorageKey,
       backup[AppConstants.tasbihStorageKey] ?? 0,
+    );
+    await _box.put(
+      AppConstants.tasbihGuidedProgressStorageKey,
+      backup[AppConstants.tasbihGuidedProgressStorageKey] ?? <String, dynamic>{},
     );
     await _box.put(
       AppConstants.prayerTrackerStorageKey,
@@ -201,6 +272,30 @@ class HiveService {
     await _box.put(
       AppConstants.azkarTrackerStorageKey,
       backup[AppConstants.azkarTrackerStorageKey] ?? <String, dynamic>{},
+    );
+    await _box.put(
+      AppConstants.retentionLastOpenDateStorageKey,
+      backup[AppConstants.retentionLastOpenDateStorageKey] ?? '',
+    );
+    await _box.put(
+      AppConstants.retentionCurrentStreakStorageKey,
+      backup[AppConstants.retentionCurrentStreakStorageKey] ?? 0,
+    );
+    await _box.put(
+      AppConstants.dailyTasbihTrackerStorageKey,
+      backup[AppConstants.dailyTasbihTrackerStorageKey] ?? <String, dynamic>{},
+    );
+    await _box.put(
+      AppConstants.retentionNotificationsEnabledStorageKey,
+      backup[AppConstants.retentionNotificationsEnabledStorageKey] ?? true,
+    );
+    await _box.put(
+      AppConstants.dailyAyahNotificationTimeStorageKey,
+      backup[AppConstants.dailyAyahNotificationTimeStorageKey] ?? '08:00',
+    );
+    await _box.put(
+      AppConstants.engagementReminderTimeStorageKey,
+      backup[AppConstants.engagementReminderTimeStorageKey] ?? '20:00',
     );
   }
 }

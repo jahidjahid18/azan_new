@@ -10,7 +10,7 @@ import 'package:azan_app/features/home/presentation/home_screen.dart';
 import 'package:azan_app/features/qibla/presentation/qibla_screen.dart';
 import 'package:azan_app/features/quran/presentation/quran_dashboard_screen.dart';
 import 'package:azan_app/features/settings/presentation/settings_screen.dart';
-import 'package:azan_app/features/tasbih/presentation/tasbih_screen.dart';
+import 'package:azan_app/features/tools/presentation/tools_screen.dart';
 import 'package:azan_app/features/theme/theme_mode_option.dart';
 import 'package:azan_app/features/theme/theme_style_option.dart';
 import 'package:flutter/material.dart';
@@ -48,15 +48,18 @@ class _MainScaffold extends StatefulWidget {
   State<_MainScaffold> createState() => _MainScaffoldState();
 }
 
-class _MainScaffoldState extends State<_MainScaffold> {
+class _MainScaffoldState extends State<_MainScaffold>
+    with SingleTickerProviderStateMixin {
   int _currentTab = 0;
   late DateTime _headerNow;
   Timer? _headerTicker;
+  late final AnimationController _tabTransitionController;
+  late final Animation<double> _tabFade;
 
   static const List<Widget> _screens = <Widget>[
     HomeScreen(),
     QuranDashboardScreen(),
-    TasbihScreen(),
+    ToolsScreen(),
     QiblaScreen(),
     SettingsScreen(),
   ];
@@ -65,6 +68,15 @@ class _MainScaffoldState extends State<_MainScaffold> {
   void initState() {
     super.initState();
     _headerNow = DateTime.now();
+    _tabTransitionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+      value: 1,
+    );
+    _tabFade = CurvedAnimation(
+      parent: _tabTransitionController,
+      curve: Curves.easeOutCubic,
+    );
     _headerTicker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _headerNow = DateTime.now());
@@ -74,6 +86,7 @@ class _MainScaffoldState extends State<_MainScaffold> {
   @override
   void dispose() {
     _headerTicker?.cancel();
+    _tabTransitionController.dispose();
     super.dispose();
   }
 
@@ -92,68 +105,72 @@ class _MainScaffoldState extends State<_MainScaffold> {
     final hijriDate = HijriCalendar.fromDate(now).toFormat('dd MMMM yyyy');
     final currentTime = DateFormat('hh:mm:ss a').format(now);
     final titles = <String>[
-      l10n.tr('titlePrayerTimes'),
+      'Solat',
       l10n.tr('titleQuran'),
-      l10n.tr('titleTasbih'),
+      'Tools',
       l10n.tr('titleQibla'),
       l10n.tr('titleSettings'),
     ];
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 50,
-        title: Text(titles[_currentTab]),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(28),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 2),
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 16,
+        toolbarHeight: 60,
+        title: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              titles[_currentTab],
+              style: Theme.of(
+                context,
+              ).appBarTheme.titleTextStyle?.copyWith(height: 1.0),
+            ),
+            const SizedBox(height: 1),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Icon(
+                    Icons.schedule_rounded,
+                    size: 16,
+                    color: isDark ? Colors.white : scheme.primary,
+                    shadows: <Shadow>[
+                      Shadow(
+                        color: scheme.secondary.withValues(alpha: 0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$todayDate | $hijriDate | $currentTime',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      height: 1.0,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
                       color: isDark ? Colors.white : scheme.primary,
                       shadows: <Shadow>[
                         Shadow(
-                          color: scheme.secondary.withValues(alpha: 0.35),
-                          blurRadius: 8,
+                          color: isDark
+                              ? Colors.black.withValues(alpha: 0.4)
+                              : Colors.white.withValues(alpha: 0.55),
+                          blurRadius: 6,
+                          offset: const Offset(0, 1),
+                        ),
+                        Shadow(
+                          color: scheme.secondary.withValues(alpha: 0.3),
+                          blurRadius: 10,
                           offset: const Offset(0, 1),
                         ),
                       ],
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$todayDate | $hijriDate | $currentTime',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: isDark ? Colors.white : scheme.primary,
-                        shadows: <Shadow>[
-                          Shadow(
-                            color: isDark
-                                ? Colors.black.withValues(alpha: 0.4)
-                                : Colors.white.withValues(alpha: 0.55),
-                            blurRadius: 6,
-                            offset: const Offset(0, 1),
-                          ),
-                          Shadow(
-                            color: scheme.secondary.withValues(alpha: 0.3),
-                            blurRadius: 10,
-                            offset: const Offset(0, 1),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ),
       ),
       body: AppGradientBackground(
@@ -166,13 +183,11 @@ class _MainScaffoldState extends State<_MainScaffold> {
           child: SafeArea(
             top: false,
             bottom: false,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 260),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              child: KeyedSubtree(
-                key: ValueKey<int>(_currentTab),
-                child: _screens[_currentTab],
+            child: FadeTransition(
+              opacity: _tabFade,
+              child: IndexedStack(
+                index: _currentTab,
+                children: _screens,
               ),
             ),
           ),
@@ -214,7 +229,11 @@ class _MainScaffoldState extends State<_MainScaffold> {
               child: NavigationBar(
                 selectedIndex: _currentTab,
                 onDestinationSelected: (index) {
+                  if (_currentTab == index) {
+                    return;
+                  }
                   setState(() => _currentTab = index);
+                  _tabTransitionController.forward(from: 0);
                 },
                 destinations: <NavigationDestination>[
                   NavigationDestination(
@@ -228,9 +247,9 @@ class _MainScaffoldState extends State<_MainScaffold> {
                     label: l10n.tr('navQuran'),
                   ),
                   NavigationDestination(
-                    icon: const Icon(Icons.touch_app_outlined),
-                    selectedIcon: const Icon(Icons.touch_app_rounded),
-                    label: l10n.tr('navTasbih'),
+                    icon: const Icon(Icons.grid_view_outlined),
+                    selectedIcon: const Icon(Icons.grid_view_rounded),
+                    label: 'Tools',
                   ),
                   NavigationDestination(
                     icon: const Icon(Icons.explore_outlined),

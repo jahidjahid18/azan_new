@@ -5,9 +5,12 @@ import 'package:azan_app/core/models/prohibited_time.dart';
 import 'package:azan_app/core/constants/app_constants.dart';
 import 'package:azan_app/core/localization/app_localizations.dart';
 import 'package:azan_app/core/state/app_controller.dart';
+import 'package:azan_app/core/widgets/app_card.dart';
+import 'package:azan_app/core/widgets/section_header.dart';
 import 'package:azan_app/core/widgets/app_surface_card.dart';
 import 'package:azan_app/features/azkar/presentation/azkar_screen.dart';
 import 'package:azan_app/features/calendar/presentation/islamic_events_section.dart';
+import 'package:azan_app/features/dashboard/presentation/dashboard_screen.dart';
 import 'package:azan_app/features/home/presentation/widgets/daily_quran_ayahs_section.dart';
 import 'package:azan_app/features/mosque/presentation/mosque_finder_screen.dart';
 import 'package:azan_app/features/tracker/presentation/prayer_tracker_screen.dart';
@@ -16,6 +19,28 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+
+Route<void> _buildSmoothRoute(Widget screen) {
+  return PageRouteBuilder<void>(
+    transitionDuration: const Duration(milliseconds: 280),
+    reverseTransitionDuration: const Duration(milliseconds: 220),
+    pageBuilder: (context, animation, secondaryAnimation) => screen,
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      final slide = Tween<Offset>(
+        begin: const Offset(0, 0.03),
+        end: Offset.zero,
+      ).animate(curved);
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(position: slide, child: child),
+      );
+    },
+  );
+}
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -42,7 +67,7 @@ class HomeScreen extends StatelessWidget {
       onRefresh: () => context.read<AppController>().refreshLocationFromGps(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(16, 6, 16, 24 + bottomPadding),
+        padding: EdgeInsets.fromLTRB(16, 12, 16, 24 + bottomPadding),
         children: <Widget>[
           if (controller.location != null) ...<Widget>[
             _CityHeader(
@@ -50,73 +75,80 @@ class HomeScreen extends StatelessWidget {
               isRefreshing: controller.isBusy,
               onLocatePressed: () => _refreshLocationFromHeader(context),
             ),
-            const SizedBox(height: 8),
-            _NextPrayerCard(nextPrayer: controller.nextPrayer),
+            const SizedBox(height: 12),
+            _NextPrayerCard(
+              nextPrayer: controller.nextPrayer,
+              allPrayers: controller.todayPrayers,
+            ),
           ] else
             _EmptyLocationState(message: controller.startupError),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
+          const _DashboardVisibilityToggle(),
+          if (controller.showPersonalDashboard) ...<Widget>[
+            const SizedBox(height: 10),
+            const _DashboardPreviewCard(),
+          ],
+          const SizedBox(height: 16),
           const _QuickActionsRow(),
           if (controller.location != null) ...<Widget>[
             const SizedBox(height: 20),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
-                        l10n.tr('prayerTimes'),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.titleLarge,
+                SectionHeader(
+                  title: l10n.tr('prayerTimes'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      IconButton(
+                        tooltip: l10n.tr('prayerDisplayFilter'),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _openPrayerFilter(context, controller),
+                        icon: const Icon(Icons.tune_rounded),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: l10n.tr('prayerDisplayFilter'),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => _openPrayerFilter(context, controller),
-                      icon: const Icon(Icons.tune_rounded),
-                    ),
-                    IconButton(
-                      tooltip: l10n.tr('showProhibitedTimes'),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () async {
-                        await context
-                            .read<AppController>()
-                            .setShowProhibitedTimes(!controller.showProhibitedTimes);
-                      },
-                      icon: Icon(
-                        controller.showProhibitedTimes
-                            ? Icons.warning_amber_rounded
-                            : Icons.warning_amber_outlined,
-                        color: controller.showProhibitedTimes
-                            ? Theme.of(context).colorScheme.error
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      IconButton(
+                        tooltip: l10n.tr('showProhibitedTimes'),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () async {
+                          await context
+                              .read<AppController>()
+                              .setShowProhibitedTimes(
+                                !controller.showProhibitedTimes,
+                              );
+                        },
+                        icon: Icon(
+                          controller.showProhibitedTimes
+                              ? Icons.warning_amber_rounded
+                              : Icons.warning_amber_outlined,
+                          color: controller.showProhibitedTimes
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: l10n.tr('copyTodaySchedule'),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => _copyPrayerSchedule(
-                        context: context,
-                        city: controller.location!.cityName,
-                        prayers: visiblePrayers,
-                        now: controller.now,
+                      IconButton(
+                        tooltip: l10n.tr('copyTodaySchedule'),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _copyPrayerSchedule(
+                          context: context,
+                          city: controller.location!.cityName,
+                          prayers: visiblePrayers,
+                          now: controller.now,
+                        ),
+                        icon: const Icon(Icons.copy_all_rounded),
                       ),
-                      icon: const Icon(Icons.copy_all_rounded),
-                    ),
-                    IconButton(
-                      tooltip: l10n.tr('shareTodaySchedule'),
-                      visualDensity: VisualDensity.compact,
-                      onPressed: () => _sharePrayerSchedule(
-                        context: context,
-                        city: controller.location!.cityName,
-                        prayers: visiblePrayers,
-                        now: controller.now,
+                      IconButton(
+                        tooltip: l10n.tr('shareTodaySchedule'),
+                        visualDensity: VisualDensity.compact,
+                        onPressed: () => _sharePrayerSchedule(
+                          context: context,
+                          city: controller.location!.cityName,
+                          prayers: visiblePrayers,
+                          now: controller.now,
+                        ),
+                        icon: const Icon(Icons.share_rounded),
                       ),
-                      icon: const Icon(Icons.share_rounded),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 Align(
                   alignment: Alignment.centerRight,
@@ -127,7 +159,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 12),
             ..._buildPrayerTimelineCards(
               visiblePrayers: visiblePrayers,
               allPrayers: controller.todayPrayers,
@@ -139,9 +171,9 @@ class HomeScreen extends StatelessWidget {
               now: controller.now,
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           DailyQuranAyahsSection(translationLanguage: controller.appLanguage),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           IslamicEventsSection(now: controller.now),
         ],
       ),
@@ -540,9 +572,10 @@ class _CityHeader extends StatelessWidget {
 }
 
 class _NextPrayerCard extends StatefulWidget {
-  const _NextPrayerCard({required this.nextPrayer});
+  const _NextPrayerCard({required this.nextPrayer, required this.allPrayers});
 
   final PrayerInfo? nextPrayer;
+  final List<PrayerInfo> allPrayers;
 
   @override
   State<_NextPrayerCard> createState() => _NextPrayerCardState();
@@ -572,10 +605,14 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final prayerTimeFormat = DateFormat('hh:mm a');
-    final scheme = Theme.of(context).colorScheme;
     final countdown = widget.nextPrayer == null
         ? Duration.zero
         : widget.nextPrayer!.time.difference(_now);
+    final progress = _remainingProgress(
+      now: _now,
+      nextPrayer: widget.nextPrayer,
+      allPrayers: widget.allPrayers,
+    );
     final countdownLabel = l10n.tr('startsIn', <String, String>{
       'duration': _formatStableDuration(countdown),
     });
@@ -585,6 +622,11 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
       enableEntranceAnimation: false,
       entranceDirection: AppCardEntranceDirection.none,
       padding: const EdgeInsets.all(18),
+      gradient: const LinearGradient(
+        colors: <Color>[Color(0xFF0B6D59), Color(0xFF20C89A)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
@@ -593,12 +635,12 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
               Text(
                 l10n.tr('nextPrayer'),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface,
+                  color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
               ),
               const Spacer(),
-              Icon(Icons.nights_stay_rounded, color: scheme.secondary),
+              const Icon(Icons.nights_stay_rounded, color: Colors.white70),
             ],
           ),
           const SizedBox(height: 6),
@@ -607,7 +649,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                 ? l10n.tr('unavailable')
                 : l10n.prayerName(widget.nextPrayer!.name),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
+              color: Colors.white,
               fontWeight: FontWeight.w800,
             ),
           ),
@@ -620,7 +662,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                       ? '--:--'
                       : prayerTimeFormat.format(widget.nextPrayer!.time),
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Colors.white,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -631,7 +673,7 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                 child: Text(
                   countdownLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontWeight: FontWeight.w800,
                     fontFeatures: const <FontFeature>[
                       FontFeature.tabularFigures(),
@@ -641,6 +683,25 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 320),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) {
+                return LinearProgressIndicator(
+                  minHeight: 5,
+                  value: value,
+                  backgroundColor: Colors.white.withValues(alpha: 0.24),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Colors.white.withValues(alpha: 0.92),
+                  ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -653,6 +714,47 @@ class _NextPrayerCardState extends State<_NextPrayerCard> {
     final minutes = safeDuration.inMinutes.remainder(60);
     final seconds = safeDuration.inSeconds.remainder(60);
     return '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  double _remainingProgress({
+    required DateTime now,
+    required PrayerInfo? nextPrayer,
+    required List<PrayerInfo> allPrayers,
+  }) {
+    if (nextPrayer == null) {
+      return 0;
+    }
+    if (allPrayers.isEmpty) {
+      return 0;
+    }
+
+    final sorted = List<PrayerInfo>.from(allPrayers)
+      ..sort((a, b) => a.time.compareTo(b.time));
+    final nextTime = nextPrayer.time;
+    final nextIndex = sorted.indexWhere(
+      (p) => p.name == nextPrayer.name && p.time == nextPrayer.time,
+    );
+
+    DateTime previousTime;
+    if (nextIndex == -1) {
+      previousTime = sorted.last.time;
+      if (previousTime.isAfter(nextTime)) {
+        previousTime = previousTime.subtract(const Duration(days: 1));
+      }
+    } else if (nextIndex == 0) {
+      previousTime = sorted.last.time.subtract(const Duration(days: 1));
+    } else {
+      previousTime = sorted[nextIndex - 1].time;
+    }
+
+    final totalMillis = nextTime.difference(previousTime).inMilliseconds;
+    if (totalMillis <= 0) {
+      return 0;
+    }
+
+    final elapsedMillis = now.difference(previousTime).inMilliseconds;
+    final ratio = elapsedMillis / totalMillis;
+    return ratio.clamp(0.0, 1.0);
   }
 }
 
@@ -670,40 +772,172 @@ class _QuickActionsRow extends StatelessWidget {
             label: l10n.tr('quickTracker'),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const PrayerTrackerScreen(),
-                ),
+                _buildSmoothRoute(const PrayerTrackerScreen()),
               );
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: _QuickActionButton(
             icon: Icons.map_outlined,
             label: l10n.tr('quickMosques'),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => const MosqueFinderScreen(),
-                ),
+                _buildSmoothRoute(const MosqueFinderScreen()),
               );
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: _QuickActionButton(
             icon: Icons.auto_stories_rounded,
             label: l10n.tr('quickAzkar'),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(builder: (_) => const AzkarScreen()),
-              );
+              Navigator.of(context).push(_buildSmoothRoute(const AzkarScreen()));
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DashboardVisibilityToggle extends StatelessWidget {
+  const _DashboardVisibilityToggle();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<AppController>();
+    return AppSurfaceCard(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: controller.showPersonalDashboard,
+        onChanged: (value) async {
+          await context.read<AppController>().setShowPersonalDashboard(value);
+        },
+        title: const Text('Personal Dashboard'),
+        subtitle: Text(
+          controller.showPersonalDashboard ? 'Visible on Home' : 'Hidden from Home',
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardPreviewCard extends StatelessWidget {
+  const _DashboardPreviewCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = context.watch<AppController>();
+    final completed = controller.todayCompletedPrayersCount;
+    final total = AppConstants.prayerOrder.length;
+
+    return AppSurfaceCard(
+      gradient: const LinearGradient(
+        colors: <Color>[Color(0xFF0B6D59), Color(0xFF20C89A)],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  'Personal Dashboard',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const Icon(Icons.insights_rounded, color: Colors.white70),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: <Widget>[
+              _DashboardStatChip(label: 'Prayers', value: '$completed/$total'),
+              _DashboardStatChip(
+                label: 'Streak',
+                value: '${controller.currentStreak} day(s)',
+              ),
+              _DashboardStatChip(
+                label: 'Quran',
+                value: '${controller.quranReadingTodayMinutes} min',
+              ),
+              _DashboardStatChip(
+                label: 'Tasbih',
+                value: '${controller.dailyTasbihCount}',
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(_buildSmoothRoute(const DashboardScreen()));
+              },
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: const Text('Open Dashboard'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: BorderSide(color: Colors.white.withValues(alpha: 0.45)),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardStatChip extends StatelessWidget {
+  const _DashboardStatChip({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.38)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: Colors.white.withValues(alpha: 0.9)),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -739,9 +973,9 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
           borderRadius: BorderRadius.circular(18),
           onTap: widget.onTap,
           onHighlightChanged: (value) => setState(() => _pressed = value),
-          child: AppSurfaceCard(
+          child: AppCard(
             radius: 18,
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
             gradient: LinearGradient(
               colors: <Color>[
                 Theme.of(context).cardTheme.color ?? Colors.white,
@@ -752,13 +986,14 @@ class _QuickActionButtonState extends State<_QuickActionButton> {
             ),
             child: Column(
               children: <Widget>[
-                Icon(widget.icon, color: scheme.primary),
-                const SizedBox(height: 6),
+                Icon(widget.icon, size: 22, color: scheme.primary),
+                const SizedBox(height: 8),
                 Text(
                   widget.label,
                   style: Theme.of(
                     context,
                   ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
@@ -1268,20 +1503,18 @@ class _ProhibitedTimeCard extends StatelessWidget {
                 ],
                 const SizedBox(height: 2),
                 Text(
-                  'Start: ${DateFormat('hh:mm a').format(window.start)}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  DateFormat('hh:mm a').format(window.start),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 22,
                     fontWeight: FontWeight.w800,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.9)
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.9),
+                    color: isDark ? Colors.white : Theme.of(context).colorScheme.primary,
                   ),
                 ),
                 Text(
-                  'End: ${DateFormat('hh:mm a').format(window.end)}',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+                  'Ends at ${DateFormat('hh:mm a').format(window.end)}',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
                     color: isDark
                         ? Colors.white.withValues(alpha: 0.9)
                         : Theme.of(

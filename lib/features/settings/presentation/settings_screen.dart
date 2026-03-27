@@ -236,6 +236,69 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
+              const SizedBox(height: 8),
+              Divider(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.4),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('Enable daily reminders'),
+                subtitle: const Text('Daily ayah + engagement reminder'),
+                value: controller.retentionNotificationsEnabled,
+                onChanged: (value) async {
+                  await context
+                      .read<AppController>()
+                      .setRetentionNotificationsEnabled(value);
+                },
+              ),
+              if (controller.retentionNotificationsEnabled) ...<Widget>[
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.auto_stories_rounded),
+                  title: const Text('Daily ayah notification time'),
+                  subtitle: Text(
+                    MaterialLocalizations.of(
+                      context,
+                    ).formatTimeOfDay(controller.dailyAyahNotificationTime),
+                  ),
+                  trailing: const Icon(Icons.schedule_rounded),
+                  onTap: () async {
+                    final picked = await _pickTime(
+                      context: context,
+                      initialTime: controller.dailyAyahNotificationTime,
+                    );
+                    if (picked == null) return;
+                    if (!context.mounted) return;
+                    await context
+                        .read<AppController>()
+                        .setDailyAyahNotificationTime(picked);
+                  },
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.notifications_paused_rounded),
+                  title: const Text('Engagement reminder time'),
+                  subtitle: Text(
+                    MaterialLocalizations.of(
+                      context,
+                    ).formatTimeOfDay(controller.engagementReminderTime),
+                  ),
+                  trailing: const Icon(Icons.schedule_rounded),
+                  onTap: () async {
+                    final picked = await _pickTime(
+                      context: context,
+                      initialTime: controller.engagementReminderTime,
+                    );
+                    if (picked == null) return;
+                    if (!context.mounted) return;
+                    await context
+                        .read<AppController>()
+                        .setEngagementReminderTime(picked);
+                  },
+                ),
+              ],
             ],
           ),
         ),
@@ -517,6 +580,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<TimeOfDay?> _pickTime({
+    required BuildContext context,
+    required TimeOfDay initialTime,
+  }) {
+    return showTimePicker(context: context, initialTime: initialTime);
   }
 }
 

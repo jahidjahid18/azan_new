@@ -11,6 +11,7 @@ class AppSettings {
     required this.notificationsEnabled,
     required this.notificationSoundMode,
     required this.showProhibitedTimes,
+    required this.showPersonalDashboard,
     required this.themeMode,
     required this.themeStyle,
     required this.appLanguage,
@@ -21,6 +22,7 @@ class AppSettings {
   final bool notificationsEnabled;
   final NotificationSoundMode notificationSoundMode;
   final bool showProhibitedTimes;
+  final bool showPersonalDashboard;
   final ThemeModeOption themeMode;
   final ThemeStyleOption themeStyle;
   final AppLanguage appLanguage;
@@ -32,6 +34,7 @@ class AppSettings {
       notificationsEnabled: true,
       notificationSoundMode: NotificationSoundMode.notificationOnly,
       showProhibitedTimes: true,
+      showPersonalDashboard: true,
       themeMode: ThemeModeOption.light,
       themeStyle: ThemeStyleOption.emerald,
       appLanguage: AppLanguage.english,
@@ -44,6 +47,7 @@ class AppSettings {
     bool? notificationsEnabled,
     NotificationSoundMode? notificationSoundMode,
     bool? showProhibitedTimes,
+    bool? showPersonalDashboard,
     ThemeModeOption? themeMode,
     ThemeStyleOption? themeStyle,
     AppLanguage? appLanguage,
@@ -55,6 +59,8 @@ class AppSettings {
       notificationSoundMode:
           notificationSoundMode ?? this.notificationSoundMode,
       showProhibitedTimes: showProhibitedTimes ?? this.showProhibitedTimes,
+      showPersonalDashboard:
+          showPersonalDashboard ?? this.showPersonalDashboard,
       themeMode: themeMode ?? this.themeMode,
       themeStyle: themeStyle ?? this.themeStyle,
       appLanguage: appLanguage ?? this.appLanguage,
@@ -68,6 +74,7 @@ class AppSettings {
       'notificationsEnabled': notificationsEnabled,
       'notificationSoundMode': notificationSoundMode.key,
       'showProhibitedTimes': showProhibitedTimes,
+      'showPersonalDashboard': showPersonalDashboard,
       'themeMode': themeMode.key,
       'themeStyle': themeStyle.key,
       'appLanguage': appLanguage.code,
@@ -85,6 +92,7 @@ class AppSettings {
         map['notificationSoundMode'] as String?,
       ),
       showProhibitedTimes: map['showProhibitedTimes'] as bool? ?? true,
+      showPersonalDashboard: map['showPersonalDashboard'] as bool? ?? true,
       themeMode: ThemeModeOptionX.fromKey(map['themeMode'] as String?),
       themeStyle: ThemeStyleOptionX.fromKey(map['themeStyle'] as String?),
       appLanguage: AppLanguageX.fromCode(map['appLanguage'] as String?),

@@ -447,8 +447,9 @@ class AppTheme {
       ),
       appBarTheme: AppBarTheme(
         centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+        elevation: 4,
+        scrolledUnderElevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.16),
         backgroundColor: Colors.transparent,
         foregroundColor: isDark ? colorScheme.onSurface : colorScheme.primary,
         surfaceTintColor: Colors.transparent,
@@ -463,6 +464,13 @@ class AppTheme {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+      splashFactory: InkRipple.splashFactory,
+      listTileTheme: ListTileThemeData(
+        minLeadingWidth: 26,
+        horizontalTitleGap: 12,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        iconColor: colorScheme.primary,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

@@ -63,6 +63,7 @@ dependencies:
   sqflite: ^2.4.2
   path: ^1.9.1
   share_plus: ^10.0.2
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
@@ -95,6 +96,7 @@ flutter:
     - assets/data/daily_content.json
     - assets/data/azkar.json
     - assets/data/cities_global.json
+    - assets/images/puzzle/
 
   fonts:
     - family: NotoNaskhArabic
